@@ -32,13 +32,14 @@ export default async function Home() {
           background: "var(--bgDeep)",
         }}
       >
-        {/* Campus photo — drop a real image at /public/campus.jpg.
-            A themed gradient shows through until then. */}
+        {/* Themed gradient underlay — shows through if the photo is missing. */}
+        <div style={{ position: "absolute", inset: 0, background: "var(--heroFallback)" }} />
+        {/* Campus photo. Swap /CoxeHall.jpg for any image in /public. */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: "var(--heroFallback), url('/campus.jpg')",
+            backgroundImage: "url('/CoxeHall.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "74% 42%",
           }}
