@@ -7,9 +7,6 @@ import { getLatest, getHistory } from "@/lib/fred";
 import { indices, sectors } from "@/data/sectors";
 import { usd, pct, isUp, arrow } from "@/lib/format";
 
-// Edit this watchlist to whatever the club wants to track.
-const WATCHLIST = ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "JPM"];
-
 const SERIES = [
   { id: "DGS2", label: "2-Year Treasury", unit: "%", note: "daily" },
   { id: "DGS10", label: "10-Year Treasury", unit: "%", note: "daily" },
@@ -17,16 +14,21 @@ const SERIES = [
   { id: "FEDFUNDS", label: "Fed Funds Rate", unit: "%", note: "monthly" },
   { id: "UNRATE", label: "Unemployment", unit: "%", note: "monthly" },
   { id: "CPIAUCSL", label: "CPI (Index)", unit: "", note: "monthly" },
+  { id: "GDPC1", label: "Real GDP", unit: "B", note: "quarterly" },
+  { id: "PCEPILFE", label: "Core PCE (Index)", unit: "", note: "monthly" },
+  { id: "PAYEMS", label: "Nonfarm Payrolls", unit: "K", note: "monthly" },
+  { id: "UMCSENT", label: "Consumer Sentiment", unit: "", note: "monthly" },
+  { id: "MORTGAGE30US", label: "30-Yr Mortgage", unit: "%", note: "weekly" },
+  { id: "T10Y2Y", label: "10Y–2Y Spread", unit: "%", note: "daily" },
 ];
 
 export const metadata = { title: "Markets · HWS Investment Club" };
 export const dynamic = "force-dynamic";
 
 export default async function MarketsPage() {
-  const [indexQuotes, sectorQuotes, watchQuotes, econStats, history] = await Promise.all([
+  const [indexQuotes, sectorQuotes, econStats, history] = await Promise.all([
     getQuotes(indices.map((i) => i.symbol)),
     getQuotes(sectors.map((s) => s.etf)),
-    getQuotes(WATCHLIST),
     Promise.all(SERIES.map((s) => getLatest(s.id))),
     getHistory("DGS10", 90),
   ]);
@@ -59,7 +61,6 @@ export default async function MarketsPage() {
           {[
             ["#indices", "Indices"],
             ["#sectors", "Sectors"],
-            ["#watchlist", "Watchlist"],
             ["#economy", "Economy"],
           ].map(([href, label]) => (
             <a
@@ -176,73 +177,6 @@ export default async function MarketsPage() {
                   ))}
                 </div>
               </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Watchlist */}
-      <section id="watchlist" className="container-x" style={{ paddingTop: "clamp(44px,6vh,72px)", scrollMarginTop: 80 }}>
-        <h2 className="h-sub">The club watchlist</h2>
-        <p className="lede" style={{ maxWidth: 560, margin: "11px 0 18px" }}>
-          The names we&rsquo;re actively researching and pitching this semester.
-        </p>
-        <div
-          style={{
-            border: "1px solid var(--line)",
-            borderRadius: 14,
-            overflow: "hidden",
-            background: "var(--card)",
-          }}
-        >
-          <div
-            className="mono"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1.4fr 1fr 1fr 1fr",
-              padding: "13px 22px",
-              background: "var(--card2)",
-              borderBottom: "1px solid var(--line)",
-              fontSize: 11,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "var(--faint)",
-            }}
-          >
-            <span>Symbol</span>
-            <span style={{ textAlign: "right" }}>Price</span>
-            <span style={{ textAlign: "right" }}>Change</span>
-            <span style={{ textAlign: "right" }}>% Change</span>
-          </div>
-          {watchQuotes.map((q) => {
-            const up = isUp(q.dp);
-            const color = up ? "var(--up)" : "var(--down)";
-            return (
-              <div
-                key={q.symbol}
-                className="row-hover"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1.4fr 1fr 1fr 1fr",
-                  padding: "14px 22px",
-                  borderBottom: "1px solid var(--lineSoft)",
-                  transition: "background 0.15s",
-                }}
-              >
-                <span style={{ fontWeight: 600, color: "var(--text)", fontSize: 15 }}>
-                  {q.symbol}
-                </span>
-                <span className="mono nums" style={{ textAlign: "right", color: "var(--text)", fontSize: 14 }}>
-                  {usd(q.c)}
-                </span>
-                <span className="mono nums" style={{ textAlign: "right", color, fontSize: 14 }}>
-                  {q.d >= 0 ? "+" : ""}
-                  {q.d?.toFixed(2)}
-                </span>
-                <span className="mono nums" style={{ textAlign: "right", color, fontSize: 14 }}>
-                  {pct(q.dp)}
-                </span>
-              </div>
             );
           })}
         </div>

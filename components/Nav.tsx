@@ -60,7 +60,7 @@ export default function Nav() {
               whiteSpace: "nowrap",
             }}
           >
-            <span style={{ color: "var(--brand)" }}>HWS</span> Investment Club
+            HWS Investment Club
           </span>
         </Link>
 

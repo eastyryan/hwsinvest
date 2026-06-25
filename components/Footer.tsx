@@ -38,7 +38,7 @@ export default function Footer() {
               <span
                 style={{ fontSize: 18, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.02em" }}
               >
-                <span style={{ color: "var(--brand)" }}>HWS</span> Investment Club
+                HWS Investment Club
               </span>
             </div>
             <p

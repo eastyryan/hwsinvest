@@ -64,16 +64,16 @@
 :root,
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #f2f0f7;
-  --bgDeep: #e8e3f1;
+  --bg: #ffffff;
+  --bgDeep: #ffffff;
   --card: #ffffff;
-  --card2: #f8f5fc;
-  --cardHover: #f4f0fb;
-  --line: #e4deee;
-  --lineSoft: #efebf7;
-  --text: #18131f;
-  --muted: #5c566b;
-  --faint: #8e88a1;
+  --card2: #f5f5f5;
+  --cardHover: #eeeeee;
+  --line: #e4e4e7;
+  --lineSoft: #f0f0f1;
+  --text: #141414;
+  --muted: #5a5a60;
+  --faint: #8a8a90;
   --brand: #4b2e83;
   --brandSolid: #4b2e83;
   --orange: #e87722;
@@ -82,7 +82,7 @@
   --green: #15803d;
   --up: #15803d;
   --down: #dc2626;
-  --navBg: rgba(242, 240, 247, 0.84);
+  --navBg: rgba(255, 255, 255, 0.85);
   --heroScrim: linear-gradient(
     98deg,
     rgba(13, 74, 42, 0.84) 0%,
@@ -235,7 +235,7 @@ body {
   border-radius: 11px;
   text-decoration: none;
   cursor: pointer;
-  border: 1px solid #4f2fa2;
+  border: 1px solid var(--brandSolid);
   transition: filter 0.15s, transform 0.15s;
 }
 .btn-primary:hover {

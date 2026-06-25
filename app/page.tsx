@@ -204,7 +204,7 @@ export default function Home() {
           }}
         >
           {firms.map((f) => (
-            <FirmLogo key={f.name} name={f.name} logo={f.logo} wordmark={f.wordmark} />
+            <FirmLogo key={f.name} name={f.name} logo={f.logo} />
           ))}
         </div>
       </section>

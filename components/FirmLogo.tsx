@@ -2,18 +2,9 @@
 
 import { useState } from "react";
 
-// Renders a firm's logo above its name. Wordmark logos already contain the
-// company name, so their text caption is hidden. Falls back to the name in
+// Renders a firm's logo mark above its name. Falls back to the name in
 // text if the image is missing or fails to load.
-export default function FirmLogo({
-  name,
-  logo,
-  wordmark = false,
-}: {
-  name: string;
-  logo: string;
-  wordmark?: boolean;
-}) {
+export default function FirmLogo({ name, logo }: { name: string; logo: string }) {
   const [errored, setErrored] = useState(false);
 
   return (
@@ -36,30 +27,19 @@ export default function FirmLogo({
           justifyContent: "center",
         }}
       >
-        {errored ? (
-          <span style={{ fontSize: 18, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.02em" }}>
-            {name}
-          </span>
-        ) : (
+        {!errored && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={logo}
             alt={`${name} logo`}
             onError={() => setErrored(true)}
-            style={{
-              maxHeight: wordmark ? 30 : 56,
-              maxWidth: "100%",
-              width: "auto",
-              objectFit: "contain",
-            }}
+            style={{ maxHeight: 56, maxWidth: "100%", width: "auto", objectFit: "contain" }}
           />
         )}
       </div>
-      {!wordmark && !errored && (
-        <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", whiteSpace: "nowrap" }}>
-          {name}
-        </span>
-      )}
+      <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", whiteSpace: "nowrap" }}>
+        {name}
+      </span>
     </div>
   );
 }
