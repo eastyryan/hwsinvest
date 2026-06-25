@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Ticker from "@/components/Ticker";
 import Logo from "@/components/Logo";
+import FirmLogo from "@/components/FirmLogo";
 import { clubStats, firms, meeting } from "@/data/club";
 
 export const dynamic = "force-dynamic";
@@ -203,46 +204,37 @@ export default function Home() {
       {/* ---------------- Where it leads (firms) ---------------- */}
       <section className="container-x" style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
         <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
-          <p className="kicker">Where it can lead</p>
-          <h2 className="h-section">Careers our members aim for</h2>
+          <p className="kicker">Placements</p>
+          <h2 className="h-section">Where our members land</h2>
           <p className="lede" style={{ margin: "13px auto 0" }}>
-            The skills you build here open doors across finance. These are the kinds
-            of firms and roles a finance background can lead to.
+            Club members and alumni have gone on to firms across investment
+            banking, asset management, markets, and more.
           </p>
         </div>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
             gap: 14,
             marginTop: 34,
           }}
         >
           {firms.map((f) => (
             <div
-              key={f}
+              key={f.name}
               className="card"
               style={{
-                padding: "22px 18px",
-                textAlign: "center",
+                padding: "20px 18px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                minHeight: 74,
+                minHeight: 78,
               }}
             >
-              <span
-                className="serif"
-                style={{ fontSize: 17, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.01em" }}
-              >
-                {f}
-              </span>
+              <FirmLogo name={f.name} logo={f.logo} />
             </div>
           ))}
         </div>
-        <p style={{ textAlign: "center", color: "var(--faint)", fontSize: 12.5, margin: "18px 0 0" }}>
-          Representative firms in the fields we study — not a claim of placement.
-        </p>
       </section>
 
       {/* ---------------- Meetings / Join ---------------- */}

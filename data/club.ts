@@ -12,15 +12,20 @@ export const meeting = {
   blurb: "Open to every HWS student — no experience or finance background needed.",
 };
 
-// Aspirational destinations — where a finance background can lead. These are
-// NOT claimed placements, just well-known firms in the fields we study.
+// Firms where club members and alumni have landed. Logos live in
+// /public/firms/. Add a new firm by dropping a logo there and adding a row.
 export const firms = [
-  "Goldman Sachs",
-  "J.P. Morgan",
-  "Morgan Stanley",
-  "BlackRock",
-  "Bank of America",
-  "Citi",
-  "Fidelity",
-  "Wells Fargo",
+  { name: "J.P. Morgan", logo: "/firms/jpmorgan.png" },
+  { name: "Goldman Sachs", logo: "/firms/goldman-sachs.png" },
+  { name: "Morgan Stanley", logo: "/firms/morgan-stanley.png" },
+  { name: "Bank of America", logo: "/firms/bank-of-america.png" },
+  { name: "Citi", logo: "/firms/citi.png" },
+  { name: "BlackRock", logo: "/firms/blackrock.png" },
+  { name: "HSBC", logo: "/firms/hsbc.png" },
+  { name: "Evercore", logo: "/firms/evercore.png" },
+  { name: "Rithm Capital", logo: "/firms/rithm-capital.png" },
+  { name: "Bloomberg", logo: "/firms/bloomberg.png" },
+  { name: "Chubb", logo: "/firms/chubb.png" },
+  { name: "S&P Global", logo: "/firms/sp-global.png" },
+  { name: "Fidelity", logo: "/firms/fidelity.png" },
 ];
