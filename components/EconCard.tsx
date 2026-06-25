@@ -1,0 +1,86 @@
+"use client";
+
+import { useState } from "react";
+import MiniChart from "./MiniChart";
+import { formatEcon, type EconFmt } from "@/lib/format";
+
+export type EconSeries = {
+  id: string;
+  label: string;
+  fmt: EconFmt;
+  note: string;
+  value: number | null;
+  date: string | null;
+  yoy: { text: string; up: boolean } | null;
+  history: { date: string; value: number }[];
+};
+
+export default function EconCard({ s }: { s: EconSeries }) {
+  const [open, setOpen] = useState(false);
+  const hasHistory = s.history.length > 1;
+
+  return (
+    <div className="card" style={{ borderRadius: 13, overflow: "hidden" }}>
+      <button
+        onClick={() => hasHistory && setOpen((v) => !v)}
+        aria-expanded={open}
+        disabled={!hasHistory}
+        style={{
+          width: "100%",
+          textAlign: "left",
+          background: "transparent",
+          border: "none",
+          padding: 20,
+          cursor: hasHistory ? "pointer" : "default",
+          display: "block",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+          <p style={{ color: "var(--muted)", fontSize: 14, margin: 0, lineHeight: 1.3 }}>{s.label}</p>
+          {hasHistory && (
+            <span
+              aria-hidden
+              style={{
+                flexShrink: 0,
+                color: "var(--brand)",
+                fontSize: 18,
+                lineHeight: 1,
+                transform: open ? "rotate(45deg)" : "none",
+                transition: "transform 0.18s ease",
+              }}
+            >
+              +
+            </span>
+          )}
+        </div>
+
+        <p className="mono nums" style={{ fontSize: 28, fontWeight: 600, color: "var(--text)", margin: "12px 0 0" }}>
+          {formatEcon(s.value ?? undefined, s.fmt)}
+        </p>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0 0", flexWrap: "wrap" }}>
+          {s.yoy && (
+            <span
+              style={{
+                fontSize: 12.5,
+                fontWeight: 700,
+                color: s.yoy.up ? "var(--up)" : "var(--down)",
+              }}
+            >
+              {s.yoy.up ? "▲" : "▼"} {s.yoy.text} YoY
+            </span>
+          )}
+          <span className="mono" style={{ fontSize: 11, color: "var(--faint)", letterSpacing: "0.05em" }}>
+            {s.date ? `as of ${s.date}` : s.note} · {s.id}
+          </span>
+        </div>
+      </button>
+
+      {open && hasHistory && (
+        <div style={{ padding: "0 16px 16px" }}>
+          <MiniChart data={s.history} fmt={s.fmt} />
+        </div>
+      )}
+    </div>
+  );
+}

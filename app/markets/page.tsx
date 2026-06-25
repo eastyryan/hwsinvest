@@ -2,39 +2,75 @@ import Link from "next/link";
 import Ticker from "@/components/Ticker";
 import IndexCard from "@/components/IndexCard";
 import YieldChart from "@/components/YieldChart";
+import EconCard, { type EconSeries } from "@/components/EconCard";
 import { getQuotes } from "@/lib/finnhub";
-import { getLatest, getHistory } from "@/lib/fred";
+import { getHistory } from "@/lib/fred";
 import { indices, sectors } from "@/data/sectors";
-import { usd, pct, isUp, arrow } from "@/lib/format";
+import { usd, pct, isUp, arrow, yoyChange } from "@/lib/format";
 
-const SERIES = [
-  { id: "DGS2", label: "2-Year Treasury", unit: "%", note: "daily" },
-  { id: "DGS10", label: "10-Year Treasury", unit: "%", note: "daily" },
-  { id: "DGS30", label: "30-Year Treasury", unit: "%", note: "daily" },
-  { id: "FEDFUNDS", label: "Fed Funds Rate", unit: "%", note: "monthly" },
-  { id: "UNRATE", label: "Unemployment", unit: "%", note: "monthly" },
-  { id: "CPIAUCSL", label: "CPI (Index)", unit: "", note: "monthly" },
-  { id: "GDPC1", label: "Real GDP", unit: "B", note: "quarterly" },
-  { id: "PCEPILFE", label: "Core PCE (Index)", unit: "", note: "monthly" },
-  { id: "PAYEMS", label: "Nonfarm Payrolls", unit: "K", note: "monthly" },
-  { id: "UMCSENT", label: "Consumer Sentiment", unit: "", note: "monthly" },
-  { id: "MORTGAGE30US", label: "30-Yr Mortgage", unit: "%", note: "weekly" },
-  { id: "T10Y2Y", label: "10Y–2Y Spread", unit: "%", note: "daily" },
+import type { EconFmt } from "@/lib/format";
+
+const SERIES: { id: string; label: string; fmt: EconFmt; note: string }[] = [
+  { id: "DGS2", label: "2-Year Treasury", fmt: "pct", note: "daily" },
+  { id: "DGS10", label: "10-Year Treasury", fmt: "pct", note: "daily" },
+  { id: "DGS30", label: "30-Year Treasury", fmt: "pct", note: "daily" },
+  { id: "FEDFUNDS", label: "Fed Funds Rate", fmt: "pct", note: "monthly" },
+  { id: "UNRATE", label: "Unemployment", fmt: "pct", note: "monthly" },
+  { id: "CPIAUCSL", label: "CPI (Index)", fmt: "index", note: "monthly" },
+  { id: "GDPC1", label: "Real GDP", fmt: "gdp", note: "quarterly" },
+  { id: "PCEPILFE", label: "Core PCE (Index)", fmt: "index", note: "monthly" },
+  { id: "PAYEMS", label: "Nonfarm Payrolls", fmt: "payrolls", note: "monthly" },
+  { id: "UMCSENT", label: "Consumer Sentiment", fmt: "sentiment", note: "monthly" },
+  { id: "MORTGAGE30US", label: "30-Yr Mortgage", fmt: "pct", note: "weekly" },
+  { id: "T10Y2Y", label: "10Y–2Y Spread", fmt: "pct", note: "daily" },
 ];
 
 export const metadata = { title: "Markets · HWS Investment Club" };
 export const dynamic = "force-dynamic";
 
 export default async function MarketsPage() {
-  const [indexQuotes, sectorQuotes, econStats, history] = await Promise.all([
+  const [indexQuotes, sectorQuotes, histories] = await Promise.all([
     getQuotes(indices.map((i) => i.symbol)),
     getQuotes(sectors.map((s) => s.etf)),
-    Promise.all(SERIES.map((s) => getLatest(s.id))),
-    getHistory("DGS10", 90),
+    Promise.all(SERIES.map((s) => getHistory(s.id, 800))),
   ]);
 
-  const dgs10 = econStats[SERIES.findIndex((s) => s.id === "DGS10")];
-  const latestYield = dgs10 ? `${dgs10.value}%` : "—";
+  const DAY = 24 * 3600 * 1000;
+  const econ: EconSeries[] = SERIES.map((s, i) => {
+    const hist = histories[i];
+    if (!hist.length) {
+      return { ...s, value: null, date: null, yoy: null, history: [] };
+    }
+    const latest = hist[hist.length - 1];
+
+    // Find the observation closest to one year before the latest reading.
+    const yearAgo = new Date(latest.date).getTime() - 365 * DAY;
+    let prior = hist[0];
+    let best = Infinity;
+    for (const p of hist) {
+      const diff = Math.abs(new Date(p.date).getTime() - yearAgo);
+      if (diff < best) {
+        best = diff;
+        prior = p;
+      }
+    }
+    const yoy =
+      prior.date !== latest.date && best < 60 * DAY
+        ? yoyChange(latest.value, prior.value, s.fmt)
+        : null;
+
+    // Downsample to ~80 points for the expandable chart.
+    const step = Math.max(1, Math.floor(hist.length / 80));
+    const chart = hist.filter((_, idx) => idx % step === 0);
+    if (chart[chart.length - 1]?.date !== latest.date) chart.push(latest);
+
+    return { ...s, value: latest.value, date: latest.date, yoy, history: chart };
+  });
+
+  const dgs10Hist = histories[SERIES.findIndex((s) => s.id === "DGS10")] ?? [];
+  const tenYearChart = dgs10Hist.slice(-90);
+  const dgs10Latest = dgs10Hist[dgs10Hist.length - 1];
+  const latestYield = dgs10Latest ? `${dgs10Latest.value}%` : "—";
 
   return (
     <main>
@@ -190,37 +226,19 @@ export default async function MarketsPage() {
         </h2>
         <p className="lede" style={{ maxWidth: 600, margin: "11px 0 24px" }}>
           Authoritative data from the Federal Reserve Bank of St. Louis (FRED).
-          Treasury yields update each business day.
+          Tap any indicator to see its year-over-year change and history.
         </p>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
             gap: 16,
+            alignItems: "start",
           }}
         >
-          {SERIES.map((s, i) => {
-            const d = econStats[i];
-            return (
-              <div key={s.id} className="card" style={{ padding: 20, borderRadius: 13 }}>
-                <p style={{ color: "var(--muted)", fontSize: 14, margin: 0, lineHeight: 1.3 }}>
-                  {s.label}
-                </p>
-                <p
-                  className="mono nums"
-                  style={{ fontSize: 28, fontWeight: 600, color: "var(--text)", margin: "12px 0 0" }}
-                >
-                  {d ? `${d.value}${s.unit}` : "—"}
-                </p>
-                <p
-                  className="mono"
-                  style={{ fontSize: 11, color: "var(--faint)", margin: "7px 0 0", letterSpacing: "0.05em" }}
-                >
-                  {d ? `as of ${d.date}` : s.note} · {s.id}
-                </p>
-              </div>
-            );
-          })}
+          {econ.map((s) => (
+            <EconCard key={s.id} s={s} />
+          ))}
         </div>
       </section>
 
@@ -249,7 +267,7 @@ export default async function MarketsPage() {
               {latestYield}
             </span>
           </div>
-          <YieldChart data={history} />
+          <YieldChart data={tenYearChart} />
         </div>
       </section>
     </main>

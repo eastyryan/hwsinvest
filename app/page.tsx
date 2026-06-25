@@ -20,7 +20,7 @@ export default function Home() {
           background: "var(--bgDeep)",
         }}
       >
-        <div style={{ position: "absolute", inset: 0, background: "var(--heroFallback)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "#0c0a14" }} />
         <div
           style={{
             position: "absolute",
@@ -30,8 +30,7 @@ export default function Home() {
             backgroundPosition: "74% 42%",
           }}
         />
-        <div style={{ position: "absolute", inset: 0, background: "var(--heroScrim)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "var(--heroVignette)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "rgba(9,7,16,0.5)" }} />
 
         <div
           className="container-x"
