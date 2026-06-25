@@ -114,6 +114,10 @@
   --joinMark: #2e8a50;
 }
 
+:root {
+  --wsGreen: #0a5a2d; /* William Smith green, sampled from the logo */
+}
+
 * {
   box-sizing: border-box;
 }

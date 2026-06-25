@@ -13,16 +13,16 @@ const joinBullets: [string, string][] = [
   ["Pick a team", "join a sector group and start covering names."],
 ];
 
-// Short purple divider used to break sections.
+// Long, centered William Smith green divider used to break sections.
 export function Spacer() {
   return (
     <div
       style={{
-        width: 56,
+        width: "min(260px, 70%)",
         height: 3,
         borderRadius: 2,
-        background: "var(--brandSolid)",
-        margin: "clamp(40px,6vh,64px) 0",
+        background: "var(--wsGreen)",
+        margin: "clamp(40px,6vh,64px) auto",
       }}
     />
   );
@@ -30,15 +30,23 @@ export function Spacer() {
 
 function Bullet({ head, body }: { head: string; body: string }) {
   return (
-    <li style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+    <li
+      style={{
+        display: "flex",
+        gap: 10,
+        alignItems: "baseline",
+        justifyContent: "center",
+        textAlign: "center",
+      }}
+    >
       <span
         style={{
           flexShrink: 0,
           width: 7,
           height: 7,
           borderRadius: "50%",
-          background: "var(--brandSolid)",
-          marginTop: 9,
+          background: "var(--wsGreen)",
+          alignSelf: "center",
         }}
       />
       <span style={{ color: "var(--text)", fontSize: "15.5px", lineHeight: 1.6 }}>
@@ -58,8 +66,10 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <p className="kicker">{kicker}</p>
+    <div style={{ textAlign: "center" }}>
+      <p style={{ color: "var(--wsGreen)", fontSize: 14, fontWeight: 700, margin: 0 }}>
+        {kicker}
+      </p>
       <h3
         style={{
           fontWeight: 700,
@@ -67,7 +77,7 @@ function Section({
           color: "var(--text)",
           letterSpacing: "-0.02em",
           lineHeight: 1.1,
-          margin: "10px 0 0",
+          margin: "10px auto 0",
           maxWidth: "20ch",
         }}
       >
@@ -83,13 +93,13 @@ export default function MissionJoin({ showCta = false }: { showCta?: boolean }) 
     <div>
       {/* Mission */}
       <Section kicker="Our mission" heading="Make finance approachable — and hands-on">
-        <p style={{ color: "var(--text)", fontSize: "16.5px", lineHeight: 1.7, margin: "16px 0 0", maxWidth: 720 }}>
+        <p style={{ color: "var(--text)", fontSize: "16.5px", lineHeight: 1.7, margin: "16px auto 0", maxWidth: 680 }}>
           We believe you learn markets by participating in them. No prior
           experience required — just curiosity. Members research real companies,
           debate ideas in the open, and put a thesis to the test against a live,
           simulated portfolio.
         </p>
-        <ul style={{ margin: "22px 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 13, maxWidth: 720 }}>
+        <ul style={{ margin: "22px auto 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 13, maxWidth: 620 }}>
           {missionBullets.map(([h, b]) => (
             <Bullet key={h} head={h} body={b} />
           ))}
@@ -100,11 +110,11 @@ export default function MissionJoin({ showCta = false }: { showCta?: boolean }) 
 
       {/* Join */}
       <Section kicker="Join us" heading="Everyone's first meeting is an open one">
-        <p style={{ color: "var(--text)", fontSize: "16.5px", lineHeight: 1.7, margin: "16px 0 0", maxWidth: 720 }}>
+        <p style={{ color: "var(--text)", fontSize: "16.5px", lineHeight: 1.7, margin: "16px auto 0", maxWidth: 680 }}>
           Meetings are open to all HWS students — come once, no commitment, and
           see if it&rsquo;s for you. Here&rsquo;s how to get started.
         </p>
-        <ul style={{ margin: "22px 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 13, maxWidth: 720 }}>
+        <ul style={{ margin: "22px auto 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 13, maxWidth: 620 }}>
           {joinBullets.map(([h, b]) => (
             <Bullet key={h} head={h} body={b} />
           ))}

@@ -17,13 +17,17 @@ export default function AboutPage() {
     <main>
       <section className="container-x" style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
         {/* About us */}
-        <p className="kicker">About us</p>
-        <h1 className="h-page">Who we are</h1>
-        <p style={{ color: "var(--text)", fontSize: "16.5px", lineHeight: 1.7, margin: "16px 0 0", maxWidth: 720 }}>
-          The HWS Investment Club brings together students from every major to
-          learn how markets work, manage a paper portfolio, and prepare for
-          careers in finance.
-        </p>
+        <div style={{ textAlign: "center" }}>
+          <p style={{ color: "var(--wsGreen)", fontSize: 14, fontWeight: 700, margin: 0 }}>
+            About us
+          </p>
+          <h1 className="h-page">Who we are</h1>
+          <p style={{ color: "var(--text)", fontSize: "16.5px", lineHeight: 1.7, margin: "16px auto 0", maxWidth: 680 }}>
+            The HWS Investment Club brings together students from every major to
+            learn how markets work, manage a paper portfolio, and prepare for
+            careers in finance.
+          </p>
+        </div>
 
         <Spacer />
 
@@ -31,12 +35,14 @@ export default function AboutPage() {
 
         <Spacer />
 
-        <div>
-          <p className="kicker">Our team</p>
+        <div style={{ textAlign: "center" }}>
+          <p style={{ color: "var(--wsGreen)", fontSize: 14, fontWeight: 700, margin: 0 }}>
+            Our team
+          </p>
           <h2 className="h-section" style={{ marginTop: 6 }}>
             Meet the board
           </h2>
-          <p style={{ color: "var(--text)", fontSize: "16.5px", lineHeight: 1.7, margin: "14px 0 0", maxWidth: 720 }}>
+          <p style={{ color: "var(--text)", fontSize: "16.5px", lineHeight: 1.7, margin: "14px auto 0", maxWidth: 680 }}>
             The students leading the club this year.
           </p>
         </div>
@@ -69,8 +75,8 @@ export default function AboutPage() {
                   style={{
                     width: "100%",
                     aspectRatio: "1 / 1",
-                    background: "var(--brandSolid)",
-                    color: "var(--yellow)",
+                    background: "var(--wsGreen)",
+                    color: "#fff",
                     fontSize: "clamp(44px,8vw,64px)",
                     fontWeight: 700,
                     letterSpacing: "-0.02em",
@@ -86,7 +92,7 @@ export default function AboutPage() {
               <p style={{ fontWeight: 700, color: "var(--text)", fontSize: 20, margin: "18px 0 0", letterSpacing: "-0.02em" }}>
                 {m.name}
               </p>
-              <p style={{ color: "var(--orangeText)", fontSize: 15, margin: "4px 0 0", fontWeight: 700 }}>
+              <p style={{ color: "var(--wsGreen)", fontSize: 15, margin: "4px 0 0", fontWeight: 700 }}>
                 {m.role}
               </p>
               <p style={{ color: "var(--faint)", fontSize: 13.5, margin: "3px 0 0" }}>
