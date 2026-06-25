@@ -60,9 +60,11 @@ export const sectors: Sector[] = [
   },
 ];
 
-export const indices = [
-  { symbol: "SPY", label: "S&P 500" },
-  { symbol: "QQQ", label: "Nasdaq 100" },
-  { symbol: "DIA", label: "Dow 30" },
+// `fred` maps the index to a FRED series so we can show real YoY + history.
+// Russell 2000 has no free FRED series, so it shows intraday detail only.
+export const indices: { symbol: string; label: string; fred?: string }[] = [
+  { symbol: "SPY", label: "S&P 500", fred: "SP500" },
+  { symbol: "QQQ", label: "Nasdaq", fred: "NASDAQCOM" },
+  { symbol: "DIA", label: "Dow 30", fred: "DJIA" },
   { symbol: "IWM", label: "Russell 2000" },
 ];

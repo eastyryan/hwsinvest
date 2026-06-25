@@ -28,43 +28,48 @@ const SERIES: { id: string; label: string; fmt: EconFmt; note: string }[] = [
 export const metadata = { title: "Markets · HWS Investment Club" };
 export const dynamic = "force-dynamic";
 
+const DAY = 24 * 3600 * 1000;
+
+// Derive latest value, year-over-year change, and a downsampled chart series
+// from a chronological FRED history.
+function summarize(hist: { date: string; value: number }[], fmt: EconFmt) {
+  if (!hist.length) return { value: null, date: null, yoy: null, history: [] as { date: string; value: number }[] };
+  const latest = hist[hist.length - 1];
+  const yearAgo = new Date(latest.date).getTime() - 365 * DAY;
+  let prior = hist[0];
+  let best = Infinity;
+  for (const p of hist) {
+    const diff = Math.abs(new Date(p.date).getTime() - yearAgo);
+    if (diff < best) {
+      best = diff;
+      prior = p;
+    }
+  }
+  const yoy =
+    prior.date !== latest.date && best < 60 * DAY
+      ? yoyChange(latest.value, prior.value, fmt)
+      : null;
+  const step = Math.max(1, Math.floor(hist.length / 80));
+  const chart = hist.filter((_, idx) => idx % step === 0);
+  if (chart[chart.length - 1]?.date !== latest.date) chart.push(latest);
+  return { value: latest.value, date: latest.date, yoy, history: chart };
+}
+
 export default async function MarketsPage() {
-  const [indexQuotes, sectorQuotes, histories] = await Promise.all([
+  const [indexQuotes, sectorQuotes, histories, idxHistories] = await Promise.all([
     getQuotes(indices.map((i) => i.symbol)),
     getQuotes(sectors.map((s) => s.etf)),
     Promise.all(SERIES.map((s) => getHistory(s.id, 800))),
+    Promise.all(indices.map((i) => (i.fred ? getHistory(i.fred, 800) : Promise.resolve([])))),
   ]);
 
-  const DAY = 24 * 3600 * 1000;
-  const econ: EconSeries[] = SERIES.map((s, i) => {
-    const hist = histories[i];
-    if (!hist.length) {
-      return { ...s, value: null, date: null, yoy: null, history: [] };
-    }
-    const latest = hist[hist.length - 1];
+  const econ: EconSeries[] = SERIES.map((s, i) => ({ ...s, ...summarize(histories[i], s.fmt) }));
 
-    // Find the observation closest to one year before the latest reading.
-    const yearAgo = new Date(latest.date).getTime() - 365 * DAY;
-    let prior = hist[0];
-    let best = Infinity;
-    for (const p of hist) {
-      const diff = Math.abs(new Date(p.date).getTime() - yearAgo);
-      if (diff < best) {
-        best = diff;
-        prior = p;
-      }
-    }
-    const yoy =
-      prior.date !== latest.date && best < 60 * DAY
-        ? yoyChange(latest.value, prior.value, s.fmt)
-        : null;
-
-    // Downsample to ~80 points for the expandable chart.
-    const step = Math.max(1, Math.floor(hist.length / 80));
-    const chart = hist.filter((_, idx) => idx % step === 0);
-    if (chart[chart.length - 1]?.date !== latest.date) chart.push(latest);
-
-    return { ...s, value: latest.value, date: latest.date, yoy, history: chart };
+  // Per-index YoY + history (FRED), keyed by ETF symbol. Russell 2000 has none.
+  const indexInfo: Record<string, { yoy: { text: string; up: boolean } | null; history: { date: string; value: number }[] }> = {};
+  indices.forEach((i, idx) => {
+    const sum = i.fred ? summarize(idxHistories[idx], "index") : { yoy: null, history: [] };
+    indexInfo[i.symbol] = { yoy: sum.yoy, history: sum.history };
   });
 
   const dgs10Hist = histories[SERIES.findIndex((s) => s.id === "DGS10")] ?? [];
@@ -132,7 +137,17 @@ export default async function MarketsPage() {
         >
           {indexQuotes.map((q) => {
             const label = indices.find((i) => i.symbol === q.symbol)?.label;
-            return <IndexCard key={q.symbol} quote={q} label={label} etf={q.symbol} />;
+            const info = indexInfo[q.symbol];
+            return (
+              <IndexCard
+                key={q.symbol}
+                quote={q}
+                label={label}
+                etf={q.symbol}
+                yoy={info?.yoy ?? null}
+                history={info?.history ?? []}
+              />
+            );
           })}
         </div>
       </section>

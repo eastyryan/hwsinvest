@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import MiniChart from "./MiniChart";
 import { usd, pct, isUp, arrow, sparkline } from "@/lib/format";
 import type { Quote } from "@/lib/finnhub";
 
@@ -12,15 +13,20 @@ export default function IndexCard({
   quote,
   label,
   etf,
+  yoy = null,
+  history = [],
 }: {
   quote: Quote;
   label?: string;
   etf?: string;
+  yoy?: { text: string; up: boolean } | null;
+  history?: { date: string; value: number }[];
 }) {
   const [open, setOpen] = useState(false);
   const up = isUp(quote.dp);
   const color = up ? "var(--up)" : "var(--down)";
   const points = sparkline([quote.pc, quote.o, quote.l, quote.h, quote.c]);
+  const hasHistory = history.length > 1;
 
   const rows: [string, string][] = [
     ["Open", usd(quote.o)],
@@ -42,9 +48,16 @@ export default function IndexCard({
       <p className="mono nums" style={{ fontSize: 30, fontWeight: 600, color: "var(--text)", margin: "16px 0 0" }}>
         {usd(quote.c)}
       </p>
-      <p className="mono nums" style={{ fontSize: 14, color, margin: "8px 0 14px", fontWeight: 500 }}>
-        {arrow(quote.dp)} {usd(Math.abs(quote.d))} ({pct(quote.dp)})
-      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0 14px", flexWrap: "wrap" }}>
+        <span className="mono nums" style={{ fontSize: 14, color, fontWeight: 500 }}>
+          {arrow(quote.dp)} {usd(Math.abs(quote.d))} ({pct(quote.dp)})
+        </span>
+        {yoy && (
+          <span style={{ fontSize: 12, fontWeight: 700, color: yoy.up ? "var(--up)" : "var(--down)" }}>
+            {yoy.up ? "▲" : "▼"} {yoy.text} YoY
+          </span>
+        )}
+      </div>
       {points && (
         <svg viewBox="0 0 100 32" preserveAspectRatio="none" style={{ width: "100%", height: 34, display: "block" }}>
           <polyline
@@ -78,7 +91,7 @@ export default function IndexCard({
           fontWeight: 600,
         }}
       >
-        Today&rsquo;s detail
+        {hasHistory ? "History & detail" : "Today’s detail"}
         <span
           aria-hidden
           style={{
@@ -94,13 +107,20 @@ export default function IndexCard({
       </button>
 
       {open && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 16px", marginTop: 12 }}>
-          {rows.map(([k, v]) => (
-            <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-              <span style={{ color: "var(--faint)", fontSize: 12.5 }}>{k}</span>
-              <span className="mono nums" style={{ color: "var(--text)", fontSize: 12.5 }}>{v}</span>
+        <div style={{ marginTop: 12 }}>
+          {hasHistory && (
+            <div style={{ marginBottom: 4 }}>
+              <MiniChart data={history} fmt="index" />
             </div>
-          ))}
+          )}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 16px" }}>
+            {rows.map(([k, v]) => (
+              <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                <span style={{ color: "var(--faint)", fontSize: 12.5 }}>{k}</span>
+                <span className="mono nums" style={{ color: "var(--text)", fontSize: 12.5 }}>{v}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
