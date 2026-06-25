@@ -34,69 +34,72 @@ export default function AboutPage() {
       <section className="container-x" style={{ paddingTop: "clamp(44px,6vh,72px)" }}>
         <MissionJoin />
 
-        <h2 className="h-sub" style={{ margin: "48px 0 0" }}>
-          Meet the board
-        </h2>
+        <div style={{ margin: "clamp(56px,8vh,88px) 0 0", textAlign: "center" }}>
+          <p className="kicker">Our team</p>
+          <h2 className="h-section" style={{ marginTop: 6 }}>
+            Meet the board
+          </h2>
+          <p className="lede" style={{ maxWidth: 560, margin: "13px auto 0" }}>
+            The students leading the club this year.
+          </p>
+        </div>
+
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 16,
-            marginTop: 22,
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: "clamp(36px,4vw,52px)",
+            marginTop: "clamp(36px,5vh,56px)",
+            maxWidth: 880,
+            marginLeft: "auto",
+            marginRight: "auto",
           }}
         >
           {board.map((m) => (
-            <div
-              key={m.name + m.role}
-              className="card"
-              style={{ padding: 26, textAlign: "center" }}
-            >
+            <div key={m.name + m.role} style={{ textAlign: "center" }}>
               {m.img ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={m.img}
                   alt={m.name}
                   style={{
-                    width: 78,
-                    height: 78,
-                    borderRadius: "50%",
+                    width: "100%",
+                    aspectRatio: "1 / 1",
                     objectFit: "cover",
-                    margin: "0 auto",
+                    borderRadius: 16,
                     display: "block",
-                    border: "2px solid var(--brand)",
                   }}
                 />
               ) : (
                 <div
                   style={{
-                    width: 78,
-                    height: 78,
-                    borderRadius: "50%",
+                    width: "100%",
+                    aspectRatio: "1 / 1",
                     background: "var(--brandSolid)",
                     color: "var(--yellow)",
-                    fontSize: 26,
+                    fontSize: "clamp(44px,8vw,64px)",
                     fontWeight: 700,
+                    letterSpacing: "-0.02em",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    margin: "0 auto",
-                    border: "2px solid var(--brand)",
+                    borderRadius: 16,
                   }}
                 >
                   {initials(m.name)}
                 </div>
               )}
-              <p style={{ fontWeight: 600, color: "var(--text)", fontSize: 16, margin: "16px 0 0" }}>
+              <p style={{ fontWeight: 700, color: "var(--text)", fontSize: 20, margin: "18px 0 0", letterSpacing: "-0.02em" }}>
                 {m.name}
               </p>
-              <p style={{ color: "var(--orangeText)", fontSize: 14, margin: "4px 0 0", fontWeight: 500 }}>
+              <p style={{ color: "var(--orangeText)", fontSize: 15, margin: "4px 0 0", fontWeight: 700 }}>
                 {m.role}
               </p>
-              <p className="mono" style={{ color: "var(--faint)", fontSize: "12.5px", margin: "4px 0 0" }}>
-                {m.year}
+              <p style={{ color: "var(--faint)", fontSize: 13.5, margin: "3px 0 0" }}>
+                {m.focus ? `${m.focus} · ${m.year}` : m.year}
               </p>
               {m.bio && (
-                <p style={{ color: "var(--muted)", fontSize: 13, lineHeight: 1.5, margin: "12px 0 0" }}>
+                <p style={{ color: "var(--muted)", fontSize: 14.5, lineHeight: 1.6, margin: "12px 0 0" }}>
                   {m.bio}
                 </p>
               )}
