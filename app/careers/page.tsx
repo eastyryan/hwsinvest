@@ -165,103 +165,51 @@ export default function CareersPage() {
         </h1>
       </section>
 
-      {/* ---------------- Start here ---------------- */}
-      <section style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
-        <Chip label="Start here" />
-        <h2
-          style={{
-            fontWeight: 700,
-            fontSize: "clamp(26px,3.6vw,40px)",
-            letterSpacing: "-0.025em",
-            lineHeight: 1.18,
-            margin: "18px 0 0",
-            maxWidth: "22ch",
-            color: "var(--text)",
-          }}
-        >
-          Finance is a wide field —{" "}
-          <span style={{ color: "var(--muted)" }}>and there&rsquo;s more than one way in.</span>{" "}
-          Start with the people whose job it is to help.
-        </h2>
-
-        {/* HWS Career Services link */}
-        <a
-          href="https://www.hws.edu/centers/career-services/default.aspx"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="card card-hover-orange lift"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-            marginTop: "clamp(24px,4vh,36px)",
-            padding: "18px 22px",
-            maxWidth: 580,
-            textDecoration: "none",
-          }}
-        >
-          <span
-            aria-hidden
-            style={{
-              fontSize: 22,
-              flexShrink: 0,
-              width: 46,
-              height: 46,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 11,
-              background: "var(--wsGreen)",
-              color: "#fff",
-            }}
-          >
-            ↗
-          </span>
-          <span style={{ flex: 1 }}>
-            <span style={{ display: "block", fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
-              HWS Career Services
-            </span>
-            <span style={{ display: "block", fontSize: 13.5, color: "var(--muted)", marginTop: 2 }}>
-              Advising, resume help, alumni connections, and recruiting events.
-            </span>
-          </span>
-        </a>
-      </section>
-
-      {/* ---------------- Advisors ---------------- */}
-      <section style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
-        <Chip label="Our advisors" dot />
+      {/* ---------------- Advisors + Career Services ---------------- */}
+      <section style={{ paddingTop: "clamp(48px,7vh,84px)", textAlign: "center" }}>
         <h2
           style={{
             fontWeight: 700,
             fontSize: "clamp(28px,4vw,46px)",
             letterSpacing: "-0.025em",
             lineHeight: 1.12,
-            margin: "18px 0 0",
-            maxWidth: "16ch",
+            margin: 0,
             color: "var(--text)",
           }}
         >
           The people in your corner
         </h2>
-        <p style={{ color: "var(--muted)", fontSize: 16, lineHeight: 1.65, margin: "12px 0 0", maxWidth: 600 }}>
-          Our club advisors from Career Services. Hit the{" "}
-          <span style={{ color: "var(--wsGreen)", fontWeight: 700 }}>+</span> to read more about each of them.
+        <p style={{ color: "var(--text)", fontSize: 16, lineHeight: 1.65, margin: "14px auto 0" }}>
+          Our club advisors from Career Services. Hit the + to read more about each of them.
         </p>
 
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
             gap: 20,
             marginTop: "clamp(28px,4vh,44px)",
-            maxWidth: 720,
           }}
         >
           {advisors.map((a) => (
-            <AdvisorCard key={a.name} advisor={a} />
+            <div key={a.name} style={{ width: "min(320px, 100%)", textAlign: "left" }}>
+              <AdvisorCard advisor={a} />
+            </div>
           ))}
         </div>
+
+        <p style={{ color: "var(--text)", fontSize: 15.5, lineHeight: 1.65, margin: "clamp(24px,4vh,36px) auto 0" }}>
+          Want advising, resume help, or recruiting events?{" "}
+          <a
+            href="https://www.hws.edu/centers/career-services/default.aspx"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "var(--text)", fontWeight: 700, textDecoration: "underline" }}
+          >
+            Click here to visit the HWS Career Services website.
+          </a>
+        </p>
       </section>
 
       {/* ---------------- Career paths ---------------- */}
