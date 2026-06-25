@@ -1,8 +1,32 @@
 import CareerList, { type Career } from "@/components/CareerList";
+import AdvisorCard, { type Advisor } from "@/components/AdvisorCard";
 
 export const metadata = { title: "Careers · HWS Investment Club" };
 
-const advisors = [
+// Small pill label, optionally with a leading green dot.
+function Chip({ label, dot = false }: { label: string; dot?: boolean }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "6px 13px",
+        borderRadius: 999,
+        background: "var(--card2)",
+        border: "1px solid var(--line)",
+        fontSize: 13,
+        fontWeight: 600,
+        color: "var(--muted)",
+      }}
+    >
+      {dot && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--wsGreen)" }} />}
+      {label}
+    </span>
+  );
+}
+
+const advisors: Advisor[] = [
   {
     name: "Brandi Ferrara",
     initials: "BF",
@@ -102,163 +126,199 @@ const careers: Career[] = [
 
 export default function CareersPage() {
   return (
-    <main>
-      {/* Page header */}
-      <section style={{ background: "var(--bgDeep)", borderBottom: "1px solid var(--line)" }}>
+    <main className="container-x" style={{ paddingTop: "clamp(24px,4vh,40px)" }}>
+      {/* ---------------- Hero card ---------------- */}
+      <section
+        style={{
+          position: "relative",
+          borderRadius: 22,
+          overflow: "hidden",
+          minHeight: "clamp(260px,40vh,380px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--bgDeep)",
+        }}
+      >
+        <div style={{ position: "absolute", inset: 0, background: "var(--heroFallback)" }} />
         <div
-          className="container-x"
-          style={{ paddingTop: "clamp(44px,7vh,76px)", paddingBottom: "clamp(44px,7vh,76px)" }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: "url('/careers-hero.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center 42%",
+          }}
+        />
+        <div style={{ position: "absolute", inset: 0, background: "rgba(9,7,16,0.5)" }} />
+        <h1
+          style={{
+            position: "relative",
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: "clamp(40px,7vw,76px)",
+            letterSpacing: "-0.03em",
+            margin: 0,
+          }}
         >
-          <p className="kicker">Careers</p>
-          <h1 className="h-page">Where finance can take you</h1>
-          <p className="lede" style={{ maxWidth: 620 }}>
-            These are the paths HWS grads most often head into. Start with the
-            college&apos;s own career office, then read up on the roles that
-            interest you.
-          </p>
+          Careers
+        </h1>
+      </section>
 
-          {/* First thing on the page: link to HWS Career Services */}
-          <a
-            href="https://www.hws.edu/centers/career-services/default.aspx"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="card card-hover-orange lift"
+      {/* ---------------- Start here ---------------- */}
+      <section style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
+        <Chip label="Start here" />
+        <h2
+          style={{
+            fontWeight: 700,
+            fontSize: "clamp(26px,3.6vw,40px)",
+            letterSpacing: "-0.025em",
+            lineHeight: 1.18,
+            margin: "18px 0 0",
+            maxWidth: "22ch",
+            color: "var(--text)",
+          }}
+        >
+          Finance is a wide field —{" "}
+          <span style={{ color: "var(--muted)" }}>and there&rsquo;s more than one way in.</span>{" "}
+          Start with the people whose job it is to help.
+        </h2>
+
+        {/* HWS Career Services link */}
+        <a
+          href="https://www.hws.edu/centers/career-services/default.aspx"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="card card-hover-orange lift"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            marginTop: "clamp(24px,4vh,36px)",
+            padding: "18px 22px",
+            maxWidth: 580,
+            textDecoration: "none",
+          }}
+        >
+          <span
+            aria-hidden
             style={{
-              display: "flex",
+              fontSize: 22,
+              flexShrink: 0,
+              width: 46,
+              height: 46,
+              display: "inline-flex",
               alignItems: "center",
-              gap: 16,
-              marginTop: 28,
-              padding: "18px 22px",
-              maxWidth: 560,
-              textDecoration: "none",
+              justifyContent: "center",
+              borderRadius: 11,
+              background: "var(--wsGreen)",
+              color: "#fff",
             }}
           >
-            <span
-              aria-hidden
-              style={{
-                fontSize: 22,
-                flexShrink: 0,
-                width: 44,
-                height: 44,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: 11,
-                background: "var(--brandSolid)",
-                color: "#fff",
-              }}
-            >
-              ↗
+            ↗
+          </span>
+          <span style={{ flex: 1 }}>
+            <span style={{ display: "block", fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
+              HWS Career Services
             </span>
-            <span style={{ flex: 1 }}>
-              <span
-                style={{
-                  display: "block",
-                  fontSize: 16,
-                  fontWeight: 600,
-                  color: "var(--text)",
-                }}
-              >
-                HWS Career Services
-              </span>
-              <span style={{ display: "block", fontSize: 13.5, color: "var(--muted)", marginTop: 2 }}>
-                Advising, resume help, alumni connections, and recruiting events.
-              </span>
+            <span style={{ display: "block", fontSize: 13.5, color: "var(--muted)", marginTop: 2 }}>
+              Advising, resume help, alumni connections, and recruiting events.
             </span>
-          </a>
+          </span>
+        </a>
+      </section>
 
-          {/* Club advisors */}
-          <div style={{ marginTop: 36 }}>
-            <p className="kicker" style={{ marginBottom: 14 }}>
-              Our club advisors
-            </p>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                gap: 16,
-                maxWidth: 760,
-              }}
-            >
-              {advisors.map((a) => (
-                <div key={a.name} className="card card-hover-orange" style={{ padding: 22 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                    <span
-                      aria-hidden
-                      style={{
-                        flexShrink: 0,
-                        width: 46,
-                        height: 46,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderRadius: "50%",
-                        background: "var(--brandSolid)",
-                        color: "#fff",
-                        fontSize: 16,
-                        fontWeight: 700,
-                      }}
-                    >
-                      {a.initials}
-                    </span>
-                    <span>
-                      <span
-                        style={{
-                          display: "block",
-                          fontSize: 18,
-                          fontWeight: 700,
-                          color: "var(--text)",
-                          letterSpacing: "-0.02em",
-                        }}
-                      >
-                        {a.name}
-                      </span>
-                      <span style={{ display: "block", fontSize: 12.5, color: "var(--orangeText)", fontWeight: 600, marginTop: 2 }}>
-                        {a.title}
-                      </span>
-                    </span>
-                  </div>
-                  <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, margin: "14px 0 0" }}>
-                    {a.bio}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* ---------------- Advisors ---------------- */}
+      <section style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
+        <Chip label="Our advisors" dot />
+        <h2
+          style={{
+            fontWeight: 700,
+            fontSize: "clamp(28px,4vw,46px)",
+            letterSpacing: "-0.025em",
+            lineHeight: 1.12,
+            margin: "18px 0 0",
+            maxWidth: "16ch",
+            color: "var(--text)",
+          }}
+        >
+          The people in your corner
+        </h2>
+        <p style={{ color: "var(--muted)", fontSize: 16, lineHeight: 1.65, margin: "12px 0 0", maxWidth: 600 }}>
+          Our club advisors from Career Services. Hit the{" "}
+          <span style={{ color: "var(--wsGreen)", fontWeight: 700 }}>+</span> to read more about each of them.
+        </p>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: 20,
+            marginTop: "clamp(28px,4vh,44px)",
+            maxWidth: 720,
+          }}
+        >
+          {advisors.map((a) => (
+            <AdvisorCard key={a.name} advisor={a} />
+          ))}
         </div>
       </section>
 
-      {/* Career list */}
-      <section className="container-x" style={{ paddingTop: "clamp(44px,6vh,72px)" }}>
-        <h2 className="h-section" style={{ marginBottom: 6 }}>
-          Common career paths
+      {/* ---------------- Career paths ---------------- */}
+      <section style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
+        <Chip label="Career paths" />
+        <h2
+          style={{
+            fontWeight: 700,
+            fontSize: "clamp(28px,4vw,46px)",
+            letterSpacing: "-0.025em",
+            lineHeight: 1.12,
+            margin: "18px 0 0",
+            maxWidth: "16ch",
+            color: "var(--text)",
+          }}
+        >
+          Where finance can take you
         </h2>
-        <p className="lede" style={{ maxWidth: 600, marginBottom: 26 }}>
+        <p style={{ color: "var(--muted)", fontSize: 16, lineHeight: 1.65, margin: "12px 0 26px", maxWidth: 600 }}>
           Tap any role to see what the job actually looks like, the skills it
           rewards, and when recruiting tends to happen.
         </p>
 
         <CareerList careers={careers} />
+      </section>
 
-        {/* How the club fits in */}
+      {/* ---------------- How the club helps ---------------- */}
+      <section style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
         <div
-          className="card"
           style={{
-            marginTop: 28,
-            padding: "clamp(22px,4vw,34px)",
-            borderRadius: 14,
+            borderRadius: 22,
+            background: "var(--wsGreen)",
+            padding: "clamp(34px,6vw,64px)",
+            textAlign: "center",
+            color: "#fff",
           }}
         >
-          <h3 className="h-sub" style={{ marginBottom: 12 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "rgba(255,255,255,0.82)" }}>
             How the club helps
-          </h3>
-          <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.65, margin: 0, maxWidth: "68ch" }}>
-            We run weekly markets recaps and stock pitches so you can talk
-            confidently about the market in an interview. We hold Excel and
-            modeling workshops, do resume reviews and mock interviews before
-            recruiting season, and lean on alumni and Career Services to make
-            connections. You don&apos;t need a finance background to start —
-            just show up.
+          </p>
+          <h2
+            style={{
+              fontWeight: 700,
+              fontSize: "clamp(26px,4vw,42px)",
+              letterSpacing: "-0.025em",
+              lineHeight: 1.1,
+              margin: "12px auto 0",
+              maxWidth: "20ch",
+            }}
+          >
+            We help you get there
+          </h2>
+          <p style={{ fontSize: 16.5, lineHeight: 1.65, margin: "16px auto 0", maxWidth: 620, color: "rgba(255,255,255,0.9)" }}>
+            Weekly markets recaps and stock pitches so you can talk confidently in
+            an interview, Excel and modeling workshops, resume reviews and mock
+            interviews before recruiting season, and alumni connections through
+            Career Services. No finance background required — just show up.
           </p>
         </div>
       </section>
