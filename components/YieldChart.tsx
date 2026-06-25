@@ -15,40 +15,45 @@ export default function YieldChart({
   data: { date: string; value: number }[];
 }) {
   return (
-    <div className="h-64 w-full rounded-xl border border-line bg-panel p-4">
+    <div style={{ height: 220, width: "100%" }}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 10, right: 6, left: -10, bottom: 0 }}>
           <defs>
             <linearGradient id="yield" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#E87722" stopOpacity={0.5} />
-              <stop offset="95%" stopColor="#E87722" stopOpacity={0} />
+              <stop offset="0%" stopColor="#7C5BCB" stopOpacity={0.38} />
+              <stop offset="100%" stopColor="#7C5BCB" stopOpacity={0} />
             </linearGradient>
           </defs>
           <XAxis
             dataKey="date"
-            tick={{ fill: "#8b929c", fontSize: 11 }}
+            tick={{ fill: "var(--faint)", fontSize: 11 }}
             tickFormatter={(d) => String(d).slice(5)}
             minTickGap={30}
+            axisLine={{ stroke: "var(--line)" }}
+            tickLine={false}
           />
           <YAxis
-            tick={{ fill: "#8b929c", fontSize: 11 }}
+            tick={{ fill: "var(--faint)", fontSize: 11 }}
             domain={["auto", "auto"]}
             tickFormatter={(v) => `${v}%`}
             width={45}
+            axisLine={false}
+            tickLine={false}
           />
           <Tooltip
             contentStyle={{
-              background: "#0E1116",
-              border: "1px solid #2A2F37",
+              background: "var(--bgDeep)",
+              border: "1px solid var(--line)",
               borderRadius: 8,
-              color: "#fff",
+              color: "var(--text)",
             }}
+            labelStyle={{ color: "var(--muted)" }}
             formatter={(v) => [`${v}%`, "Yield"]}
           />
           <Area
             type="monotone"
             dataKey="value"
-            stroke="#E87722"
+            stroke="#9B7FE0"
             strokeWidth={2}
             fill="url(#yield)"
           />

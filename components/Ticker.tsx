@@ -1,12 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { arrow } from "@/lib/format";
 
 type Q = { symbol: string; c: number; dp: number };
 
-const SYMBOLS = ["SPY", "QQQ", "DIA", "IWM", "AAPL", "MSFT", "NVDA", "XLE", "XLF"];
+const SYMBOLS = [
+  "SPY",
+  "QQQ",
+  "DIA",
+  "IWM",
+  "AAPL",
+  "MSFT",
+  "NVDA",
+  "GOOGL",
+  "META",
+  "JPM",
+  "XLE",
+  "XLF",
+];
 
-export default function Ticker() {
+export default function Ticker({ topBorder = true }: { topBorder?: boolean }) {
   const [quotes, setQuotes] = useState<Q[]>([]);
 
   useEffect(() => {
@@ -28,27 +42,58 @@ export default function Ticker() {
     };
   }, []);
 
+  const wrap: React.CSSProperties = {
+    position: "relative",
+    overflow: "hidden",
+    borderBottom: "1px solid var(--line)",
+    borderTop: topBorder ? "1px solid var(--line)" : undefined,
+    background: "var(--bgDeep)",
+  };
+
   if (quotes.length === 0) {
     return (
-      <div className="border-y border-line bg-panel py-2 text-center text-xs text-gray-500">
-        Loading market data…
+      <div style={{ ...wrap, padding: "11px 0", textAlign: "center" }}>
+        <span className="mono" style={{ fontSize: "13.5px", color: "var(--faint)" }}>
+          Loading market data…
+        </span>
       </div>
     );
   }
 
-  const row = [...quotes, ...quotes]; // duplicate for seamless loop
+  const row = [...quotes, ...quotes]; // duplicate for a seamless loop
 
   return (
-    <div className="overflow-hidden border-y border-line bg-panel">
-      <div className="animate-marquee flex w-max gap-8 py-2 text-sm nums">
+    <div style={wrap}>
+      <div
+        style={{
+          display: "flex",
+          width: "max-content",
+          animation: "hws-marquee 48s linear infinite",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.animationPlayState = "paused")}
+        onMouseLeave={(e) => (e.currentTarget.style.animationPlayState = "running")}
+      >
         {row.map((q, i) => {
           const up = q.dp >= 0;
           return (
-            <span key={i} className="flex items-center gap-2 whitespace-nowrap">
-              <span className="font-semibold text-white">{q.symbol}</span>
-              <span className="text-gray-300">{q.c?.toFixed(2)}</span>
-              <span className={up ? "text-up" : "text-down"}>
-                {up ? "▲" : "▼"} {q.dp?.toFixed(2)}%
+            <span
+              key={i}
+              className="mono"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 9,
+                padding: "11px 22px",
+                borderRight: "1px solid var(--lineSoft)",
+                whiteSpace: "nowrap",
+                fontSize: "13.5px",
+              }}
+            >
+              <span style={{ fontWeight: 600, color: "var(--text)" }}>{q.symbol}</span>
+              <span style={{ color: "var(--muted)" }}>{q.c?.toFixed(2)}</span>
+              <span style={{ color: up ? "var(--up)" : "var(--down)", fontWeight: 500 }}>
+                {arrow(q.dp)} {q.dp >= 0 ? "+" : ""}
+                {q.dp?.toFixed(2)}%
               </span>
             </span>
           );

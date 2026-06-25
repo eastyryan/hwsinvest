@@ -1,4 +1,4 @@
-import { usd, pct, isUp } from "@/lib/format";
+import { usd, pct, isUp, arrow } from "@/lib/format";
 import type { Quote } from "@/lib/finnhub";
 
 export default function QuoteCard({
@@ -9,17 +9,28 @@ export default function QuoteCard({
   label?: string;
 }) {
   const up = isUp(quote.dp);
+  const color = up ? "var(--up)" : "var(--down)";
   return (
-    <div className="rounded-xl border border-line bg-panel p-5">
-      <div className="flex items-baseline justify-between">
-        <p className="text-sm text-gray-400">{label ?? quote.symbol}</p>
-        <p className="text-xs text-gray-500">{quote.symbol}</p>
+    <div className="card card-hover-orange" style={{ padding: 22 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+        <span style={{ color: "var(--muted)", fontSize: 14, fontWeight: 500 }}>
+          {label ?? quote.symbol}
+        </span>
+        <span
+          className="mono"
+          style={{ fontSize: 11, color: "var(--faint)", letterSpacing: "0.05em" }}
+        >
+          {quote.symbol}
+        </span>
       </div>
-      <p className="mt-2 text-2xl font-semibold text-white nums">
+      <p
+        className="mono nums"
+        style={{ fontSize: 28, fontWeight: 600, color: "var(--text)", margin: "16px 0 0" }}
+      >
         {usd(quote.c)}
       </p>
-      <p className={`mt-1 text-sm nums ${up ? "text-up" : "text-down"}`}>
-        {up ? "▲" : "▼"} {usd(Math.abs(quote.d))} ({pct(quote.dp)})
+      <p className="mono nums" style={{ fontSize: 14, color, margin: "8px 0 0", fontWeight: 500 }}>
+        {arrow(quote.dp)} {usd(Math.abs(quote.d))} ({pct(quote.dp)})
       </p>
     </div>
   );

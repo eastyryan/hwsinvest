@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import QuoteCard from "@/components/QuoteCard";
-import SectionHeading from "@/components/SectionHeading";
 import { sectors } from "@/data/sectors";
 import { getQuotes } from "@/lib/finnhub";
 
@@ -26,36 +24,51 @@ export default async function SectorPage({
   const holdingQuotes = quotes.filter((q) => q.symbol !== sector.etf);
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-12">
-      <Link
-        href="/markets"
-        className="inline-flex items-center gap-1 text-sm text-gray-400 transition hover:text-hws-yellow"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to markets
-      </Link>
-
-      <div className="mt-4">
-        <SectionHeading
-          kicker={`${sector.etf} · Sector`}
-          title={sector.name}
-          sub={sector.blurb}
-        />
-      </div>
+    <main>
+      <section style={{ background: "var(--bgDeep)", borderBottom: "1px solid var(--line)" }}>
+        <div
+          className="container-x"
+          style={{ paddingTop: "clamp(44px,7vh,76px)", paddingBottom: "clamp(44px,7vh,76px)" }}
+        >
+          <Link
+            href="/markets"
+            className="link-muted mono"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }}
+          >
+            ← Back to markets
+          </Link>
+          <p className="kicker" style={{ marginTop: 18 }}>
+            {sector.etf} · Sector
+          </p>
+          <h1 className="h-page">{sector.name}</h1>
+          <p className="lede">{sector.blurb}</p>
+        </div>
+      </section>
 
       {etfQuote && (
-        <div className="max-w-sm">
-          <QuoteCard quote={etfQuote} label={`${sector.name} ETF`} />
-        </div>
+        <section className="container-x" style={{ paddingTop: "clamp(44px,6vh,72px)" }}>
+          <div style={{ maxWidth: 340 }}>
+            <QuoteCard quote={etfQuote} label={`${sector.name} ETF`} />
+          </div>
+        </section>
       )}
 
-      <div className="mt-12">
-        <SectionHeading title="Representative holdings" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="container-x" style={{ paddingTop: "clamp(40px,5vh,56px)" }}>
+        <h2 className="h-sub" style={{ marginBottom: 22 }}>
+          Representative holdings
+        </h2>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+            gap: 16,
+          }}
+        >
           {holdingQuotes.map((q) => (
             <QuoteCard key={q.symbol} quote={q} />
           ))}
         </div>
-      </div>
+      </section>
     </main>
   );
 }

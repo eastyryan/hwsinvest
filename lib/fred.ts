@@ -5,19 +5,21 @@ export type Observation = { date: string; value: string };
 
 const BASE = "https://api.stlouisfed.org/fred";
 
-function key() {
-  const k = process.env.FRED_API_KEY;
-  if (!k) throw new Error("FRED_API_KEY is not set");
-  return k;
+function key(): string | null {
+  return process.env.FRED_API_KEY ?? null;
 }
 
 // Latest single observation for a series, e.g. DGS10. Cached 1h (daily data).
+// Returns null (rather than throwing) when the key is missing so pages degrade
+// gracefully in local dev / preview without credentials.
 export async function getLatest(
   series: string
 ): Promise<{ series: string; date: string; value: number } | null> {
+  const k = key();
+  if (!k) return null;
   const url =
     `${BASE}/series/observations?series_id=${series}` +
-    `&api_key=${key()}&file_type=json&sort_order=desc&limit=1`;
+    `&api_key=${k}&file_type=json&sort_order=desc&limit=1`;
   const res = await fetch(url, { next: { revalidate: 3600 } });
   if (!res.ok) return null;
   const json = await res.json();
@@ -31,9 +33,11 @@ export async function getHistory(
   series: string,
   limit = 60
 ): Promise<{ date: string; value: number }[]> {
+  const k = key();
+  if (!k) return [];
   const url =
     `${BASE}/series/observations?series_id=${series}` +
-    `&api_key=${key()}&file_type=json&sort_order=desc&limit=${limit}`;
+    `&api_key=${k}&file_type=json&sort_order=desc&limit=${limit}`;
   const res = await fetch(url, { next: { revalidate: 3600 } });
   if (!res.ok) return [];
   const json = await res.json();

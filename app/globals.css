@@ -2,17 +2,281 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* ============================================================
+   HWS Investment Club — design system
+   Color tokens mirror the Claude Design source (dark + light).
+   Variables live on :root so they cascade everywhere; the theme
+   toggle flips [data-theme] on <html>.
+   ============================================================ */
+
+:root,
+:root[data-theme="dark"] {
   color-scheme: dark;
+  --bg: #0e1116;
+  --bgDeep: #090b0e;
+  --card: #161b22;
+  --card2: #1c2230;
+  --cardHover: #222a39;
+  --line: #2a2f37;
+  --lineSoft: #1e232b;
+  --text: #f4f3f7;
+  --muted: #9aa0ab;
+  --faint: #6a707b;
+  --brand: #b7a2f0;
+  --brandSolid: #4b2e83;
+  --orange: #f08a33;
+  --orangeText: #f49a4d;
+  --yellow: #ffc72c;
+  --green: #3fbe7b;
+  --up: #3fbe7b;
+  --down: #f0585b;
+  --navBg: rgba(12, 14, 19, 0.82);
+  --heroScrim: linear-gradient(
+    98deg,
+    rgba(24, 10, 46, 0.96) 0%,
+    rgba(28, 13, 52, 0.92) 26%,
+    rgba(26, 12, 49, 0.6) 44%,
+    rgba(20, 9, 40, 0.16) 62%,
+    rgba(20, 9, 40, 0) 82%
+  );
+  --heroVignette: linear-gradient(
+    to top,
+    rgba(9, 6, 18, 0.66) 0%,
+    rgba(9, 6, 18, 0) 36%
+  );
+  --heroFallback: radial-gradient(
+    120% 120% at 75% 30%,
+    #2c2150 0%,
+    #1a0f33 45%,
+    #090b0e 100%
+  );
+  --missionBg: linear-gradient(160deg, #1d1733 0%, #2c2150 100%);
+  --missionBorder: #3a2b5e;
+  --missionHead: #c2aef2;
+  --missionText: #cfc6e3;
+  --missionMark: #9079da;
+  --joinBg: linear-gradient(157deg, #15271d 0%, #193a28 100%);
+  --joinBorder: #27462f;
+  --joinHead: #86d6a6;
+  --joinText: #cbe3d3;
+  --joinMark: #46ae72;
 }
 
-html,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f2f0f7;
+  --bgDeep: #e8e3f1;
+  --card: #ffffff;
+  --card2: #f8f5fc;
+  --cardHover: #f4f0fb;
+  --line: #e4deee;
+  --lineSoft: #efebf7;
+  --text: #18131f;
+  --muted: #5c566b;
+  --faint: #8e88a1;
+  --brand: #4b2e83;
+  --brandSolid: #4b2e83;
+  --orange: #e87722;
+  --orangeText: #be5a13;
+  --yellow: #c98a00;
+  --green: #15803d;
+  --up: #15803d;
+  --down: #dc2626;
+  --navBg: rgba(242, 240, 247, 0.84);
+  --heroScrim: linear-gradient(
+    98deg,
+    rgba(13, 74, 42, 0.84) 0%,
+    rgba(16, 92, 52, 0.7) 26%,
+    rgba(21, 128, 61, 0.38) 44%,
+    rgba(21, 128, 61, 0.1) 62%,
+    rgba(21, 128, 61, 0) 82%
+  );
+  --heroVignette: linear-gradient(
+    to top,
+    rgba(11, 58, 32, 0.4) 0%,
+    rgba(11, 58, 32, 0) 36%
+  );
+  --heroFallback: radial-gradient(
+    120% 120% at 75% 30%,
+    #176a3a 0%,
+    #0d4a2a 45%,
+    #0b3a20 100%
+  );
+  --missionBg: linear-gradient(160deg, #f2ecfa 0%, #e9dff6 100%);
+  --missionBorder: #dccfee;
+  --missionHead: #4b2e83;
+  --missionText: #473c5e;
+  --missionMark: #6d4fb8;
+  --joinBg: linear-gradient(157deg, #eaf3ec 0%, #dceee0 100%);
+  --joinBorder: #c5dec9;
+  --joinHead: #1c6536;
+  --joinText: #33503c;
+  --joinMark: #2e8a50;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background-color: #0e1116;
-  color: #f4f5f7;
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Tabular figures so prices/percentages align in tables */
+::selection {
+  background: rgba(232, 119, 34, 0.3);
+}
+
+@keyframes hws-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ---------- Reusable design-system classes ---------- */
+
+.serif {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+}
+.mono {
+  font-family: var(--font-mono), "IBM Plex Mono", ui-monospace, monospace;
+}
 .nums {
   font-variant-numeric: tabular-nums;
+}
+
+.container-x {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-left: clamp(20px, 5vw, 48px);
+  padding-right: clamp(20px, 5vw, 48px);
+}
+
+.kicker {
+  font-family: var(--font-mono), "IBM Plex Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--orangeText);
+  font-weight: 500;
+  margin: 0;
+}
+
+.h-page {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(34px, 5vw, 58px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin: 10px 0 0;
+}
+
+.h-section {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(30px, 4vw, 46px);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin: 10px 0 0;
+}
+
+.h-sub {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(24px, 3vw, 34px);
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0;
+}
+
+.lede {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 13px 0 0;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  transition: border-color 0.18s, transform 0.18s;
+}
+.card-hover-orange:hover {
+  border-color: var(--orange);
+}
+.card-hover-brand:hover {
+  border-color: var(--brand);
+}
+.lift:hover {
+  transform: translateY(-3px);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--brandSolid);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 11px;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid #4f2fa2;
+  transition: filter 0.15s, transform 0.15s;
+}
+.btn-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 11px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.up {
+  color: var(--up);
+}
+.down {
+  color: var(--down);
+}
+
+.row-hover:hover {
+  background: var(--card2);
+}
+.link-muted {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s;
+  cursor: pointer;
+}
+.link-muted:hover {
+  color: var(--text);
 }

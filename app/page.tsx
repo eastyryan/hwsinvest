@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, Landmark, Briefcase, Layers } from "lucide-react";
 import Ticker from "@/components/Ticker";
-import QuoteCard from "@/components/QuoteCard";
-import SectionHeading from "@/components/SectionHeading";
+import IndexCard from "@/components/IndexCard";
+import MissionJoin from "@/components/MissionJoin";
 import { getQuotes } from "@/lib/finnhub";
 import { indices } from "@/data/sectors";
 
@@ -10,69 +9,95 @@ import { indices } from "@/data/sectors";
 // env vars being present.
 export const dynamic = "force-dynamic";
 
+const tiles = [
+  { tag: "MK", href: "/markets", title: "Markets", desc: "Indices, sector tiles, and our club watchlist." },
+  { tag: "EC", href: "/economy", title: "Economy", desc: "Treasury yields, the Fed, inflation, and jobs." },
+  { tag: "CA", href: "/careers", title: "Careers", desc: "Finance paths and how to break into them." },
+  { tag: "AB", href: "/about", title: "About", desc: "Our mission, the board, and how to join." },
+];
+
 export default async function Home() {
   const quotes = await getQuotes(indices.map((i) => i.symbol));
 
-  const tiles = [
-    {
-      href: "/markets",
-      icon: BarChart3,
-      title: "Markets",
-      desc: "Indices, movers, and our club watchlist.",
-    },
-    {
-      href: "/markets",
-      icon: Layers,
-      title: "Sectors",
-      desc: "Drill into Tech, Energy, Financials, and more.",
-    },
-    {
-      href: "/economy",
-      icon: Landmark,
-      title: "Bonds & Economy",
-      desc: "Treasury yields, the Fed, inflation, and jobs.",
-    },
-    {
-      href: "/careers",
-      icon: Briefcase,
-      title: "Careers",
-      desc: "Finance paths and how to break in.",
-    },
-  ];
-
   return (
     <main>
-      {/* Hero */}
-      <section className="relative isolate overflow-hidden">
-        {/* Replace with a real campus photo at /public/campus.jpg.
-            The gradient below is a tasteful fallback. */}
+      {/* ---------------- Hero ---------------- */}
+      <section
+        style={{
+          position: "relative",
+          minHeight: "clamp(580px, 84vh, 860px)",
+          display: "flex",
+          alignItems: "flex-end",
+          overflow: "hidden",
+          background: "var(--bgDeep)",
+        }}
+      >
+        {/* Campus photo — drop a real image at /public/campus.jpg.
+            A themed gradient shows through until then. */}
         <div
-          className="absolute inset-0 -z-10 bg-cover bg-center"
-          style={{ backgroundImage: "url('/campus.jpg')" }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: "var(--heroFallback), url('/campus.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "74% 42%",
+          }}
         />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-hws-purple/90 via-ink/85 to-ink" />
-        <div className="mx-auto max-w-7xl px-6 py-28 sm:py-36">
-          <p className="text-sm font-semibold uppercase tracking-widest text-hws-yellow">
-            Hobart and William Smith Colleges
-          </p>
-          <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight text-white sm:text-6xl">
+        <div style={{ position: "absolute", inset: 0, background: "var(--heroScrim)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "var(--heroVignette)" }} />
+        <div
+          className="container-x"
+          style={{
+            position: "relative",
+            width: "100%",
+            paddingBottom: "clamp(64px, 9vh, 112px)",
+          }}
+        >
+          <h1
+            className="serif"
+            style={{
+              fontWeight: 500,
+              fontSize: "clamp(42px, 7vw, 84px)",
+              lineHeight: 0.98,
+              letterSpacing: "-0.025em",
+              color: "#fff",
+              margin: "14px 0 0",
+              maxWidth: "13ch",
+            }}
+          >
             The HWS{" "}
-            <span className="text-hws-orange">Investment Club</span>
+            <span style={{ fontStyle: "italic", color: "var(--orange)" }}>
+              Investment Club
+            </span>
           </h1>
-          <p className="mt-5 max-w-2xl text-lg text-gray-200">
-            Live markets, hands-on research, and the career knowledge to get you
-            from the Quad to Wall Street. Built by students, for students.
+          <p
+            style={{
+              color: "rgba(255,255,255,0.88)",
+              fontSize: "clamp(16px, 2vw, 20px)",
+              lineHeight: 1.55,
+              maxWidth: 520,
+              margin: "22px 0 0",
+            }}
+          >
+            Live markets, hands-on research, and the career knowledge to take you
+            from the Quad to Wall Street — built by students, for students.
           </p>
-          <div className="mt-8 flex flex-wrap gap-4">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 34 }}>
             <Link
               href="/markets"
-              className="inline-flex items-center gap-2 rounded-lg bg-hws-orange px-5 py-3 font-semibold text-ink transition hover:brightness-110"
+              className="btn-primary"
+              style={{
+                fontSize: 16,
+                padding: "15px 24px",
+                boxShadow: "0px 12px 30px -10px #9c22e899",
+              }}
             >
-              Explore the Markets <ArrowRight className="h-4 w-4" />
+              Explore the Markets <span style={{ fontSize: 18 }}>→</span>
             </Link>
             <Link
               href="/about"
-              className="inline-flex items-center gap-2 rounded-lg border border-line bg-panel/60 px-5 py-3 font-semibold text-white transition hover:border-hws-yellow"
+              className="btn-ghost"
+              style={{ fontSize: 16, padding: "15px 24px" }}
             >
               Meet the Board
             </Link>
@@ -82,39 +107,115 @@ export default async function Home() {
 
       <Ticker />
 
-      {/* Live indices */}
-      <section className="mx-auto max-w-7xl px-6 py-16">
-        <SectionHeading
-          kicker="At a glance"
-          title="Major U.S. indices"
-          sub="Live snapshot via index-tracking ETFs. Updated continuously during market hours."
-        />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {quotes.map((q) => {
-            const label = indices.find((i) => i.symbol === q.symbol)?.label;
-            return <QuoteCard key={q.symbol} quote={q} label={label} />;
-          })}
+      {/* ---------------- About ---------------- */}
+      <section className="container-x" style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
+        <p className="kicker">About us</p>
+        <h2 className="h-section">Who we are</h2>
+        <p className="lede" style={{ maxWidth: 600 }}>
+          The HWS Investment Club brings together students from every major to
+          learn how markets work, manage a paper portfolio, and prepare for
+          careers in finance.
+        </p>
+        <div style={{ marginTop: 34 }}>
+          <MissionJoin showCta />
         </div>
       </section>
 
-      {/* Navigation tiles */}
-      <section className="mx-auto max-w-7xl px-6 pb-20">
-        <SectionHeading kicker="Dive in" title="Where do you want to go?" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ---------------- Explore tiles ---------------- */}
+      <section className="container-x" style={{ paddingTop: "clamp(56px,8vh,90px)" }}>
+        <p className="kicker">Dive in</p>
+        <h2 className="h-section">Where do you want to go?</h2>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            gap: 16,
+            marginTop: 30,
+          }}
+        >
           {tiles.map((t) => (
             <Link
-              key={t.title}
+              key={t.tag}
               href={t.href}
-              className="group rounded-xl border border-line bg-panel p-6 transition hover:border-hws-orange"
+              className="card card-hover-orange lift"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                padding: 24,
+                textDecoration: "none",
+              }}
             >
-              <t.icon className="h-7 w-7 text-hws-yellow" />
-              <p className="mt-4 text-lg font-semibold text-white">{t.title}</p>
-              <p className="mt-1 text-sm text-gray-400">{t.desc}</p>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm text-hws-orange opacity-0 transition group-hover:opacity-100">
-                Open <ArrowRight className="h-4 w-4" />
+              <span
+                className="mono"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#fff",
+                  width: 38,
+                  height: 38,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 9,
+                  letterSpacing: "0.04em",
+                  background: "#419c66",
+                }}
+              >
+                {t.tag}
+              </span>
+              <h3
+                className="serif"
+                style={{
+                  fontWeight: 500,
+                  fontSize: 22,
+                  color: "var(--text)",
+                  margin: "18px 0 0",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {t.title}
+              </h3>
+              <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.55, margin: "8px 0 0" }}>
+                {t.desc}
+              </p>
+              <span
+                style={{
+                  marginTop: 18,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: "13.5px",
+                  fontWeight: 600,
+                  color: "#419c66",
+                }}
+              >
+                Open <span style={{ fontSize: 15 }}>→</span>
               </span>
             </Link>
           ))}
+        </div>
+      </section>
+
+      {/* ---------------- Indices ---------------- */}
+      <section className="container-x" style={{ paddingTop: "clamp(56px,8vh,90px)" }}>
+        <p className="kicker">At a glance</p>
+        <h2 className="h-section">Major U.S. indices</h2>
+        <p className="lede" style={{ maxWidth: 560 }}>
+          A live snapshot via index-tracking ETFs, updated continuously during
+          market hours.
+        </p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+            gap: 16,
+            marginTop: 32,
+          }}
+        >
+          {quotes.map((q) => {
+            const label = indices.find((i) => i.symbol === q.symbol)?.label;
+            return <IndexCard key={q.symbol} quote={q} label={label} etf={q.symbol} />;
+          })}
         </div>
       </section>
     </main>
