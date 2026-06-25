@@ -2,40 +2,64 @@
 
 import { useState } from "react";
 
-// Renders a firm's logo, falling back to its name in text if the image
-// is missing or fails to load — so the wall never shows a broken image.
-export default function FirmLogo({ name, logo }: { name: string; logo: string }) {
+// Renders a firm's logo above its name. Wordmark logos already contain the
+// company name, so their text caption is hidden. Falls back to the name in
+// text if the image is missing or fails to load.
+export default function FirmLogo({
+  name,
+  logo,
+  wordmark = false,
+}: {
+  name: string;
+  logo: string;
+  wordmark?: boolean;
+}) {
   const [errored, setErrored] = useState(false);
 
-  if (errored) {
-    return (
-      <span
-        className="serif"
-        style={{ fontSize: 16, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.01em", textAlign: "center" }}
-      >
-        {name}
-      </span>
-    );
-  }
-
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={logo}
-        alt={`${name} logo`}
-        onError={() => setErrored(true)}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 14,
+        textAlign: "center",
+        padding: "12px 8px",
+      }}
+    >
+      <div
         style={{
-          height: 34,
-          width: 34,
-          objectFit: "contain",
-          borderRadius: 7,
-          flexShrink: 0,
+          height: 56,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
-      />
-      <span style={{ fontSize: 14.5, fontWeight: 600, color: "var(--text)", whiteSpace: "nowrap" }}>
-        {name}
-      </span>
+      >
+        {errored ? (
+          <span style={{ fontSize: 18, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.02em" }}>
+            {name}
+          </span>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logo}
+            alt={`${name} logo`}
+            onError={() => setErrored(true)}
+            style={{
+              maxHeight: wordmark ? 30 : 56,
+              maxWidth: "100%",
+              width: "auto",
+              objectFit: "contain",
+            }}
+          />
+        )}
+      </div>
+      {!wordmark && !errored && (
+        <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", whiteSpace: "nowrap" }}>
+          {name}
+        </span>
+      )}
     </div>
   );
 }

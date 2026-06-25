@@ -52,12 +52,11 @@ export default function Nav() {
         >
           <Logo size={34} />
           <span
-            className="serif"
             style={{
-              fontSize: 20,
-              fontWeight: 500,
+              fontSize: 19,
+              fontWeight: 700,
               color: "var(--text)",
-              letterSpacing: "-0.01em",
+              letterSpacing: "-0.02em",
               whiteSpace: "nowrap",
             }}
           >

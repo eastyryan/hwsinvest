@@ -185,7 +185,6 @@ export default function CareersPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                     <span
                       aria-hidden
-                      className="serif"
                       style={{
                         flexShrink: 0,
                         width: 46,
@@ -196,21 +195,20 @@ export default function CareersPage() {
                         borderRadius: "50%",
                         background: "var(--brandSolid)",
                         color: "#fff",
-                        fontSize: 17,
-                        fontWeight: 500,
+                        fontSize: 16,
+                        fontWeight: 700,
                       }}
                     >
                       {a.initials}
                     </span>
                     <span>
                       <span
-                        className="serif"
                         style={{
                           display: "block",
-                          fontSize: 19,
-                          fontWeight: 500,
+                          fontSize: 18,
+                          fontWeight: 700,
                           color: "var(--text)",
-                          letterSpacing: "-0.01em",
+                          letterSpacing: "-0.02em",
                         }}
                       >
                         {a.name}

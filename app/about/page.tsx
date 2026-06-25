@@ -68,15 +68,14 @@ export default function AboutPage() {
                 />
               ) : (
                 <div
-                  className="serif"
                   style={{
                     width: 78,
                     height: 78,
                     borderRadius: "50%",
                     background: "var(--brandSolid)",
                     color: "var(--yellow)",
-                    fontSize: 27,
-                    fontWeight: 500,
+                    fontSize: 26,
+                    fontWeight: 700,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",

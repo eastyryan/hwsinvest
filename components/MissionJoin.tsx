@@ -55,12 +55,9 @@ const panel = (bg: string, border: string): React.CSSProperties => ({
 });
 
 const cardKicker = (color: string): React.CSSProperties => ({
-  fontFamily: "var(--font-mono), monospace",
-  fontSize: "11.5px",
-  letterSpacing: "0.2em",
-  textTransform: "uppercase",
+  fontSize: 14,
   color,
-  fontWeight: 600,
+  fontWeight: 700,
   margin: 0,
 });
 
@@ -78,13 +75,12 @@ export default function MissionJoin({ showCta = false }: { showCta?: boolean }) 
       <div style={panel("var(--missionBg)", "var(--missionBorder)")}>
         <p style={cardKicker("var(--missionMark)")}>Our mission</p>
         <h3
-          className="serif"
           style={{
-            fontWeight: 500,
+            fontWeight: 700,
             fontSize: "clamp(26px,3vw,34px)",
             color: "var(--missionHead)",
             margin: "12px 0 0",
-            letterSpacing: "-0.01em",
+            letterSpacing: "-0.02em",
           }}
         >
           Make finance approachable — and hands-on
@@ -121,13 +117,12 @@ export default function MissionJoin({ showCta = false }: { showCta?: boolean }) 
       <div style={panel("var(--joinBg)", "var(--joinBorder)")}>
         <p style={cardKicker("var(--joinMark)")}>Join us</p>
         <h3
-          className="serif"
           style={{
-            fontWeight: 500,
+            fontWeight: 700,
             fontSize: "clamp(26px,3vw,34px)",
             color: "var(--joinHead)",
             margin: "12px 0 0",
-            letterSpacing: "-0.01em",
+            letterSpacing: "-0.02em",
           }}
         >
           Everyone&rsquo;s first meeting is an open one

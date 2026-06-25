@@ -36,8 +36,7 @@ export default function Footer() {
             <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
               <Logo size={32} />
               <span
-                className="serif"
-                style={{ fontSize: 19, fontWeight: 500, color: "var(--text)" }}
+                style={{ fontSize: 18, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.02em" }}
               >
                 <span style={{ color: "var(--brand)" }}>HWS</span> Investment Club
               </span>

@@ -49,34 +49,19 @@ export default function Home() {
           <div style={{ marginBottom: 26 }}>
             <Logo size={78} />
           </div>
-          <p
-            className="mono"
+          <h1
             style={{
-              color: "var(--yellow)",
-              fontSize: "12.5px",
-              letterSpacing: "0.28em",
-              textTransform: "uppercase",
+              fontWeight: 700,
+              fontSize: "clamp(30px, 5vw, 58px)",
+              lineHeight: 1.05,
+              letterSpacing: "-0.03em",
+              color: "#fff",
               margin: 0,
             }}
           >
-            Hobart and William Smith Colleges
-          </p>
-          <h1
-            className="serif"
-            style={{
-              fontWeight: 500,
-              fontSize: "clamp(40px, 7vw, 80px)",
-              lineHeight: 1.0,
-              letterSpacing: "-0.025em",
-              color: "#fff",
-              margin: "18px 0 0",
-              maxWidth: "16ch",
-            }}
-          >
-            The HWS{" "}
-            <span style={{ fontStyle: "italic", color: "var(--orange)" }}>
-              Investment Club
-            </span>
+            <span style={{ whiteSpace: "nowrap" }}>Hobart &amp; William Smith Colleges</span>
+            <br />
+            Investment Club
           </h1>
           <p
             style={{
@@ -132,13 +117,12 @@ export default function Home() {
               style={{ padding: "30px 26px", textAlign: "center" }}
             >
               <p
-                className="serif"
                 style={{
                   fontSize: "clamp(34px,5vw,48px)",
-                  fontWeight: 500,
+                  fontWeight: 800,
                   color: "var(--orange)",
                   margin: 0,
-                  letterSpacing: "-0.02em",
+                  letterSpacing: "-0.03em",
                 }}
               >
                 {s.value}
@@ -214,25 +198,13 @@ export default function Home() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: 14,
-            marginTop: 34,
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: "32px 24px",
+            marginTop: 44,
           }}
         >
           {firms.map((f) => (
-            <div
-              key={f.name}
-              className="card"
-              style={{
-                padding: "20px 18px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 78,
-              }}
-            >
-              <FirmLogo name={f.name} logo={f.logo} />
-            </div>
+            <FirmLogo key={f.name} name={f.name} logo={f.logo} wordmark={f.wordmark} />
           ))}
         </div>
       </section>
@@ -253,17 +225,16 @@ export default function Home() {
           }}
         >
           <div style={{ maxWidth: 540 }}>
-            <p style={{ color: "var(--missionMark)", fontSize: "12.5px", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 600, margin: 0, fontFamily: "var(--font-mono), monospace" }}>
+            <p style={{ color: "var(--missionMark)", fontSize: 14, fontWeight: 700, margin: 0 }}>
               Join us
             </p>
             <h2
-              className="serif"
               style={{
-                fontWeight: 500,
+                fontWeight: 700,
                 fontSize: "clamp(28px,4vw,42px)",
                 color: "var(--missionHead)",
                 margin: "12px 0 0",
-                letterSpacing: "-0.015em",
+                letterSpacing: "-0.02em",
                 lineHeight: 1.1,
               }}
             >
