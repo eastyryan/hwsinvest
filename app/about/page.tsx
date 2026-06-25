@@ -1,5 +1,6 @@
 import { board } from "@/data/board";
-import { meeting } from "@/data/club";
+import { contactEmail } from "@/data/club";
+import ContactForm from "@/components/ContactForm";
 
 export const metadata = { title: "About · HWS Investment Club" };
 
@@ -10,31 +11,6 @@ function initials(name: string) {
     .slice(0, 2)
     .join("")
     .toUpperCase();
-}
-
-// Small pill label, optionally with a leading green dot.
-function Chip({ label, dot = false }: { label: string; dot?: boolean }) {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "6px 13px",
-        borderRadius: 999,
-        background: "var(--card2)",
-        border: "1px solid var(--line)",
-        fontSize: 13,
-        fontWeight: 600,
-        color: "var(--muted)",
-      }}
-    >
-      {dot && (
-        <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--wsGreen)" }} />
-      )}
-      {label}
-    </span>
-  );
 }
 
 const principles = [
@@ -140,7 +116,6 @@ export default function AboutPage() {
 
       {/* ---------------- Principles ---------------- */}
       <section style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
-        <Chip label="Principles" />
         <h2
           style={{
             fontWeight: 700,
@@ -199,7 +174,6 @@ export default function AboutPage() {
 
       {/* ---------------- Our Team ---------------- */}
       <section style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
-        <Chip label="Our team" dot />
         <h2
           style={{
             fontWeight: 700,
@@ -291,8 +265,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ---------------- Join CTA ---------------- */}
-      <section style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
+      {/* ---------------- Contact ---------------- */}
+      <section id="contact" style={{ paddingTop: "clamp(56px,8vh,96px)", scrollMarginTop: 84 }}>
         <div
           style={{
             borderRadius: 22,
@@ -302,25 +276,22 @@ export default function AboutPage() {
             color: "#fff",
           }}
         >
-          <p style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "rgba(255,255,255,0.82)" }}>
-            Join us
-          </p>
           <h2
             style={{
               fontWeight: 700,
               fontSize: "clamp(26px,4vw,42px)",
               letterSpacing: "-0.025em",
               lineHeight: 1.1,
-              margin: "12px auto 0",
-              maxWidth: "18ch",
+              margin: 0,
             }}
           >
-            Everyone&rsquo;s first meeting is an open one
+            Contact us
           </h2>
-          <p style={{ fontSize: 16.5, lineHeight: 1.6, margin: "16px auto 0", maxWidth: 560, color: "rgba(255,255,255,0.9)" }}>
-            We meet every {meeting.day} at {meeting.time}. {meeting.blurb} Come
-            once, bring a friend, and see what it&rsquo;s about.
+          <p style={{ fontSize: 16.5, lineHeight: 1.6, margin: "14px auto 0", maxWidth: 560, color: "rgba(255,255,255,0.9)" }}>
+            Questions about joining, meetings, or the club? Send us a note and a
+            board member will get back to you.
           </p>
+          <ContactForm email={contactEmail} />
         </div>
       </section>
     </main>

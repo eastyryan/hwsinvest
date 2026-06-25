@@ -12,6 +12,9 @@ export const meeting = {
   blurb: "Open to every HWS student — no experience or finance background needed.",
 };
 
+// Where the contact form sends. Update to the club's real inbox.
+export const contactEmail = "investmentclub@hws.edu";
+
 // Firms where club members and alumni have landed. Logos live in
 // /public/firms/. Add a new firm by dropping a logo there and adding a row.
 // Every firm shows its name as a caption beneath the logo mark.

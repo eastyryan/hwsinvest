@@ -80,7 +80,7 @@ export default function Nav() {
           <ThemeToggle />
 
           <Link
-            href="/about"
+            href="/about#contact"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -147,7 +147,7 @@ export default function Nav() {
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 16 }}>
             <Link
-              href="/about"
+              href="/about#contact"
               style={{
                 flex: 1,
                 display: "inline-flex",

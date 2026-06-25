@@ -62,19 +62,6 @@ export default function Home() {
             <br />
             Investment Club
           </h1>
-          <p
-            style={{
-              color: "rgba(255,255,255,0.9)",
-              fontSize: "clamp(16px, 2vw, 20px)",
-              lineHeight: 1.6,
-              maxWidth: 620,
-              margin: "22px auto 0",
-            }}
-          >
-            A fully student-run club where members learn the markets through
-            hands-on research, weekly stock pitches, and a bottom-up approach to
-            investing — from the Quad to Wall Street.
-          </p>
           <div
             style={{
               display: "flex",
@@ -84,12 +71,8 @@ export default function Home() {
               justifyContent: "center",
             }}
           >
-            <Link
-              href="/markets"
-              className="btn-primary"
-              style={{ fontSize: 16, padding: "15px 26px", boxShadow: "0px 12px 30px -10px #9c22e899" }}
-            >
-              Explore the Markets <span style={{ fontSize: 18 }}>→</span>
+            <Link href="/markets" className="btn-ghost" style={{ fontSize: 16, padding: "15px 26px" }}>
+              Explore the Markets
             </Link>
             <Link href="/about" className="btn-ghost" style={{ fontSize: 16, padding: "15px 26px" }}>
               Meet the Board
