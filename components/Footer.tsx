@@ -3,7 +3,6 @@ import Logo from "./Logo";
 
 const exploreLinks = [
   { href: "/markets", label: "Markets" },
-  { href: "/economy", label: "Economy" },
   { href: "/careers", label: "Careers" },
   { href: "/about", label: "About" },
 ];
