@@ -1,4 +1,4 @@
-import MissionJoin from "@/components/MissionJoin";
+import MissionJoin, { Spacer } from "@/components/MissionJoin";
 import { board } from "@/data/board";
 
 export const metadata = { title: "About · HWS Investment Club" };
@@ -15,31 +15,28 @@ function initials(name: string) {
 export default function AboutPage() {
   return (
     <main>
-      {/* Page header */}
-      <section style={{ background: "var(--bgDeep)", borderBottom: "1px solid var(--line)" }}>
-        <div
-          className="container-x"
-          style={{ paddingTop: "clamp(44px,7vh,76px)", paddingBottom: "clamp(44px,7vh,76px)" }}
-        >
-          <p className="kicker">About us</p>
-          <h1 className="h-page">Who we are</h1>
-          <p className="lede" style={{ maxWidth: 640 }}>
-            The HWS Investment Club brings together students from every major to
-            learn how markets work, manage a paper portfolio, and prepare for
-            careers in finance.
-          </p>
-        </div>
-      </section>
+      <section className="container-x" style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
+        {/* About us */}
+        <p className="kicker">About us</p>
+        <h1 className="h-page">Who we are</h1>
+        <p style={{ color: "var(--text)", fontSize: "16.5px", lineHeight: 1.7, margin: "16px 0 0", maxWidth: 720 }}>
+          The HWS Investment Club brings together students from every major to
+          learn how markets work, manage a paper portfolio, and prepare for
+          careers in finance.
+        </p>
 
-      <section className="container-x" style={{ paddingTop: "clamp(44px,6vh,72px)" }}>
+        <Spacer />
+
         <MissionJoin />
 
-        <div style={{ margin: "clamp(56px,8vh,88px) 0 0", textAlign: "center" }}>
+        <Spacer />
+
+        <div>
           <p className="kicker">Our team</p>
           <h2 className="h-section" style={{ marginTop: 6 }}>
             Meet the board
           </h2>
-          <p className="lede" style={{ maxWidth: 560, margin: "13px auto 0" }}>
+          <p style={{ color: "var(--text)", fontSize: "16.5px", lineHeight: 1.7, margin: "14px 0 0", maxWidth: 720 }}>
             The students leading the club this year.
           </p>
         </div>
@@ -47,12 +44,9 @@ export default function AboutPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
             gap: "clamp(36px,4vw,52px)",
-            marginTop: "clamp(36px,5vh,56px)",
-            maxWidth: 880,
-            marginLeft: "auto",
-            marginRight: "auto",
+            marginTop: "clamp(32px,5vh,48px)",
           }}
         >
           {board.map((m) => (
