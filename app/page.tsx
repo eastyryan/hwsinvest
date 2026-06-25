@@ -67,7 +67,8 @@ export default async function Home() {
               maxWidth: "13ch",
             }}
           >
-            The HWS{" "}
+            The HWS
+            <br />
             <span style={{ fontStyle: "italic", color: "var(--orange)" }}>
               Investment Club
             </span>

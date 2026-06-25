@@ -1,55 +1,103 @@
+import CareerList, { type Career } from "@/components/CareerList";
+
 export const metadata = { title: "Careers · HWS Investment Club" };
 
-const paths = [
+const advisors = [
   {
-    n: "01",
-    title: "Investment Banking",
-    day: "Advise companies on M&A and raising capital; build financial models and pitch books.",
-    skills: "Excel modeling, accounting, valuation, stamina.",
-    timeline: "Recruiting starts very early — sophomore/junior year for summer analyst roles.",
+    name: "Brandi Ferrara",
+    initials: "BF",
+    title: "Assistant Vice President, Career Services",
+    bio: "Brandi has led the Salisbury Center for Career, Professional & Experiential Education since 1999, overseeing career development across every field and guiding students through graduate-school planning. She holds degrees from Johnson & Wales University.",
   },
   {
-    n: "02",
+    name: "Shayne Feinberg",
+    initials: "SF",
+    title: "Director, Employer Development & Engagement",
+    bio: "Shayne builds internship and job opportunities in for-profit fields including finance, real estate, sales, and marketing. Through info sessions and career treks, she connects students directly with employers and real-world examples of what these careers look like.",
+  },
+];
+
+const careers: Career[] = [
+  {
+    title: "Investment Banking",
+    blurb: "M&A and capital raising",
+    detail:
+      "Advise companies on mergers, acquisitions, and raising money through stock or debt. Analysts spend most of their time building financial models and putting together pitch books. It's the most common first job for people who want to end up in private equity or at a hedge fund — long hours, but you learn fast.",
+    skills: "Excel modeling, accounting, valuation, stamina.",
+    timeline: "Recruiting starts early — sophomore/junior year for summer analyst roles.",
+  },
+  {
     title: "Sales & Trading",
-    day: "Make markets and execute trades; cover clients across equities, rates, FX, and credit.",
-    skills: "Quick math, market intuition, communication, composure.",
+    blurb: "Markets desk",
+    detail:
+      "Work on a trading floor making markets and executing trades for clients across stocks, bonds, currencies, and credit. Sales covers the clients; trading manages the risk. Fast-paced and very markets-driven — good if you'd rather follow the tape than build models all night.",
+    skills: "Quick mental math, market intuition, communication, composure.",
     timeline: "Spring-week and summer internships; junior-year recruiting.",
   },
   {
-    n: "03",
     title: "Equity Research",
-    day: "Analyze companies and industries; publish notes and earnings models with buy/sell views.",
+    blurb: "Covering stocks",
+    detail:
+      "Analyze companies and industries, then publish written notes with earnings models and buy/sell/hold ratings. You become the go-to expert on a handful of stocks. A great path if you like digging into businesses and writing about them.",
     skills: "Writing, modeling, sector curiosity, attention to detail.",
     timeline: "On-cycle and off-cycle; networking matters a lot.",
   },
   {
-    n: "04",
-    title: "Asset / Wealth Management",
-    day: "Build and manage portfolios for institutions or individuals against a mandate.",
+    title: "Asset & Wealth Management",
+    blurb: "Managing portfolios",
+    detail:
+      "Build and manage investment portfolios — either for big institutions (asset management) or for individuals and families (wealth management). The work is more about long-term strategy and client relationships than the deal-by-deal grind of banking.",
     skills: "Portfolio theory, client relationships, discipline.",
-    timeline: "Rotational programs; CFA is highly valued.",
+    timeline: "Rotational programs; the CFA is highly valued here.",
   },
   {
-    n: "05",
-    title: "Private Equity / VC",
-    day: "Invest in private companies; source deals, underwrite, and improve portfolio firms.",
-    skills: "Modeling, judgment, deal sense — usually after banking/consulting.",
-    timeline: "Often a post-banking move; some analyst programs exist.",
+    title: "Private Equity",
+    blurb: "Buying companies",
+    detail:
+      "Invest in private companies — source deals, underwrite them, and work to grow the businesses you buy before selling them later. Almost always a move you make after a couple of years in banking or consulting, though a few analyst programs exist.",
+    skills: "Modeling, judgment, deal sense.",
+    timeline: "Usually a post-banking move.",
   },
   {
-    n: "06",
+    title: "Venture Capital",
+    blurb: "Funding startups",
+    detail:
+      "Invest in early-stage startups and help them grow. The job is part finding promising founders, part evaluating markets, and part supporting the companies you back. Less about spreadsheets than PE — more about judgment, networks, and conviction.",
+    skills: "Market sense, networking, pattern recognition.",
+    timeline: "Hard to break into straight out of school; networking is everything.",
+  },
+  {
+    title: "Hedge Funds",
+    blurb: "Active investing",
+    detail:
+      "Funds that take active positions in markets to generate returns regardless of where the market goes. Strategies range from fundamental stock-picking to fully quantitative. Roles are competitive and often come after research, banking, or a strong quant background.",
+    skills: "Analytical edge, conviction, risk awareness.",
+    timeline: "Typically after a first job; some analyst seats exist.",
+  },
+  {
     title: "Corporate Finance / FP&A",
-    day: "Run budgeting, forecasting, and capital decisions inside a company.",
+    blurb: "Finance inside a company",
+    detail:
+      "Run budgeting, forecasting, and capital decisions from inside a company rather than at a bank. Financial Planning & Analysis (FP&A) teams help leadership decide where the money goes. One of the most accessible and well-balanced entry points in finance.",
     skills: "Modeling, business partnering, communication.",
-    timeline: "Rotational analyst programs; great entry path.",
+    timeline: "Rotational analyst programs; a great first job.",
   },
-];
-
-const prep = [
-  "Weekly markets recaps and stock pitches to build fluency.",
-  "Excel and financial-modeling workshops.",
-  "Resume reviews and mock interviews before recruiting season.",
-  "Alumni networking, treks, and connections at Career Services.",
+  {
+    title: "Commercial & Corporate Banking",
+    blurb: "Lending to businesses",
+    detail:
+      "Lend to and manage relationships with businesses — everything from local companies to large corporations. You assess credit risk and structure loans. More predictable hours than investment banking, and a solid foundation in how companies actually use money.",
+    skills: "Credit analysis, relationship management, judgment.",
+    timeline: "Structured analyst and training programs.",
+  },
+  {
+    title: "Consulting",
+    blurb: "Advising companies",
+    detail:
+      "Not strictly finance, but a huge destination for finance-minded grads. Help companies solve strategy and operations problems across industries. The exit options are wide — including private equity and corporate roles — which is part of the appeal.",
+    skills: "Problem solving, communication, structured thinking.",
+    timeline: "On-campus recruiting; junior-year internships.",
+  },
 ];
 
 export default function CareersPage() {
@@ -62,104 +110,158 @@ export default function CareersPage() {
           style={{ paddingTop: "clamp(44px,7vh,76px)", paddingBottom: "clamp(44px,7vh,76px)" }}
         >
           <p className="kicker">Careers</p>
-          <h1 className="h-page">Finance career paths</h1>
-          <p className="lede">
-            A map of where a finance background can take you, what each role does
-            day-to-day, and how to prepare.
+          <h1 className="h-page">Where finance can take you</h1>
+          <p className="lede" style={{ maxWidth: 620 }}>
+            These are the paths HWS grads most often head into. Start with the
+            college&apos;s own career office, then read up on the roles that
+            interest you.
           </p>
+
+          {/* First thing on the page: link to HWS Career Services */}
+          <a
+            href="https://www.hws.edu/centers/career-services/default.aspx"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="card card-hover-orange lift"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              marginTop: 28,
+              padding: "18px 22px",
+              maxWidth: 560,
+              textDecoration: "none",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                fontSize: 22,
+                flexShrink: 0,
+                width: 44,
+                height: 44,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 11,
+                background: "var(--brandSolid)",
+                color: "#fff",
+              }}
+            >
+              ↗
+            </span>
+            <span style={{ flex: 1 }}>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 16,
+                  fontWeight: 600,
+                  color: "var(--text)",
+                }}
+              >
+                HWS Career Services
+              </span>
+              <span style={{ display: "block", fontSize: 13.5, color: "var(--muted)", marginTop: 2 }}>
+                Advising, resume help, alumni connections, and recruiting events.
+              </span>
+            </span>
+          </a>
+
+          {/* Club advisors */}
+          <div style={{ marginTop: 36 }}>
+            <p className="kicker" style={{ marginBottom: 14 }}>
+              Our club advisors
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                gap: 16,
+                maxWidth: 760,
+              }}
+            >
+              {advisors.map((a) => (
+                <div key={a.name} className="card card-hover-orange" style={{ padding: 22 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <span
+                      aria-hidden
+                      className="serif"
+                      style={{
+                        flexShrink: 0,
+                        width: 46,
+                        height: 46,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: "50%",
+                        background: "var(--brandSolid)",
+                        color: "#fff",
+                        fontSize: 17,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {a.initials}
+                    </span>
+                    <span>
+                      <span
+                        className="serif"
+                        style={{
+                          display: "block",
+                          fontSize: 19,
+                          fontWeight: 500,
+                          color: "var(--text)",
+                          letterSpacing: "-0.01em",
+                        }}
+                      >
+                        {a.name}
+                      </span>
+                      <span style={{ display: "block", fontSize: 12.5, color: "var(--orangeText)", fontWeight: 600, marginTop: 2 }}>
+                        {a.title}
+                      </span>
+                    </span>
+                  </div>
+                  <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, margin: "14px 0 0" }}>
+                    {a.bio}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
+      {/* Career list */}
       <section className="container-x" style={{ paddingTop: "clamp(44px,6vh,72px)" }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: 16,
-          }}
-        >
-          {paths.map((p) => (
-            <div key={p.n} className="card card-hover-brand" style={{ padding: 24 }}>
-              <span
-                className="mono"
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "#fff",
-                  background: "var(--brandSolid)",
-                  width: 38,
-                  height: 38,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 9,
-                }}
-              >
-                {p.n}
-              </span>
-              <h3
-                className="serif"
-                style={{
-                  fontWeight: 500,
-                  fontSize: 21,
-                  color: "var(--text)",
-                  margin: "18px 0 0",
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                {p.title}
-              </h3>
-              <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.55, margin: "10px 0 0" }}>
-                {p.day}
-              </p>
-              <p style={{ fontSize: "12.5px", color: "var(--faint)", margin: "14px 0 0", lineHeight: 1.5 }}>
-                <span style={{ color: "var(--orangeText)", fontWeight: 600 }}>Skills · </span>
-                {p.skills}
-              </p>
-              <p style={{ fontSize: "12.5px", color: "var(--faint)", margin: "7px 0 0", lineHeight: 1.5 }}>
-                <span style={{ color: "var(--orangeText)", fontWeight: 600 }}>Timeline · </span>
-                {p.timeline}
-              </p>
-            </div>
-          ))}
-        </div>
+        <h2 className="h-section" style={{ marginBottom: 6 }}>
+          Common career paths
+        </h2>
+        <p className="lede" style={{ maxWidth: 600, marginBottom: 26 }}>
+          Tap any role to see what the job actually looks like, the skills it
+          rewards, and when recruiting tends to happen.
+        </p>
 
-        {/* How the club prepares you */}
+        <CareerList careers={careers} />
+
+        {/* How the club fits in */}
         <div
           className="card"
           style={{
-            padding: "clamp(24px,4vw,36px)",
-            borderRadius: 16,
-            marginTop: 24,
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: 24,
-            alignItems: "start",
+            marginTop: 28,
+            padding: "clamp(22px,4vw,34px)",
+            borderRadius: 14,
           }}
         >
-          <div>
-            <h3
-              className="serif"
-              style={{ fontWeight: 500, fontSize: 24, color: "var(--text)", margin: 0, letterSpacing: "-0.01em" }}
-            >
-              How the club prepares you
-            </h3>
-            <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, margin: "10px 0 0" }}>
-              Connect these paths with on-campus resources at the HWS Salisbury
-              Center for Career, Professional &amp; Experiential Education.
-            </p>
-          </div>
-          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 12 }}>
-            {prep.map((item) => (
-              <li
-                key={item}
-                style={{ display: "flex", gap: 11, color: "var(--text)", fontSize: "14.5px", lineHeight: 1.5 }}
-              >
-                <span style={{ color: "var(--orange)", fontWeight: 700 }}>→</span>
-                {item}
-              </li>
-            ))}
-          </ul>
+          <h3 className="h-sub" style={{ marginBottom: 12 }}>
+            How the club helps
+          </h3>
+          <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.65, margin: 0, maxWidth: "68ch" }}>
+            We run weekly markets recaps and stock pitches so you can talk
+            confidently about the market in an interview. We hold Excel and
+            modeling workshops, do resume reviews and mock interviews before
+            recruiting season, and lean on alumni and Career Services to make
+            connections. You don&apos;t need a finance background to start —
+            just show up.
+          </p>
         </div>
       </section>
     </main>
