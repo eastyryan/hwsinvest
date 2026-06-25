@@ -1,7 +1,31 @@
-// Self-contained brand mark — a purple rounded tile with a yellow shield and
-// dollar glyph, echoing the design thumbnail. Drop a real HWS seal into
-// /public and swap this for an <img> if you'd prefer the official mark.
-export default function Logo({ size = 34 }: { size?: number }) {
+"use client";
+
+import { useState } from "react";
+
+// Renders the official HWS logo from /public/hws-logo.png. Until that file
+// exists (or if it fails to load), it falls back to a self-contained brand
+// mark so the header/footer never show a broken image.
+export default function Logo({
+  size = 34,
+  src = "/hws-logo.png",
+}: {
+  size?: number;
+  src?: string;
+}) {
+  const [errored, setErrored] = useState(false);
+
+  if (!errored) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt="Hobart and William Smith Colleges"
+        style={{ height: size, width: "auto", display: "block", flexShrink: 0 }}
+        onError={() => setErrored(true)}
+      />
+    );
+  }
+
   return (
     <svg
       width={size}

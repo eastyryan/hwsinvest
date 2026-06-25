@@ -27,7 +27,7 @@ export default async function Home() {
           position: "relative",
           minHeight: "clamp(580px, 84vh, 860px)",
           display: "flex",
-          alignItems: "flex-end",
+          alignItems: "center",
           overflow: "hidden",
           background: "var(--bgDeep)",
         }}
@@ -50,7 +50,8 @@ export default async function Home() {
           style={{
             position: "relative",
             width: "100%",
-            paddingBottom: "clamp(64px, 9vh, 112px)",
+            paddingTop: "clamp(40px, 6vh, 80px)",
+            paddingBottom: "clamp(40px, 6vh, 80px)",
           }}
         >
           <h1
