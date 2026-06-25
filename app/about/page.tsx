@@ -118,12 +118,12 @@ export default function AboutPage() {
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: "url('/CoxeHall.jpg')",
+            backgroundImage: "url('/about-hero.jpg')",
             backgroundSize: "cover",
-            backgroundPosition: "74% 42%",
+            backgroundPosition: "center 38%",
           }}
         />
-        <div style={{ position: "absolute", inset: 0, background: "rgba(9,7,16,0.62)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "rgba(9,7,16,0.5)" }} />
         <h1
           style={{
             position: "relative",
