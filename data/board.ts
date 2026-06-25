@@ -17,6 +17,7 @@ export const board: Member[] = [
     role: "President",
     year: "Class of 2027",
     focus: "Markets & Strategy",
+    img: "/board/easton.jpg",
     bio: "Easton runs the club's weekly meetings and sets the direction for the markets team. Outside the club, he follows macro trends and is always up for debating where rates head next.",
     linkedin: "",
   },

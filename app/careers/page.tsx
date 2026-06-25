@@ -8,12 +8,14 @@ const advisors: Advisor[] = [
     name: "Brandi Ferrara",
     initials: "BF",
     title: "Assistant Vice President, Career Services",
+    img: "/advisors/brandi.jpg",
     bio: "Brandi has led the Salisbury Center for Career, Professional & Experiential Education since 1999, overseeing career development across every field and guiding students through graduate-school planning. She holds degrees from Johnson & Wales University.",
   },
   {
     name: "Shayne Feinberg",
     initials: "SF",
     title: "Director, Employer Development & Engagement",
+    img: "/advisors/shayne.jpg",
     bio: "Shayne builds internship and job opportunities in for-profit fields including finance, real estate, sales, and marketing. Through info sessions and career treks, she connects students directly with employers and real-world examples of what these careers look like.",
   },
 ];
