@@ -10,19 +10,91 @@ import { yoyChange } from "@/lib/format";
 
 import type { EconFmt } from "@/lib/format";
 
-const SERIES: { id: string; label: string; fmt: EconFmt; note: string }[] = [
-  { id: "DGS2", label: "2-Year Treasury", fmt: "pct", note: "daily" },
-  { id: "DGS10", label: "10-Year Treasury", fmt: "pct", note: "daily" },
-  { id: "DGS30", label: "30-Year Treasury", fmt: "pct", note: "daily" },
-  { id: "FEDFUNDS", label: "Fed Funds Rate", fmt: "pct", note: "monthly" },
-  { id: "UNRATE", label: "Unemployment", fmt: "pct", note: "monthly" },
-  { id: "CPIAUCSL", label: "CPI (Index)", fmt: "index", note: "monthly" },
-  { id: "GDPC1", label: "Real GDP", fmt: "gdp", note: "quarterly" },
-  { id: "PCEPILFE", label: "Core PCE (Index)", fmt: "index", note: "monthly" },
-  { id: "PAYEMS", label: "Nonfarm Payrolls", fmt: "payrolls", note: "monthly" },
-  { id: "UMCSENT", label: "Consumer Sentiment", fmt: "sentiment", note: "monthly" },
-  { id: "MORTGAGE30US", label: "30-Yr Mortgage", fmt: "pct", note: "weekly" },
-  { id: "T10Y2Y", label: "10Y–2Y Spread", fmt: "pct", note: "daily" },
+const SERIES: { id: string; label: string; fmt: EconFmt; note: string; desc: string }[] = [
+  {
+    id: "DGS2",
+    label: "2-Year Treasury",
+    fmt: "pct",
+    note: "daily",
+    desc: "The yield on a U.S. government bond maturing in two years. It closely tracks where investors expect the Fed to set short-term interest rates over the next couple of years.",
+  },
+  {
+    id: "DGS10",
+    label: "10-Year Treasury",
+    fmt: "pct",
+    note: "daily",
+    desc: "The yield on the 10-year U.S. government bond — the benchmark 'risk-free' rate. It influences mortgage rates, corporate borrowing costs, and how stocks are valued.",
+  },
+  {
+    id: "DGS30",
+    label: "30-Year Treasury",
+    fmt: "pct",
+    note: "daily",
+    desc: "The yield on the 30-year U.S. government bond. As the longest common maturity, it reflects the market's long-run expectations for growth and inflation.",
+  },
+  {
+    id: "FEDFUNDS",
+    label: "Fed Funds Rate",
+    fmt: "pct",
+    note: "monthly",
+    desc: "The interest rate banks charge each other for overnight loans, steered into a target range by the Federal Reserve. It's the main lever of U.S. monetary policy and ripples into nearly every other rate.",
+  },
+  {
+    id: "UNRATE",
+    label: "Unemployment",
+    fmt: "pct",
+    note: "monthly",
+    desc: "The share of the labor force that is without a job and actively looking for one. A core gauge of labor-market health — low is generally strong, but very low can signal an overheating economy.",
+  },
+  {
+    id: "CPIAUCSL",
+    label: "CPI (Index)",
+    fmt: "index",
+    note: "monthly",
+    desc: "The Consumer Price Index tracks the average price of a basket of goods and services households buy. It's the most widely watched measure of inflation — rising values mean prices are climbing.",
+  },
+  {
+    id: "GDPC1",
+    label: "Real GDP",
+    fmt: "gdp",
+    note: "quarterly",
+    desc: "Real Gross Domestic Product is the inflation-adjusted value of everything the U.S. economy produces. It's the broadest measure of economic output, so its growth rate defines expansions and recessions.",
+  },
+  {
+    id: "PCEPILFE",
+    label: "Core PCE (Index)",
+    fmt: "index",
+    note: "monthly",
+    desc: "Core Personal Consumption Expenditures prices — inflation excluding volatile food and energy. This is the Federal Reserve's preferred inflation gauge for judging progress toward its 2% target.",
+  },
+  {
+    id: "PAYEMS",
+    label: "Nonfarm Payrolls",
+    fmt: "payrolls",
+    note: "monthly",
+    desc: "The total number of paid U.S. workers outside of farming, private households, and the military. The monthly change is the headline 'jobs report' that markets react to strongly.",
+  },
+  {
+    id: "UMCSENT",
+    label: "Consumer Sentiment",
+    fmt: "sentiment",
+    note: "monthly",
+    desc: "The University of Michigan's survey of how optimistic households feel about their finances and the economy. Since consumer spending drives most of GDP, it's a forward-looking read on demand.",
+  },
+  {
+    id: "MORTGAGE30US",
+    label: "30-Yr Mortgage",
+    fmt: "pct",
+    note: "weekly",
+    desc: "The average interest rate on a 30-year fixed-rate home loan. It's a key driver of housing affordability — higher rates cool home demand, lower rates fuel it.",
+  },
+  {
+    id: "T10Y2Y",
+    label: "10Y–2Y Spread",
+    fmt: "pct",
+    note: "daily",
+    desc: "The gap between 10-year and 2-year Treasury yields. When it turns negative (an 'inverted' curve), it has historically been one of the most reliable warning signals of a coming recession.",
+  },
 ];
 
 export const metadata = { title: "Markets · HWS Investment Club" };

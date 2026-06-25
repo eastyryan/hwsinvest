@@ -9,6 +9,7 @@ export type EconSeries = {
   label: string;
   fmt: EconFmt;
   note: string;
+  desc: string;
   value: number | null;
   date: string | null;
   yoy: { text: string; up: boolean } | null;
@@ -18,26 +19,27 @@ export type EconSeries = {
 export default function EconCard({ s }: { s: EconSeries }) {
   const [open, setOpen] = useState(false);
   const hasHistory = s.history.length > 1;
+  const canExpand = hasHistory || !!s.desc;
 
   return (
     <div className="card" style={{ borderRadius: 13, overflow: "hidden" }}>
       <button
-        onClick={() => hasHistory && setOpen((v) => !v)}
+        onClick={() => canExpand && setOpen((v) => !v)}
         aria-expanded={open}
-        disabled={!hasHistory}
+        disabled={!canExpand}
         style={{
           width: "100%",
           textAlign: "left",
           background: "transparent",
           border: "none",
           padding: 20,
-          cursor: hasHistory ? "pointer" : "default",
+          cursor: canExpand ? "pointer" : "default",
           display: "block",
         }}
       >
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
           <p style={{ color: "var(--muted)", fontSize: 14, margin: 0, lineHeight: 1.3 }}>{s.label}</p>
-          {hasHistory && (
+          {canExpand && (
             <span
               aria-hidden
               style={{
@@ -76,9 +78,23 @@ export default function EconCard({ s }: { s: EconSeries }) {
         </div>
       </button>
 
-      {open && hasHistory && (
-        <div style={{ padding: "0 16px 16px" }}>
-          <MiniChart data={s.history} fmt={s.fmt} />
+      {open && (
+        <div style={{ padding: "0 16px 18px" }}>
+          {s.desc && (
+            <p
+              style={{
+                color: "var(--muted)",
+                fontSize: 13.5,
+                lineHeight: 1.6,
+                margin: "0 0 14px",
+                paddingTop: 14,
+                borderTop: "1px solid var(--lineSoft)",
+              }}
+            >
+              {s.desc}
+            </p>
+          )}
+          {hasHistory && <MiniChart data={s.history} fmt={s.fmt} />}
         </div>
       )}
     </div>
