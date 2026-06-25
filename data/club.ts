@@ -31,4 +31,7 @@ export const firms: Firm[] = [
   { name: "Chubb", logo: "/firms/chubb.png" },
   { name: "S&P Global", logo: "/firms/sp-global.png" },
   { name: "Fidelity", logo: "/firms/fidelity.png" },
+  { name: "UBS", logo: "/firms/ubs.png" },
+  { name: "RBC", logo: "/firms/rbc.png" },
+  { name: "CIBC", logo: "/firms/cibc.png" },
 ];

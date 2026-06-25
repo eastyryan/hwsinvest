@@ -58,7 +58,7 @@ export default function Home() {
               margin: 0,
             }}
           >
-            <span style={{ whiteSpace: "nowrap" }}>Hobart &amp; William Smith Colleges</span>
+            <span className="heading-nowrap">Hobart &amp; William Smith Colleges</span>
             <br />
             Investment Club
           </h1>
@@ -102,18 +102,12 @@ export default function Home() {
 
       {/* ---------------- Stat band ---------------- */}
       <section className="container-x" style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 16,
-          }}
-        >
+        <div className="stat-grid">
           {clubStats.map((s) => (
             <div
               key={s.label}
-              className="card"
-              style={{ padding: "30px 26px", textAlign: "center" }}
+              className="stat-item"
+              style={{ padding: "18px 26px", textAlign: "center" }}
             >
               <p
                 style={{

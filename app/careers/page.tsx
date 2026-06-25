@@ -147,13 +147,13 @@ export default function CareersPage() {
       {/* ---------------- Career paths ---------------- */}
       <section style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
         <h2
+          className="heading-nowrap"
           style={{
             fontWeight: 700,
             fontSize: "clamp(28px,4vw,46px)",
             letterSpacing: "-0.025em",
             lineHeight: 1.12,
             margin: 0,
-            whiteSpace: "nowrap",
             color: "var(--text)",
           }}
         >
