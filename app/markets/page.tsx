@@ -1,12 +1,12 @@
-import Link from "next/link";
 import Ticker from "@/components/Ticker";
 import IndexCard from "@/components/IndexCard";
+import SectorCard from "@/components/SectorCard";
 import YieldChart from "@/components/YieldChart";
 import EconCard, { type EconSeries } from "@/components/EconCard";
 import { getQuotes } from "@/lib/finnhub";
 import { getHistory } from "@/lib/fred";
 import { indices, sectors } from "@/data/sectors";
-import { usd, pct, isUp, arrow, yoyChange } from "@/lib/format";
+import { yoyChange } from "@/lib/format";
 
 import type { EconFmt } from "@/lib/format";
 
@@ -153,67 +153,7 @@ export default async function MarketsPage() {
         >
           {sectors.map((s) => {
             const q = sectorQuotes.find((x) => x.symbol === s.etf);
-            const up = isUp(q?.dp);
-            return (
-              <Link
-                key={s.slug}
-                href={`/markets/${s.slug}`}
-                className="card card-hover-orange"
-                style={{ display: "block", padding: 22, textDecoration: "none" }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                  <span style={{ fontSize: 17, fontWeight: 600, color: "var(--text)" }}>{s.name}</span>
-                  <span
-                    className="mono"
-                    style={{
-                      fontSize: 11,
-                      color: "var(--brand)",
-                      background: "var(--card2)",
-                      border: "1px solid var(--line)",
-                      padding: "3px 8px",
-                      borderRadius: 6,
-                      letterSpacing: "0.05em",
-                    }}
-                  >
-                    {s.etf}
-                  </span>
-                </div>
-                {q && (
-                  <p
-                    className="mono"
-                    style={{
-                      fontSize: 14,
-                      color: up ? "var(--up)" : "var(--down)",
-                      margin: "11px 0 0",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {usd(q.c)} · {arrow(q.dp)} {pct(q.dp)}
-                  </p>
-                )}
-                <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.55, margin: "11px 0 0" }}>
-                  {s.blurb}
-                </p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 14 }}>
-                  {s.holdings.map((h) => (
-                    <span
-                      key={h}
-                      className="mono"
-                      style={{
-                        fontSize: "11.5px",
-                        color: "var(--muted)",
-                        background: "var(--card2)",
-                        border: "1px solid var(--lineSoft)",
-                        padding: "3px 8px",
-                        borderRadius: 6,
-                      }}
-                    >
-                      {h}
-                    </span>
-                  ))}
-                </div>
-              </Link>
-            );
+            return <SectorCard key={s.slug} sector={s} quote={q} />;
           })}
         </div>
       </section>
