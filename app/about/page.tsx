@@ -118,9 +118,9 @@ export default function AboutPage() {
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: "url('/about-hero.jpg')",
+            backgroundImage: "url('/careers-hero.jpg')",
             backgroundSize: "cover",
-            backgroundPosition: "center 38%",
+            backgroundPosition: "center 42%",
           }}
         />
         <div style={{ position: "absolute", inset: 0, background: "rgba(9,7,16,0.5)" }} />

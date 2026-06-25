@@ -3,29 +3,6 @@ import AdvisorCard, { type Advisor } from "@/components/AdvisorCard";
 
 export const metadata = { title: "Careers · HWS Investment Club" };
 
-// Small pill label, optionally with a leading green dot.
-function Chip({ label, dot = false }: { label: string; dot?: boolean }) {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "6px 13px",
-        borderRadius: 999,
-        background: "var(--card2)",
-        border: "1px solid var(--line)",
-        fontSize: 13,
-        fontWeight: 600,
-        color: "var(--muted)",
-      }}
-    >
-      {dot && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--wsGreen)" }} />}
-      {label}
-    </span>
-  );
-}
-
 const advisors: Advisor[] = [
   {
     name: "Brandi Ferrara",
@@ -145,9 +122,9 @@ export default function CareersPage() {
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: "url('/careers-hero.jpg')",
+            backgroundImage: "url('/about-hero.jpg')",
             backgroundSize: "cover",
-            backgroundPosition: "center 42%",
+            backgroundPosition: "center 38%",
           }}
         />
         <div style={{ position: "absolute", inset: 0, background: "rgba(9,7,16,0.5)" }} />
@@ -165,8 +142,31 @@ export default function CareersPage() {
         </h1>
       </section>
 
+      {/* ---------------- Career paths ---------------- */}
+      <section style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
+        <h2
+          style={{
+            fontWeight: 700,
+            fontSize: "clamp(28px,4vw,46px)",
+            letterSpacing: "-0.025em",
+            lineHeight: 1.12,
+            margin: 0,
+            whiteSpace: "nowrap",
+            color: "var(--text)",
+          }}
+        >
+          Where finance can take you
+        </h2>
+        <p style={{ color: "var(--muted)", fontSize: 16, lineHeight: 1.65, margin: "12px 0 26px", maxWidth: 600 }}>
+          Tap any role to see what the job actually looks like, the skills it
+          rewards, and when recruiting tends to happen.
+        </p>
+
+        <CareerList careers={careers} />
+      </section>
+
       {/* ---------------- Advisors + Career Services ---------------- */}
-      <section style={{ paddingTop: "clamp(48px,7vh,84px)", textAlign: "center" }}>
+      <section style={{ paddingTop: "clamp(56px,8vh,96px)", textAlign: "center" }}>
         <h2
           style={{
             fontWeight: 700,
@@ -210,30 +210,6 @@ export default function CareersPage() {
             Click here to visit the HWS Career Services website.
           </a>
         </p>
-      </section>
-
-      {/* ---------------- Career paths ---------------- */}
-      <section style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
-        <Chip label="Career paths" />
-        <h2
-          style={{
-            fontWeight: 700,
-            fontSize: "clamp(28px,4vw,46px)",
-            letterSpacing: "-0.025em",
-            lineHeight: 1.12,
-            margin: "18px 0 0",
-            maxWidth: "16ch",
-            color: "var(--text)",
-          }}
-        >
-          Where finance can take you
-        </h2>
-        <p style={{ color: "var(--muted)", fontSize: 16, lineHeight: 1.65, margin: "12px 0 26px", maxWidth: 600 }}>
-          Tap any role to see what the job actually looks like, the skills it
-          rewards, and when recruiting tends to happen.
-        </p>
-
-        <CareerList careers={careers} />
       </section>
 
       {/* ---------------- How the club helps ---------------- */}
