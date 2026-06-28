@@ -122,7 +122,7 @@ export default function Home() {
         }}
       >
         <div className="container-x" style={{ maxWidth: 940, margin: "0 auto", textAlign: "center" }}>
-          <h2 style={{ ...sectionTitle, color: "#ffffff" }}>Who We Are</h2>
+          <h2 style={{ ...sectionTitle, color: "#ffffff", fontWeight: 700 }}>Who We Are</h2>
           <p
             className="serif"
             style={{
@@ -164,7 +164,7 @@ export default function Home() {
       {/* ---------------- Where it leads (firms) ---------------- */}
       <section className="container-x" style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
         <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
-          <h2 style={{ ...sectionTitle, color: "var(--orange)" }}>Where our members land</h2>
+          <h2 style={{ ...sectionTitle, color: "var(--text)" }}>Where our members land</h2>
           <p className="lede" style={{ margin: "13px auto 0" }}>
             Club members and alumni have gone on to firms across investment
             banking, asset management, markets, and more.
