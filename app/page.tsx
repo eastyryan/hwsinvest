@@ -50,7 +50,7 @@ export default function Home() {
           </div>
           <h1
             style={{
-              fontWeight: 700,
+              fontWeight: 500,
               fontSize: "clamp(30px, 5vw, 58px)",
               lineHeight: 1.05,
               letterSpacing: "-0.03em",
@@ -122,7 +122,7 @@ export default function Home() {
         }}
       >
         <div className="container-x" style={{ maxWidth: 940, margin: "0 auto", textAlign: "center" }}>
-          <h2 style={{ ...sectionTitle, color: "#ffffff", fontWeight: 700 }}>Who We Are</h2>
+          <h2 style={{ ...sectionTitle, color: "#ffffff" }}>Who We Are</h2>
           <p
             className="serif"
             style={{
@@ -196,7 +196,7 @@ export default function Home() {
 // Shared style for every section title (except the hero), so they all read
 // at the same size and weight. Color is set per-section by background.
 const sectionTitle: React.CSSProperties = {
-  fontWeight: 600,
+  fontWeight: 500,
   fontSize: "clamp(32px,4.5vw,48px)",
   letterSpacing: "-0.015em",
   lineHeight: 1.12,
@@ -205,8 +205,8 @@ const sectionTitle: React.CSSProperties = {
 
 const statValue: React.CSSProperties = {
   fontSize: "clamp(46px,6.5vw,68px)",
-  fontWeight: 600,
-  color: "var(--orange)",
+  fontWeight: 500,
+  color: "var(--text)",
   lineHeight: 1,
   letterSpacing: "-0.015em",
 };
