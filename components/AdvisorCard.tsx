@@ -10,8 +10,10 @@ export type Advisor = {
   img?: string;
 };
 
-// Portrait card whose info panel slides up over the photo to reveal the
-// advisor's full bio when the plus button is pressed.
+// Portrait card whose bio panel covers the photo when expanded. A single
+// toggle button sits in a fixed spot (top-right) and rotates the "+" into an
+// "×" in place — matching the expand/collapse pattern used elsewhere on the
+// site (see EconCard / SectorCard).
 export default function AdvisorCard({ advisor }: { advisor: Advisor }) {
   const [open, setOpen] = useState(false);
 
@@ -51,7 +53,38 @@ export default function AdvisorCard({ advisor }: { advisor: Advisor }) {
         </div>
       )}
 
-      {/* Collapsed floating label */}
+      {/* Single persistent toggle — stays in the same spot, + rotates to × */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-label={open ? `Hide ${advisor.name}'s bio` : `Show ${advisor.name}'s bio`}
+        style={{
+          position: "absolute",
+          top: 12,
+          right: 12,
+          zIndex: 3,
+          width: 34,
+          height: 34,
+          borderRadius: 9,
+          background: open ? "rgba(255,255,255,0.2)" : "var(--wsGreen)",
+          color: "#fff",
+          border: "none",
+          cursor: "pointer",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 22,
+          lineHeight: 1,
+          transform: open ? "rotate(45deg)" : "none",
+          transition: "transform 0.18s ease, background 0.18s ease",
+          boxShadow: open ? "none" : "0 4px 14px -4px rgba(0,0,0,0.35)",
+        }}
+      >
+        +
+      </button>
+
+      {/* Collapsed label — name + title (clamped to a fixed height so every
+          card's short bio lines up) */}
       {!open && (
         <div
           style={{
@@ -63,44 +96,31 @@ export default function AdvisorCard({ advisor }: { advisor: Advisor }) {
             border: "1px solid var(--line)",
             borderRadius: 12,
             padding: "12px 14px",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
             boxShadow: "0 6px 20px -8px rgba(0,0,0,0.25)",
           }}
         >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontWeight: 700, fontSize: 15, color: "var(--text)", margin: 0, letterSpacing: "-0.01em" }}>
-              {advisor.name}
-            </p>
-            <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "2px 0 0" }}>{advisor.title}</p>
-          </div>
-          <button
-            onClick={() => setOpen(true)}
-            aria-expanded={false}
-            aria-label={`Show ${advisor.name}'s bio`}
+          <p style={{ fontWeight: 700, fontSize: 15, color: "var(--text)", margin: 0, letterSpacing: "-0.01em" }}>
+            {advisor.name}
+          </p>
+          <p
             style={{
-              flexShrink: 0,
-              width: 32,
-              height: 32,
-              borderRadius: 9,
-              background: "var(--wsGreen)",
-              color: "#fff",
-              border: "none",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 20,
-              lineHeight: 1,
+              fontSize: 12.5,
+              color: "var(--muted)",
+              margin: "3px 0 0",
+              lineHeight: 1.35,
+              minHeight: 34,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
             }}
           >
-            +
-          </button>
+            {advisor.title}
+          </p>
         </div>
       )}
 
-      {/* Expanded overlay covering the photo */}
+      {/* Expanded overlay — full bio */}
       {open && (
         <div
           style={{
@@ -114,35 +134,10 @@ export default function AdvisorCard({ advisor }: { advisor: Advisor }) {
             overflowY: "auto",
           }}
         >
-          <button
-            onClick={() => setOpen(false)}
-            aria-label={`Hide ${advisor.name}'s bio`}
-            style={{
-              position: "absolute",
-              top: 14,
-              right: 14,
-              width: 32,
-              height: 32,
-              borderRadius: 9,
-              background: "rgba(255,255,255,0.18)",
-              color: "#fff",
-              border: "none",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 20,
-              lineHeight: 1,
-              transform: "rotate(45deg)",
-            }}
-          >
-            +
-          </button>
-
-          <p style={{ fontWeight: 700, fontSize: 19, margin: "4px 0 0", letterSpacing: "-0.01em", paddingRight: 36 }}>
+          <p style={{ fontWeight: 700, fontSize: 19, margin: "2px 0 0", letterSpacing: "-0.01em", paddingRight: 40 }}>
             {advisor.name}
           </p>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", margin: "4px 0 0", fontWeight: 600 }}>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", margin: "4px 0 0", fontWeight: 600, paddingRight: 40 }}>
             {advisor.title}
           </p>
           <p style={{ fontSize: 14, lineHeight: 1.6, margin: "14px 0 0", color: "rgba(255,255,255,0.95)" }}>
