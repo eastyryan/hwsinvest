@@ -44,9 +44,21 @@ export default function Footer() {
             <p
               style={{
                 color: "var(--muted)",
+                fontSize: 14,
+                fontWeight: 600,
+                lineHeight: 1.5,
+                margin: "16px 0 0",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Hobart and William Smith Colleges · Geneva, New York
+            </p>
+            <p
+              style={{
+                color: "var(--muted)",
                 fontSize: "13.5px",
                 lineHeight: 1.6,
-                margin: "16px 0 0",
+                margin: "10px 0 0",
               }}
             >
               Built by students, for students. Live markets, hands-on research,
@@ -92,30 +104,6 @@ export default function Footer() {
                 </Link>
               ))}
             </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <span
-                className="mono"
-                style={{
-                  fontSize: 11,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "var(--faint)",
-                  marginBottom: 2,
-                }}
-              >
-                Colleges
-              </span>
-              <span style={{ color: "var(--muted)", fontSize: 14 }}>
-                Hobart College
-              </span>
-              <span style={{ color: "var(--muted)", fontSize: 14 }}>
-                William Smith College
-              </span>
-              <span style={{ color: "var(--muted)", fontSize: 14 }}>
-                Geneva, New York
-              </span>
-            </div>
           </div>
         </div>
 
@@ -132,12 +120,6 @@ export default function Footer() {
         >
           <span style={{ color: "var(--faint)", fontSize: "12.5px" }}>
             © {new Date().getFullYear()} HWS Investment Club
-          </span>
-          <span
-            className="mono"
-            style={{ color: "var(--faint)", fontSize: 12, letterSpacing: "0.04em" }}
-          >
-            Disce · Βιος — Ψυχή
           </span>
         </div>
       </div>
