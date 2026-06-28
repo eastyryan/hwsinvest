@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-// Renders a firm's logo centered, with no card or caption — the logos float
-// directly on the white Placements panel. Broken images are hidden entirely.
+// Renders a firm's logo centered in a fixed-size box so every mark reads at a
+// consistent visual size — no cards, no captions. Broken images are hidden.
 export default function FirmLogo({ name, logo }: { name: string; logo: string }) {
   const [errored, setErrored] = useState(false);
   if (errored) return null;
@@ -11,11 +11,10 @@ export default function FirmLogo({ name, logo }: { name: string; logo: string })
   return (
     <div
       style={{
-        height: 64,
+        height: 72,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "8px 16px",
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -23,7 +22,7 @@ export default function FirmLogo({ name, logo }: { name: string; logo: string })
         src={logo}
         alt={name}
         onError={() => setErrored(true)}
-        style={{ maxHeight: 56, maxWidth: "100%", width: "auto", objectFit: "contain" }}
+        style={{ maxHeight: 42, maxWidth: 150, width: "auto", objectFit: "contain" }}
       />
     </div>
   );

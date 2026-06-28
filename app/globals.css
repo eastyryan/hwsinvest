@@ -4,65 +4,11 @@
 
 /* ============================================================
    HWS Investment Club — design system
-   Color tokens mirror the Claude Design source (dark + light).
-   Variables live on :root so they cascade everywhere; the theme
-   toggle flips [data-theme] on <html>.
+   Single light theme. Color tokens live on :root and cascade
+   everywhere.
    ============================================================ */
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #0e1116;
-  --bgDeep: #090b0e;
-  --card: #161b22;
-  --card2: #1c2230;
-  --cardHover: #222a39;
-  --line: #2a2f37;
-  --lineSoft: #1e232b;
-  --text: #f4f3f7;
-  --muted: #9aa0ab;
-  --faint: #6a707b;
-  --brand: #b7a2f0;
-  --brandSolid: #4b2e83;
-  --orange: #f08a33;
-  --orangeText: #f49a4d;
-  --yellow: #ffc72c;
-  --green: #3fbe7b;
-  --up: #3fbe7b;
-  --down: #f0585b;
-  --navBg: rgba(12, 14, 19, 0.82);
-  --heroScrim: linear-gradient(
-    98deg,
-    rgba(24, 10, 46, 0.96) 0%,
-    rgba(28, 13, 52, 0.92) 26%,
-    rgba(26, 12, 49, 0.6) 44%,
-    rgba(20, 9, 40, 0.16) 62%,
-    rgba(20, 9, 40, 0) 82%
-  );
-  --heroVignette: linear-gradient(
-    to top,
-    rgba(9, 6, 18, 0.66) 0%,
-    rgba(9, 6, 18, 0) 36%
-  );
-  --heroFallback: radial-gradient(
-    120% 120% at 75% 30%,
-    #2c2150 0%,
-    #1a0f33 45%,
-    #090b0e 100%
-  );
-  --missionBg: linear-gradient(160deg, #1d1733 0%, #2c2150 100%);
-  --missionBorder: #3a2b5e;
-  --missionHead: #c2aef2;
-  --missionText: #cfc6e3;
-  --missionMark: #9079da;
-  --joinBg: linear-gradient(157deg, #15271d 0%, #193a28 100%);
-  --joinBorder: #27462f;
-  --joinHead: #86d6a6;
-  --joinText: #cbe3d3;
-  --joinMark: #46ae72;
-}
-
-:root,
-:root[data-theme="light"] {
+:root {
   color-scheme: light;
   --bg: #ffffff;
   --bgDeep: #ffffff;

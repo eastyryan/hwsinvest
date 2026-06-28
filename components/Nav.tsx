@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Logo from "./Logo";
-import ThemeToggle from "./ThemeToggle";
 
 const links = [
   { href: "/", label: "Home" },
@@ -78,8 +77,6 @@ export default function Nav() {
             </Link>
           ))}
 
-          <ThemeToggle />
-
           <Link
             href="/about#contact"
             style={{
@@ -146,27 +143,24 @@ export default function Nav() {
             </Link>
           ))}
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 16 }}>
-            <Link
-              href="/about#contact"
-              style={{
-                flex: 1,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fbfaf9",
-                fontWeight: 600,
-                fontSize: 15,
-                padding: "13px 16px",
-                borderRadius: 10,
-                textDecoration: "none",
-                background: "var(--brandSolid)",
-              }}
-            >
-              Join the Club
-            </Link>
-            <ThemeToggle />
-          </div>
+          <Link
+            href="/about#contact"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginTop: 16,
+              color: "#fbfaf9",
+              fontWeight: 600,
+              fontSize: 15,
+              padding: "13px 16px",
+              borderRadius: 10,
+              textDecoration: "none",
+              background: "var(--brandSolid)",
+            }}
+          >
+            Join the Club
+          </Link>
         </div>
       </div>
     </nav>

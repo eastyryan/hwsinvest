@@ -25,9 +25,6 @@ export const metadata: Metadata = {
     "Markets, research, and careers — the Hobart and William Smith Colleges Investment Club.",
 };
 
-// Apply the saved theme before first paint to avoid a flash of the wrong theme.
-const themeScript = `(function(){try{var t=localStorage.getItem('hws-theme');if(t!=='light'&&t!=='dark')t='light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
-
 export default function RootLayout({
   children,
 }: {
@@ -36,12 +33,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="light"
       className={`${newsreader.variable} ${plexMono.variable}`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
       <body>
         <Nav />
         {children}
