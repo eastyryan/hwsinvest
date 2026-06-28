@@ -55,15 +55,17 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
     load("");
   }, [load]);
 
-  async function upload(fileList: FileList | null) {
+  // Upload into `target` folder (defaults to the folder we're viewing).
+  async function upload(fileList: FileList | null, target?: string) {
     if (!fileList || fileList.length === 0) return;
+    const dest = target ?? path;
     setUploading(true);
     setError("");
     try {
       for (const file of Array.from(fileList)) {
         const form = new FormData();
         form.append("file", file);
-        form.append("path", path);
+        form.append("path", dest);
         const res = await fetch("/api/files", { method: "POST", body: form });
         if (!res.ok) {
           throw new Error((await res.json()).error || `Failed to upload ${file.name}`);
@@ -76,6 +78,15 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
     }
+  }
+
+  // Per-folder hidden file input (admin "Upload here" button).
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  const [uploadTarget, setUploadTarget] = useState<string>("");
+  const [dropFolder, setDropFolder] = useState<string | null>(null);
+  function pickInto(target: string) {
+    setUploadTarget(target);
+    folderInputRef.current?.click();
   }
 
   async function newFolder() {
@@ -262,9 +273,34 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
         </div>
       )}
 
+      {/* Hidden input used by per-folder "Upload here" buttons. */}
+      <input
+        ref={folderInputRef}
+        type="file"
+        multiple
+        hidden
+        onChange={(ev) => {
+          upload(ev.target.files, uploadTarget);
+          if (folderInputRef.current) folderInputRef.current.value = "";
+        }}
+      />
+
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {entries.map((e) => (
-          <div key={e.path} style={row}>
+        {entries.map((e) => {
+          const isDropTarget = admin && e.type === "folder";
+          return (
+          <div
+            key={e.path}
+            style={{
+              ...row,
+              ...(dropFolder === e.path
+                ? { borderColor: "var(--brandSolid)", background: "var(--card2)" }
+                : null),
+            }}
+            onDragOver={isDropTarget ? (ev) => { ev.preventDefault(); setDropFolder(e.path); } : undefined}
+            onDragLeave={isDropTarget ? () => setDropFolder((p) => (p === e.path ? null : p)) : undefined}
+            onDrop={isDropTarget ? (ev) => { ev.preventDefault(); setDropFolder(null); upload(ev.dataTransfer.files, e.path); } : undefined}
+          >
             {e.type === "folder" ? <FolderIcon /> : <FileIcon />}
             <button
               onClick={() => (e.type === "folder" ? load(e.path) : openFile(e))}
@@ -285,6 +321,11 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
                   : `${fileSize(e.size)}${e.modified ? ` · ${new Date(e.modified).toLocaleDateString()}` : ""}`}
               </div>
             </button>
+            {admin && e.type === "folder" && (
+              <button onClick={() => pickInto(e.path)} style={btnPrimary}>
+                Upload here
+              </button>
+            )}
             {e.type === "file" && previewKind(e.name) !== "none" && (
               <button onClick={() => openFile(e)} style={btnPrimary}>
                 View
@@ -301,7 +342,8 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
               </button>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {preview && <PreviewModal preview={preview} onClose={() => setPreview(null)} />}
