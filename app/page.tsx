@@ -2,7 +2,7 @@ import Link from "next/link";
 import Ticker from "@/components/Ticker";
 import Logo from "@/components/Logo";
 import FirmLogo from "@/components/FirmLogo";
-import { clubStats, firms } from "@/data/club";
+import { firms } from "@/data/club";
 
 export const dynamic = "force-dynamic";
 
@@ -83,47 +83,27 @@ export default function Home() {
 
       <Ticker />
 
-      {/* ---------------- Stat band ---------------- */}
+      {/* ---------------- Intro paragraphs ---------------- */}
       <section className="container-x" style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: 18,
-            maxWidth: 720,
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "clamp(28px,5vw,56px)",
+            maxWidth: 920,
             margin: "0 auto",
           }}
         >
-          {clubStats.map((s) => (
-            <div
-              key={s.label}
-              className="card lift"
-              style={{
-                padding: "30px 28px 26px",
-                textAlign: "center",
-                borderTop: "3px solid var(--brandSolid)",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "clamp(30px,4.5vw,42px)",
-                  fontWeight: 800,
-                  color: "var(--orange)",
-                  margin: 0,
-                  letterSpacing: "-0.02em",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {s.value}
-              </p>
-              <p style={{ fontSize: 16.5, fontWeight: 700, color: "var(--text)", margin: "12px 0 0" }}>
-                {s.label}
-              </p>
-              <p style={{ fontSize: 13.5, color: "var(--muted)", margin: "5px 0 0" }}>
-                {s.note}
-              </p>
-            </div>
-          ))}
+          <p style={{ fontSize: "clamp(17px,1.4vw,19px)", lineHeight: 1.7, color: "var(--text)", margin: 0 }}>
+            Now <strong>55+ members</strong> strong and growing every semester, the
+            club brings together students from every major — from economics and
+            finance to the sciences and humanities.
+          </p>
+          <p style={{ fontSize: "clamp(17px,1.4vw,19px)", lineHeight: 1.7, color: "var(--text)", margin: 0 }}>
+            We meet every <strong>Tuesday from 7:00 to 8:00 PM</strong>, and every HWS
+            student is welcome. Come to one — no experience or finance background
+            needed.
+          </p>
         </div>
       </section>
 
