@@ -30,7 +30,7 @@ export const firms: Firm[] = [
   { name: "HSBC", logo: "/firms/hsbc.png" },
   { name: "Evercore", logo: "/firms/evercore.png" },
   { name: "Rithm Capital", logo: "/firms/rithm-capital.png" },
-  { name: "Bloomberg", logo: "/firms/bloomberg-wordmark.svg" },
+  { name: "Bloomberg", logo: "/firms/bloomberg.png" },
   { name: "Chubb", logo: "/firms/chubb.png" },
   { name: "S&P Global", logo: "/firms/sp-global.png" },
   { name: "Fidelity", logo: "/firms/fidelity.png" },
