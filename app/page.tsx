@@ -94,16 +94,22 @@ export default function Home() {
             margin: "0 auto",
           }}
         >
-          <p style={{ fontSize: "clamp(17px,1.4vw,19px)", lineHeight: 1.7, color: "var(--text)", margin: 0 }}>
-            Now <strong>55+ members</strong> strong and growing every semester, the
-            club brings together students from every major — from economics and
-            finance to the sciences and humanities.
-          </p>
-          <p style={{ fontSize: "clamp(17px,1.4vw,19px)", lineHeight: 1.7, color: "var(--text)", margin: 0 }}>
-            We meet every <strong>Tuesday from 7:00 to 8:00 PM</strong>, and every HWS
-            student is welcome. Come to one — no experience or finance background
-            needed.
-          </p>
+          <div>
+            <div style={statValue}>55+</div>
+            <div style={statSub}>Members</div>
+            <p style={statPara}>
+              Drawn from every major — economics and finance to the sciences and
+              humanities — and growing every semester. No prior background required.
+            </p>
+          </div>
+          <div>
+            <div style={statValue}>Tuesdays</div>
+            <div style={statSub}>7:00 – 8:00 PM</div>
+            <p style={statPara}>
+              Open to every HWS student. Come to a single meeting, bring a friend,
+              and see if it&rsquo;s for you — no experience needed.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -198,3 +204,25 @@ export default function Home() {
     </main>
   );
 }
+
+const statValue: React.CSSProperties = {
+  fontSize: "clamp(46px,6.5vw,68px)",
+  fontWeight: 600,
+  color: "var(--orange)",
+  lineHeight: 1,
+  letterSpacing: "-0.015em",
+};
+const statSub: React.CSSProperties = {
+  fontSize: 15,
+  fontWeight: 600,
+  color: "var(--text)",
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+  marginTop: 10,
+};
+const statPara: React.CSSProperties = {
+  fontSize: "clamp(16px,1.4vw,18px)",
+  lineHeight: 1.7,
+  color: "var(--muted)",
+  margin: "16px 0 0",
+};
