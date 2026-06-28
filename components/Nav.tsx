@@ -11,6 +11,7 @@ const links = [
   { href: "/markets", label: "Markets" },
   { href: "/careers", label: "Careers" },
   { href: "/about", label: "About" },
+  { href: "/members", label: "Members" },
 ];
 
 export default function Nav() {

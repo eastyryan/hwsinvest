@@ -44,6 +44,15 @@ export function yoyChange(
 
 export const arrow = (n: number | undefined) => (isUp(n) ? "▲" : "▼");
 
+// Human-readable file size, e.g. 1536 → "1.5 KB".
+export function fileSize(bytes: number): string {
+  if (!bytes) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+  const n = bytes / Math.pow(1024, i);
+  return `${i === 0 ? n : n.toFixed(1)} ${units[i]}`;
+}
+
 // Build a normalized SVG polyline ("x,y x,y …") from a handful of numbers,
 // inverting y so larger values sit higher. Used for the index sparklines.
 export function sparkline(values: number[], width = 100, height = 32): string {
