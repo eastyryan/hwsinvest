@@ -163,25 +163,39 @@ export default function Home() {
 
       {/* ---------------- Where it leads (firms) ---------------- */}
       <section className="container-x" style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
-        <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
-          <p className="kicker">Placements</p>
-          <h2 className="h-section">Where our members land</h2>
-          <p className="lede" style={{ margin: "13px auto 0" }}>
-            Club members and alumni have gone on to firms across investment
-            banking, asset management, markets, and more.
-          </p>
-        </div>
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(168px, 1fr))",
-            gap: 16,
-            marginTop: 44,
+            background: "#ffffff",
+            borderRadius: 24,
+            padding: "clamp(36px,5vw,64px) clamp(20px,4vw,56px)",
           }}
         >
-          {firms.map((f) => (
-            <FirmLogo key={f.name} name={f.name} logo={f.logo} />
-          ))}
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
+            <p className="kicker">Placements</p>
+            <h2 className="h-section" style={{ color: "#141414" }}>
+              Where our members land
+            </h2>
+            <p style={{ color: "#5a5a60", fontSize: 16, lineHeight: 1.6, margin: "13px auto 0" }}>
+              Club members and alumni have gone on to firms across investment
+              banking, asset management, markets, and more.
+            </p>
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+              gap: "clamp(28px,4vw,48px) 24px",
+              marginTop: "clamp(36px,5vw,56px)",
+              alignItems: "center",
+            }}
+          >
+            {firms.map((f) => (
+              <FirmLogo key={f.name} name={f.name} logo={f.logo} />
+            ))}
+          </div>
+          <p style={{ textAlign: "center", color: "#8a8a90", fontSize: 16, fontStyle: "italic", margin: "clamp(28px,4vw,44px) 0 0" }}>
+            and more …
+          </p>
         </div>
       </section>
 

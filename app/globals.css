@@ -348,16 +348,6 @@ body {
   color: var(--text);
 }
 
-/* Firm logo tiles (home "Where our members land"). */
-.firm-tile {
-  transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
-}
-.firm-tile:hover {
-  border-color: var(--brand);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-}
-
 /* ---------- Members / Academy ---------- */
 
 /* Small bordered control button (Sign out, Manage files, Back). */
