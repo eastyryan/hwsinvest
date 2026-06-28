@@ -135,7 +135,7 @@ function Results({ track, lesson, correct, total, onRetry }: { track: Track; les
       </h1>
       <p className="lede" style={{ marginTop: 10 }}>
         You answered <strong style={{ color: "var(--text)" }}>{correct} of {total}</strong> correctly
-        {passed ? `, earning +${correct * 10} XP.` : ". Aim for 80% to master this lesson."}
+        {passed ? "." : ". Review the explanations and try again to lock it in."}
       </p>
       <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 30, flexWrap: "wrap" }}>
         <button onClick={onRetry} className="ctl" style={{ padding: "12px 18px", fontSize: 14 }}>
