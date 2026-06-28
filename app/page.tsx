@@ -2,7 +2,7 @@ import Link from "next/link";
 import Ticker from "@/components/Ticker";
 import Logo from "@/components/Logo";
 import FirmLogo from "@/components/FirmLogo";
-import { clubStats, firms, meeting } from "@/data/club";
+import { clubStats, firms } from "@/data/club";
 
 export const dynamic = "force-dynamic";
 
@@ -85,28 +85,41 @@ export default function Home() {
 
       {/* ---------------- Stat band ---------------- */}
       <section className="container-x" style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
-        <div className="stat-grid">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: 18,
+            maxWidth: 720,
+            margin: "0 auto",
+          }}
+        >
           {clubStats.map((s) => (
             <div
               key={s.label}
-              className="stat-item"
-              style={{ padding: "18px 26px", textAlign: "center" }}
+              className="card lift"
+              style={{
+                padding: "30px 28px 26px",
+                textAlign: "center",
+                borderTop: "3px solid var(--brandSolid)",
+              }}
             >
               <p
                 style={{
-                  fontSize: "clamp(34px,5vw,48px)",
+                  fontSize: "clamp(30px,4.5vw,42px)",
                   fontWeight: 800,
                   color: "var(--orange)",
                   margin: 0,
-                  letterSpacing: "-0.03em",
+                  letterSpacing: "-0.02em",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {s.value}
               </p>
-              <p style={{ fontSize: 16, fontWeight: 600, color: "var(--text)", margin: "10px 0 0" }}>
+              <p style={{ fontSize: 16.5, fontWeight: 700, color: "var(--text)", margin: "12px 0 0" }}>
                 {s.label}
               </p>
-              <p style={{ fontSize: "13.5px", color: "var(--muted)", margin: "4px 0 0" }}>
+              <p style={{ fontSize: 13.5, color: "var(--muted)", margin: "5px 0 0" }}>
                 {s.note}
               </p>
             </div>
@@ -190,51 +203,6 @@ export default function Home() {
         </p>
       </section>
 
-      {/* ---------------- Meetings / Join ---------------- */}
-      <section className="container-x" style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
-        <div
-          style={{
-            background: "var(--missionBg)",
-            border: "1px solid var(--missionBorder)",
-            borderRadius: 20,
-            padding: "clamp(30px,5vw,56px)",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 28,
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div style={{ maxWidth: 540 }}>
-            <p style={{ color: "var(--missionMark)", fontSize: 14, fontWeight: 700, margin: 0 }}>
-              Join us
-            </p>
-            <h2
-              style={{
-                fontWeight: 700,
-                fontSize: "clamp(28px,4vw,42px)",
-                color: "var(--missionHead)",
-                margin: "12px 0 0",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-              }}
-            >
-              Meetings every {meeting.day} at {meeting.time}
-            </h2>
-            <p style={{ color: "var(--missionText)", fontSize: 16.5, lineHeight: 1.65, margin: "16px 0 0" }}>
-              {meeting.blurb} Come to one — bring a friend — and see if it&rsquo;s
-              for you.
-            </p>
-          </div>
-          <Link
-            href="/about"
-            className="btn-primary"
-            style={{ fontSize: 16, padding: "16px 28px", flexShrink: 0 }}
-          >
-            Get involved <span style={{ fontSize: 18 }}>→</span>
-          </Link>
-        </div>
-      </section>
     </main>
   );
 }

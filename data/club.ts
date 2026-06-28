@@ -2,13 +2,12 @@
 
 export const clubStats = [
   { value: "55+", label: "Members", note: "and growing every semester" },
-  { value: "6", label: "Sectors covered", note: "tech, financials, energy & more" },
-  { value: "Wed · 7PM", label: "Weekly meetings", note: "open to all HWS students" },
+  { value: "Tue · 7–8PM", label: "Weekly meetings", note: "open to all HWS students" },
 ];
 
 export const meeting = {
-  day: "Wednesdays",
-  time: "7:00 PM",
+  day: "Tuesdays",
+  time: "7:00–8:00 PM",
   blurb: "Open to every HWS student — no experience or finance background needed.",
 };
 
