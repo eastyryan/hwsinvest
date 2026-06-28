@@ -127,50 +127,62 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------------- Who are we ---------------- */}
-      <section className="container-x" style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: "clamp(28px,5vw,64px)",
-            alignItems: "center",
-          }}
-        >
-          <div>
-            <p className="kicker">Who we are</p>
-            <h2 className="h-section" style={{ maxWidth: "14ch" }}>
-              A student-run approach to the markets
-            </h2>
-          </div>
-          <div>
-            <p style={{ color: "var(--muted)", fontSize: 16.5, lineHeight: 1.7, margin: 0 }}>
-              The HWS Investment Club brings together students from every major to
-              learn how markets actually work. We focus on fundamental, bottom-up
-              research — studying real companies, debating ideas in the open, and
-              testing a thesis against a live, simulated portfolio.
-            </p>
-            <p style={{ color: "var(--muted)", fontSize: 16.5, lineHeight: 1.7, margin: "16px 0 0" }}>
-              No prior experience is required. Whether you&rsquo;re aiming for Wall
-              Street or just want to understand the news, there&rsquo;s a place for
-              you here.
-            </p>
-            <Link
-              href="/about"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                marginTop: 22,
-                color: "var(--orangeText)",
-                fontWeight: 600,
-                fontSize: 15,
-                textDecoration: "none",
-              }}
-            >
-              More about us <span style={{ fontSize: 17 }}>→</span>
-            </Link>
-          </div>
+      {/* ---------------- Who we are (full-width orange band) ---------------- */}
+      <section
+        style={{
+          marginTop: "clamp(56px,8vh,96px)",
+          background: "var(--orange)",
+          padding: "clamp(64px,10vh,116px) 0",
+        }}
+      >
+        <div className="container-x" style={{ maxWidth: 940, margin: "0 auto", textAlign: "center" }}>
+          <h2
+            className="serif"
+            style={{
+              color: "#fdf4ec",
+              fontWeight: 500,
+              fontSize: "clamp(34px,5vw,54px)",
+              letterSpacing: "-0.01em",
+              margin: 0,
+            }}
+          >
+            Who We Are
+          </h2>
+          <p
+            className="serif"
+            style={{
+              color: "#fdf4ec",
+              fontSize: "clamp(17px,1.55vw,21px)",
+              lineHeight: 1.75,
+              maxWidth: 720,
+              margin: "clamp(20px,3vh,30px) auto 0",
+            }}
+          >
+            The HWS Investment Club brings together students from every major to
+            learn how markets actually work. We focus on fundamental, bottom-up
+            research — studying real companies, debating ideas in the open, and
+            testing a thesis against a live, simulated portfolio. No prior
+            experience is required: whether you&rsquo;re aiming for Wall Street or
+            just want to understand the news, there&rsquo;s a place for you here.
+          </p>
+          <Link
+            href="/about"
+            className="serif"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              marginTop: "clamp(24px,3.5vh,36px)",
+              color: "#ffffff",
+              fontWeight: 600,
+              fontSize: 17,
+              textDecoration: "none",
+              borderBottom: "1px solid rgba(255,255,255,0.55)",
+              paddingBottom: 2,
+            }}
+          >
+            More about us <span aria-hidden>→</span>
+          </Link>
         </div>
       </section>
 
