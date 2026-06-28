@@ -5,18 +5,20 @@
 // the only Dropbox auth flow that survives unattended on a server — raw
 // "generated access tokens" from the Dropbox console expire after 4 hours.
 //
-// All files live under one folder (DROPBOX_FOLDER). If you create the Dropbox
-// app with "App folder" access, that folder is sandboxed and DROPBOX_FOLDER can
-// stay "" (the app folder root).
+// Everything lives under one base folder (DROPBOX_FOLDER). With an "App folder"
+// scoped app, DROPBOX_FOLDER can stay "" (the sandboxed app-folder root).
+// Members can browse subfolders below that root.
 
-export type DropboxFile = {
+export type DropboxEntry = {
+  type: "file" | "folder";
   name: string;
-  path: string; // path_lower, used for download/delete
+  path: string; // path_lower — used for navigate / download / delete
   size: number;
-  modified: string; // ISO date
+  modified: string; // ISO date (files only)
 };
 
-const FOLDER = (process.env.DROPBOX_FOLDER ?? "").replace(/\/$/, "");
+// Base folder, normalized to "" or "/Something" (no trailing slash).
+export const BASE_FOLDER = (process.env.DROPBOX_FOLDER ?? "").replace(/\/+$/, "");
 
 export function isDropboxConfigured(): boolean {
   return Boolean(
@@ -24,6 +26,20 @@ export function isDropboxConfigured(): boolean {
       process.env.DROPBOX_APP_SECRET &&
       process.env.DROPBOX_REFRESH_TOKEN
   );
+}
+
+// Keep a requested path inside BASE_FOLDER so a crafted ?path= can't escape
+// the members area. Returns a clean absolute Dropbox path ("" = root).
+export function safePath(input: string | null | undefined): string {
+  let p = (input ?? "").trim();
+  if (!p || p === "/") return BASE_FOLDER;
+  if (!p.startsWith("/")) p = "/" + p;
+  p = p.replace(/\/+$/, "").replace(/\.\.+/g, ""); // strip trailing slash + ".."
+  const base = BASE_FOLDER.toLowerCase();
+  if (base && !(p.toLowerCase() === base || p.toLowerCase().startsWith(base + "/"))) {
+    return BASE_FOLDER; // outside the sandbox → snap back to root
+  }
+  return p;
 }
 
 // In-memory access-token cache (per server instance). Avoids refreshing on
@@ -73,16 +89,15 @@ async function rpc(endpoint: string, body: unknown): Promise<Response> {
   });
 }
 
-// List files in the members folder (newest first). Folders are skipped.
-export async function listFiles(): Promise<DropboxFile[]> {
+// List entries (folders first, then files) inside an absolute folder path.
+export async function listEntries(dir: string): Promise<DropboxEntry[]> {
   const res = await rpc("files/list_folder", {
-    path: FOLDER, // "" = app-folder root
+    path: dir, // "" = app-folder root
     recursive: false,
     include_non_downloadable_files: false,
   });
   if (!res.ok) {
-    // Folder not found yet (nothing uploaded) → treat as empty.
-    if (res.status === 409) return [];
+    if (res.status === 409) return []; // folder doesn't exist yet → empty
     throw new Error(`Dropbox list failed (${res.status})`);
   }
   const json = (await res.json()) as {
@@ -94,19 +109,27 @@ export async function listFiles(): Promise<DropboxFile[]> {
       server_modified?: string;
     }>;
   };
-  return json.entries
-    .filter((e) => e[".tag"] === "file")
+  const entries: DropboxEntry[] = json.entries
+    .filter((e) => e[".tag"] === "file" || e[".tag"] === "folder")
     .map((e) => ({
+      type: e[".tag"] === "folder" ? "folder" : "file",
       name: e.name,
       path: e.path_lower,
       size: e.size ?? 0,
       modified: e.server_modified ?? "",
-    }))
-    .sort((a, b) => (a.modified < b.modified ? 1 : -1));
+    }));
+  // Folders first (alphabetical), then files (newest first).
+  entries.sort((a, b) => {
+    if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
+    if (a.type === "folder") return a.name.localeCompare(b.name);
+    return a.modified < b.modified ? 1 : -1;
+  });
+  return entries;
 }
 
-// A direct, time-limited (~4h) download URL for a file. We never expose the
-// Dropbox token to the browser — only these short-lived links.
+// A direct, time-limited (~4h) download URL. Used by the Office Online viewer,
+// which needs a public URL it can fetch. Inline preview of PDFs/images/text
+// instead goes through our own authed proxy (see app/api/files/view).
 export async function temporaryLink(path: string): Promise<string | null> {
   const res = await rpc("files/get_temporary_link", { path });
   if (!res.ok) return null;
@@ -114,18 +137,50 @@ export async function temporaryLink(path: string): Promise<string | null> {
   return json.link;
 }
 
-export async function deleteFile(path: string): Promise<void> {
+// Stream a file's bytes through our server (keeps access behind the login).
+export async function downloadFile(
+  path: string
+): Promise<{ body: ArrayBuffer; size: number } | null> {
+  const token = await accessToken();
+  const res = await fetch("https://content.dropboxapi.com/2/files/download", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Dropbox-API-Arg": JSON.stringify({ path }),
+    },
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  const body = await res.arrayBuffer();
+  return { body, size: body.byteLength };
+}
+
+// Delete a file OR folder (delete_v2 handles both).
+export async function deletePath(path: string): Promise<void> {
   const res = await rpc("files/delete_v2", { path });
   if (!res.ok && res.status !== 409) {
     throw new Error(`Dropbox delete failed (${res.status})`);
   }
 }
 
-// Upload bytes to the members folder. Names collide → Dropbox autorenames.
-export async function uploadFile(name: string, data: ArrayBuffer): Promise<void> {
+export async function createFolder(dir: string, name: string): Promise<void> {
+  const clean = name.replace(/[\\/:*?"<>|]/g, "_").trim();
+  if (!clean) throw new Error("Folder name required");
+  const res = await rpc("files/create_folder_v2", { path: `${dir}/${clean}` });
+  if (!res.ok && res.status !== 409) {
+    throw new Error(`Dropbox create folder failed (${res.status})`);
+  }
+}
+
+// Upload bytes into a folder. Name collisions → Dropbox autorenames.
+export async function uploadFile(
+  dir: string,
+  name: string,
+  data: ArrayBuffer
+): Promise<void> {
   const token = await accessToken();
   const safeName = name.replace(/[\\/:*?"<>|]/g, "_"); // strip path-y chars
-  const dropboxPath = `${FOLDER}/${safeName}`;
+  const dropboxPath = `${dir}/${safeName}`;
   const res = await fetch("https://content.dropboxapi.com/2/files/upload", {
     method: "POST",
     headers: {

@@ -2,29 +2,43 @@ import { NextResponse } from "next/server";
 import { getSession, hasMemberAccess } from "@/lib/auth";
 import {
   isDropboxConfigured,
-  listFiles,
+  listEntries,
   temporaryLink,
   uploadFile,
-  deleteFile,
+  deletePath,
+  createFolder,
+  safePath,
+  BASE_FOLDER,
 } from "@/lib/dropbox";
 
 export const dynamic = "force-dynamic"; // never cache member files
 
-// GET /api/files → list of files with short-lived download links (members+).
-export async function GET() {
+// GET /api/files?path=/sub → entries (folders + files) in that folder.
+// Files include a short-lived download link; folders are navigable.
+export async function GET(request: Request) {
   const role = await getSession();
   if (!hasMemberAccess(role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   if (!isDropboxConfigured()) {
-    return NextResponse.json({ files: [], configured: false });
+    return NextResponse.json({ entries: [], path: "", configured: false });
   }
+  const dir = safePath(new URL(request.url).searchParams.get("path"));
   try {
-    const files = await listFiles();
+    const entries = await listEntries(dir);
     const withLinks = await Promise.all(
-      files.map(async (f) => ({ ...f, url: await temporaryLink(f.path) }))
+      entries.map(async (e) =>
+        e.type === "file"
+          ? { ...e, url: await temporaryLink(e.path) }
+          : { ...e, url: null }
+      )
     );
-    return NextResponse.json({ files: withLinks, configured: true });
+    return NextResponse.json({
+      entries: withLinks,
+      path: dir,
+      base: BASE_FOLDER,
+      configured: true,
+    });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Dropbox error" },
@@ -33,7 +47,8 @@ export async function GET() {
   }
 }
 
-// POST /api/files (multipart form, field "file") → upload (admin only).
+// POST /api/files → upload (multipart, field "file", optional "path"=folder)
+// OR create a folder when sent as JSON { action: "mkdir", path, name }.
 export async function POST(request: Request) {
   const role = await getSession();
   if (role !== "admin") {
@@ -42,16 +57,43 @@ export async function POST(request: Request) {
   if (!isDropboxConfigured()) {
     return NextResponse.json({ error: "Dropbox not configured" }, { status: 503 });
   }
+
+  const contentType = request.headers.get("content-type") || "";
+
+  // Create folder (JSON body)
+  if (contentType.includes("application/json")) {
+    try {
+      const body = await request.json();
+      if (body?.action !== "mkdir") {
+        return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+      }
+      const dir = safePath(body.path);
+      const name = typeof body.name === "string" ? body.name : "";
+      if (!name.trim()) {
+        return NextResponse.json({ error: "Folder name required" }, { status: 400 });
+      }
+      await createFolder(dir, name);
+      return NextResponse.json({ ok: true });
+    } catch (e) {
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : "Failed" },
+        { status: 502 }
+      );
+    }
+  }
+
+  // Upload file (multipart)
   try {
     const form = await request.formData();
     const file = form.get("file");
+    const dir = safePath(typeof form.get("path") === "string" ? (form.get("path") as string) : "");
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
     if (file.size > 150 * 1024 * 1024) {
       return NextResponse.json({ error: "File exceeds 150MB" }, { status: 413 });
     }
-    await uploadFile(file.name, await file.arrayBuffer());
+    await uploadFile(dir, file.name, await file.arrayBuffer());
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(
@@ -61,7 +103,7 @@ export async function POST(request: Request) {
   }
 }
 
-// DELETE /api/files  { path } → remove a file (admin only).
+// DELETE /api/files  { path } → remove a file or folder (admin only).
 export async function DELETE(request: Request) {
   const role = await getSession();
   if (role !== "admin") {
@@ -69,9 +111,11 @@ export async function DELETE(request: Request) {
   }
   try {
     const body = await request.json();
-    const path = typeof body?.path === "string" ? body.path : "";
-    if (!path) return NextResponse.json({ error: "No path" }, { status: 400 });
-    await deleteFile(path);
+    const path = safePath(typeof body?.path === "string" ? body.path : "");
+    if (!path || path === BASE_FOLDER) {
+      return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+    }
+    await deletePath(path);
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(
