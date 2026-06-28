@@ -174,10 +174,11 @@ export default function Home() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-            gap: "clamp(28px,4vw,48px) 24px",
+            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+            gap: "clamp(40px,5vw,56px) clamp(24px,3vw,40px)",
             marginTop: "clamp(36px,5vw,56px)",
             alignItems: "center",
+            justifyItems: "center",
           }}
         >
           {firms.map((f) => (

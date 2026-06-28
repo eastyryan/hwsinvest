@@ -11,18 +11,21 @@ export default function FirmLogo({ name, logo }: { name: string; logo: string })
   return (
     <div
       style={{
-        height: 72,
+        height: 104,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        padding: "0 12px",
       }}
     >
+      {/* Height-priority sizing: now that each logo is trimmed to its mark,
+          capping height makes them read at a consistent visual size. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={logo}
         alt={name}
         onError={() => setErrored(true)}
-        style={{ maxHeight: 42, maxWidth: 150, width: "auto", objectFit: "contain" }}
+        style={{ maxHeight: 64, maxWidth: "100%", width: "auto", objectFit: "contain" }}
       />
     </div>
   );
