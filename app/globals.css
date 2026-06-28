@@ -347,3 +347,69 @@ body {
 .link-muted:hover {
   color: var(--text);
 }
+
+/* ---------- Members / Academy ---------- */
+
+/* Small bordered control button (Sign out, Manage files, Back). */
+.ctl {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 9px 14px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ctl:hover {
+  color: var(--text);
+  border-color: var(--brand);
+}
+
+/* Dashboard stat band — purple dividers like the home stat band. */
+.learn-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+.learn-stat-item + .learn-stat-item {
+  border-left: 1px solid var(--brandSolid);
+}
+@media (max-width: 640px) {
+  .learn-stat-grid {
+    grid-template-columns: 1fr;
+  }
+  .learn-stat-item + .learn-stat-item {
+    border-left: none;
+    border-top: 1px solid var(--brandSolid);
+  }
+}
+
+/* Quiz answer choices */
+.quiz-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  font-size: 15.5px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.quiz-choice:hover:not(:disabled) {
+  border-color: var(--brand);
+  background: var(--card2);
+}
+.quiz-choice:disabled {
+  cursor: default;
+}
