@@ -255,8 +255,8 @@ body {
 .stat-item + .stat-item {
   border-left: 1px solid var(--brandSolid);
 }
-.stat-grid-green .stat-item + .stat-item {
-  border-left-color: var(--wsGreen);
+.stat-grid-orange .stat-item + .stat-item {
+  border-left-color: rgba(255, 255, 255, 0.32);
 }
 
 /* Headings that stay on one line on desktop but may wrap on mobile. */
@@ -272,8 +272,8 @@ body {
     border-left: none;
     border-top: 1px solid var(--brandSolid);
   }
-  .stat-grid-green .stat-item + .stat-item {
-    border-top-color: var(--wsGreen);
+  .stat-grid-orange .stat-item + .stat-item {
+    border-top-color: rgba(255, 255, 255, 0.32);
   }
   .heading-nowrap {
     white-space: normal;

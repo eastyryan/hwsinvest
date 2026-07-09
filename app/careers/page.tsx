@@ -210,49 +210,17 @@ export default function CareersPage() {
           </a>
         </p>
 
-        <a
-          href="https://careerservices.hws.edu/channels/finance/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="card card-hover-brand"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-            padding: "18px 20px",
-            margin: "clamp(24px,4vh,36px) auto 0",
-            maxWidth: 620,
-            textAlign: "left",
-            textDecoration: "none",
-          }}
-        >
-          <span
-            style={{
-              flexShrink: 0,
-              width: 44,
-              height: 44,
-              borderRadius: 11,
-              background: "var(--brandSolid)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+        <p style={{ color: "var(--text)", fontSize: 15.5, lineHeight: 1.65, margin: "14px auto 0" }}>
+          Looking specifically at finance?{" "}
+          <a
+            href="https://careerservices.hws.edu/channels/finance/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "var(--text)", fontWeight: 700, textDecoration: "underline" }}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 3v18h18" />
-              <path d="M19 9l-5 5-4-4-3 3" />
-            </svg>
-          </span>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", fontWeight: 700, fontSize: 16, color: "var(--text)", letterSpacing: "-0.01em" }}>
-              HWS Career Services — Finance
-            </span>
-            <span style={{ display: "block", fontSize: 14, color: "var(--muted)", lineHeight: 1.5, marginTop: 2 }}>
-              Explore every finance path, recruiting timelines, and resources on the official Career Services finance page.
-            </span>
-          </span>
-          <span aria-hidden="true" style={{ flexShrink: 0, color: "var(--brand)", fontWeight: 700, fontSize: 20 }}>→</span>
-        </a>
+            Explore the HWS Career Services finance page.
+          </a>
+        </p>
       </section>
 
       {/* ---------------- How the club helps ---------------- */}

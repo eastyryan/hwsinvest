@@ -35,40 +35,43 @@ const support = [
 
 export default function SponsorsPage() {
   return (
-    <main className="container-x" style={{ paddingTop: "clamp(24px,4vh,40px)" }}>
+    <main>
       {/* ---------------- Hero card ---------------- */}
-      <section
-        style={{
-          position: "relative",
-          borderRadius: 22,
-          overflow: "hidden",
-          minHeight: "clamp(260px,40vh,380px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "var(--bgDeep)",
-        }}
-      >
-        <div style={{ position: "absolute", inset: 0, background: "var(--heroFallback)" }} />
+      <section className="container-x" style={{ paddingTop: "clamp(24px,4vh,40px)" }}>
         <div
           style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: "url('/CoxeHall.jpg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center 45%",
+            position: "relative",
+            borderRadius: 22,
+            overflow: "hidden",
+            minHeight: "clamp(260px,40vh,380px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "var(--bgDeep)",
           }}
-        />
-        <div style={{ position: "absolute", inset: 0, background: "rgba(9,7,16,0.55)" }} />
-        <div style={{ position: "relative", textAlign: "center", padding: "0 20px" }}>
+        >
+          <div style={{ position: "absolute", inset: 0, background: "var(--heroFallback)" }} />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: "url('/CoxeHall.jpg')",
+              backgroundSize: "cover",
+              backgroundPosition: "center 45%",
+            }}
+          />
+          <div style={{ position: "absolute", inset: 0, background: "rgba(9,7,16,0.55)" }} />
           <h1
             style={{
+              position: "relative",
               color: "#fff",
               fontWeight: 700,
               fontSize: "clamp(34px,6vw,64px)",
               letterSpacing: "-0.03em",
               lineHeight: 1.08,
               margin: 0,
+              textAlign: "center",
+              padding: "0 20px",
             }}
           >
             The Melly Institute
@@ -77,7 +80,7 @@ export default function SponsorsPage() {
       </section>
 
       {/* ---------------- Intro ---------------- */}
-      <section style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
+      <section className="container-x" style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
         <h2
           style={{
             fontWeight: 700,
@@ -127,33 +130,33 @@ export default function SponsorsPage() {
         </div>
       </section>
 
-      {/* ---------------- Stat band ---------------- */}
-      <section style={{ paddingTop: "clamp(40px,6vh,64px)" }}>
-        <div
-          className="stat-grid stat-grid-green"
-          style={{
-            border: "1px solid var(--wsGreen)",
-            borderRadius: 18,
-            overflow: "hidden",
-            background: "var(--card)",
-          }}
-        >
-          {stats.map((s) => (
-            <div key={s.label} className="stat-item" style={{ padding: "clamp(22px,3vw,32px)", textAlign: "center" }}>
-              <p style={{ fontWeight: 700, fontSize: "clamp(28px,4vw,42px)", letterSpacing: "-0.02em", color: "var(--text)", margin: 0 }}>
-                {s.value}
-              </p>
-              <p style={{ fontWeight: 700, fontSize: 15, color: "var(--text)", margin: "8px 0 0" }}>{s.label}</p>
-              <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, margin: "6px auto 0", maxWidth: "26ch" }}>
-                {s.note}
-              </p>
-            </div>
-          ))}
+      {/* ---------------- Stat band (full-width orange) ---------------- */}
+      <section
+        style={{
+          marginTop: "clamp(48px,7vh,84px)",
+          background: "var(--orange)",
+          padding: "clamp(44px,6vh,72px) 0",
+        }}
+      >
+        <div className="container-x">
+          <div className="stat-grid stat-grid-orange">
+            {stats.map((s) => (
+              <div key={s.label} className="stat-item" style={{ padding: "clamp(18px,2.5vw,28px)", textAlign: "center" }}>
+                <p style={{ fontWeight: 700, fontSize: "clamp(28px,4vw,44px)", letterSpacing: "-0.02em", color: "#fff", margin: 0 }}>
+                  {s.value}
+                </p>
+                <p style={{ fontWeight: 700, fontSize: 15, color: "#fff", margin: "8px 0 0" }}>{s.label}</p>
+                <p style={{ fontSize: 13.5, color: "#fdf4ec", lineHeight: 1.5, margin: "6px auto 0", maxWidth: "26ch" }}>
+                  {s.note}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ---------------- What the gift funds ---------------- */}
-      <section style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
+      <section className="container-x" style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
         <h2
           className="heading-nowrap"
           style={{
@@ -188,33 +191,29 @@ export default function SponsorsPage() {
         </div>
       </section>
 
-      {/* ---------------- What it means for the club ---------------- */}
-      <section style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
-        <div
-          style={{
-            borderRadius: 22,
-            background: "var(--wsGreen)",
-            padding: "clamp(34px,6vw,64px)",
-            textAlign: "center",
-            color: "#fff",
-          }}
-        >
-          <p style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "rgba(255,255,255,0.82)" }}>
-            What it means for the club
-          </p>
+      {/* ---------------- What it means for the club (full-width orange) ---------------- */}
+      <section
+        style={{
+          marginTop: "clamp(56px,8vh,96px)",
+          background: "var(--orange)",
+          padding: "clamp(64px,10vh,116px) 0",
+        }}
+      >
+        <div className="container-x" style={{ maxWidth: 940, margin: "0 auto", textAlign: "center" }}>
           <h2
             style={{
               fontWeight: 700,
-              fontSize: "clamp(26px,4vw,42px)",
+              fontSize: "clamp(28px,4vw,46px)",
               letterSpacing: "-0.025em",
               lineHeight: 1.1,
-              margin: "12px auto 0",
+              margin: "0 auto",
               maxWidth: "22ch",
+              color: "#fff",
             }}
           >
             More than a name behind us
           </h2>
-          <p style={{ fontSize: 16.5, lineHeight: 1.65, margin: "16px auto 0", maxWidth: 640, color: "rgba(255,255,255,0.9)" }}>
+          <p style={{ fontSize: "clamp(17px,1.55vw,21px)", lineHeight: 1.7, margin: "clamp(20px,3vh,30px) auto 0", maxWidth: 720, color: "#fdf4ec" }}>
             The Institute’s support lets the Investment Club do more than meet and talk markets. It
             means members can build on Bloomberg Terminals, earn modeling and valuation
             certifications, take funded internships, and meet the professionals and alumni who
@@ -225,10 +224,20 @@ export default function SponsorsPage() {
             href="https://www.hws.edu/centers/melly-institute/default.aspx"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-ghost"
-            style={{ marginTop: "clamp(22px,3vh,30px)", padding: "12px 22px", fontSize: 15 }}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              marginTop: "clamp(24px,3.5vh,36px)",
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: 17,
+              textDecoration: "none",
+              borderBottom: "1px solid rgba(255,255,255,0.55)",
+              paddingBottom: 2,
+            }}
           >
-            Visit the Melly Institute →
+            Visit the Melly Institute <span aria-hidden>→</span>
           </a>
         </div>
       </section>
