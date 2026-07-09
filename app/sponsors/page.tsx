@@ -55,9 +55,9 @@ export default function SponsorsPage() {
             style={{
               position: "absolute",
               inset: 0,
-              backgroundImage: "url('/CoxeHall.jpg')",
+              backgroundImage: "url('/melly-hero.png')",
               backgroundSize: "cover",
-              backgroundPosition: "center 45%",
+              backgroundPosition: "center",
             }}
           />
           <div style={{ position: "absolute", inset: 0, background: "rgba(9,7,16,0.55)" }} />
@@ -81,27 +81,12 @@ export default function SponsorsPage() {
 
       {/* ---------------- Intro ---------------- */}
       <section className="container-x" style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
-        <h2
-          style={{
-            fontWeight: 700,
-            fontSize: "clamp(26px,3.6vw,40px)",
-            letterSpacing: "-0.025em",
-            lineHeight: 1.18,
-            margin: 0,
-            maxWidth: "22ch",
-            color: "var(--text)",
-          }}
-        >
-          The HWS Investment Club is proud to be sponsored by the Melly Institute for Business,
-          Innovation and Leadership.
-        </h2>
         <div
           style={{
             display: "flex",
             flexWrap: "wrap",
             alignItems: "center",
             gap: "clamp(24px,4vw,44px)",
-            marginTop: "clamp(24px,4vh,36px)",
           }}
         >
           <p style={{ flex: "1 1 340px", color: "var(--muted)", fontSize: 16.5, lineHeight: 1.7, margin: 0 }}>
@@ -164,8 +149,9 @@ export default function SponsorsPage() {
             fontSize: "clamp(24px,3.4vw,42px)",
             letterSpacing: "-0.025em",
             lineHeight: 1.12,
-            margin: "0 0 26px",
+            margin: "0 auto 26px",
             color: "var(--text)",
+            textAlign: "center",
           }}
         >
           What the gift puts in students’ hands
@@ -191,29 +177,23 @@ export default function SponsorsPage() {
         </div>
       </section>
 
-      {/* ---------------- What it means for the club (full-width orange) ---------------- */}
-      <section
-        style={{
-          marginTop: "clamp(56px,8vh,96px)",
-          background: "var(--orange)",
-          padding: "clamp(64px,10vh,116px) 0",
-        }}
-      >
-        <div className="container-x" style={{ maxWidth: 940, margin: "0 auto", textAlign: "center" }}>
+      {/* ---------------- What it means for the club ---------------- */}
+      <section className="container-x" style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
           <h2
+            className="heading-nowrap"
             style={{
               fontWeight: 700,
-              fontSize: "clamp(28px,4vw,46px)",
+              fontSize: "clamp(24px,3.4vw,42px)",
               letterSpacing: "-0.025em",
-              lineHeight: 1.1,
-              margin: "0 auto",
-              maxWidth: "22ch",
-              color: "#fff",
+              lineHeight: 1.12,
+              margin: 0,
+              color: "var(--text)",
             }}
           >
             More than a name behind us
           </h2>
-          <p style={{ fontSize: "clamp(17px,1.55vw,21px)", lineHeight: 1.7, margin: "clamp(20px,3vh,30px) auto 0", maxWidth: 720, color: "#fdf4ec" }}>
+          <p style={{ color: "var(--muted)", fontSize: 16.5, lineHeight: 1.7, margin: "clamp(16px,2.5vh,22px) auto 0" }}>
             The Institute’s support lets the Investment Club do more than meet and talk markets. It
             means members can build on Bloomberg Terminals, earn modeling and valuation
             certifications, take funded internships, and meet the professionals and alumni who
@@ -228,13 +208,11 @@ export default function SponsorsPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: 8,
-              marginTop: "clamp(24px,3.5vh,36px)",
-              color: "#fff",
-              fontWeight: 600,
-              fontSize: 17,
-              textDecoration: "none",
-              borderBottom: "1px solid rgba(255,255,255,0.55)",
-              paddingBottom: 2,
+              marginTop: "clamp(20px,3vh,28px)",
+              color: "var(--text)",
+              fontWeight: 700,
+              fontSize: 15.5,
+              textDecoration: "underline",
             }}
           >
             Visit the Melly Institute <span aria-hidden>→</span>
