@@ -27,7 +27,7 @@ const careers: Career[] = [
     detail:
       "Advise companies on mergers, acquisitions, and raising money through stock or debt. Analysts spend most of their time building financial models and putting together pitch books. It's the most common first job for people who want to end up in private equity or at a hedge fund — long hours, but you learn fast.",
     skills: "Excel modeling, accounting, valuation, stamina.",
-    timeline: "Recruiting starts early — sophomore/junior year for summer analyst roles.",
+    timeline: "Recruiting runs 9–12 months ahead: you apply and interview in sophomore spring (roughly Nov–Mar) for the following summer. Full-time analyst recruiting then begins in junior fall.",
   },
   {
     title: "Sales & Trading",
@@ -51,7 +51,7 @@ const careers: Career[] = [
     detail:
       "Build and manage investment portfolios — either for big institutions (asset management) or for individuals and families (wealth management). The work is more about long-term strategy and client relationships than the deal-by-deal grind of banking.",
     skills: "Portfolio theory, client relationships, discipline.",
-    timeline: "Rotational programs; the CFA is highly valued here.",
+    timeline: "Asset-management applications open in junior fall (Aug–Dec) with interviews into early winter. Wealth management hires closer to year-round, with a key July–September window. The CFA (Level I) is highly valued.",
   },
   {
     title: "Private Equity",
@@ -59,7 +59,7 @@ const careers: Career[] = [
     detail:
       "Invest in private companies — source deals, underwrite them, and work to grow the businesses you buy before selling them later. Almost always a move you make after a couple of years in banking or consulting, though a few analyst programs exist.",
     skills: "Modeling, judgment, deal sense.",
-    timeline: "Usually a post-banking move.",
+    timeline: "Almost always a post-banking move — most people enter after 2+ years in investment banking or consulting. Direct undergrad hiring is rare and rolling (fall–spring) at smaller firms.",
   },
   {
     title: "Venture Capital",
@@ -67,7 +67,7 @@ const careers: Career[] = [
     detail:
       "Invest in early-stage startups and help them grow. The job is part finding promising founders, part evaluating markets, and part supporting the companies you back. Less about spreadsheets than PE — more about judgment, networks, and conviction.",
     skills: "Market sense, networking, pattern recognition.",
-    timeline: "Hard to break into straight out of school; networking is everything.",
+    timeline: "More open to undergrads than PE — part-time roles appear in the fall, scout/analyst spots peak in winter–spring, and full-time roles post fall–winter at smaller firms. Networking is everything.",
   },
   {
     title: "Hedge Funds",
@@ -83,7 +83,7 @@ const careers: Career[] = [
     detail:
       "Run budgeting, forecasting, and capital decisions from inside a company rather than at a bank. Financial Planning & Analysis (FP&A) teams help leadership decide where the money goes. One of the most accessible and well-balanced entry points in finance.",
     skills: "Modeling, business partnering, communication.",
-    timeline: "Rotational analyst programs; a great first job.",
+    timeline: "Early fall (Aug–Oct) is the primary window for summer internships, with interviews through the fall and offers by early winter. Rotational analyst programs make a great first job.",
   },
   {
     title: "Commercial & Corporate Banking",
@@ -91,7 +91,7 @@ const careers: Career[] = [
     detail:
       "Lend to and manage relationships with businesses — everything from local companies to large corporations. You assess credit risk and structure loans. More predictable hours than investment banking, and a solid foundation in how companies actually use money.",
     skills: "Credit analysis, relationship management, judgment.",
-    timeline: "Structured analyst and training programs.",
+    timeline: "Summer-internship applications open in junior fall (Aug–Oct), with interviews and offers between November and January. Many full-time seats are filled by returning interns.",
   },
   {
     title: "Consulting",
@@ -99,7 +99,7 @@ const careers: Career[] = [
     detail:
       "Not strictly finance, but a huge destination for finance-minded grads. Help companies solve strategy and operations problems across industries. The exit options are wide — including private equity and corporate roles — which is part of the appeal.",
     skills: "Problem solving, communication, structured thinking.",
-    timeline: "On-campus recruiting; junior-year internships.",
+    timeline: "Applications open late summer–early fall (Aug–Oct) for the following summer, with rolling interviews Sept–Nov and many offers extended before winter break.",
   },
 ];
 
@@ -159,10 +159,52 @@ export default function CareersPage() {
         >
           Where finance can take you
         </h2>
-        <p style={{ color: "var(--muted)", fontSize: 16, lineHeight: 1.65, margin: "12px 0 26px", maxWidth: 600 }}>
+        <p style={{ color: "var(--muted)", fontSize: 16, lineHeight: 1.65, margin: "12px 0 22px", maxWidth: 600 }}>
           Tap any role to see what the job actually looks like, the skills it
           rewards, and when recruiting tends to happen.
         </p>
+
+        <a
+          href="https://careerservices.hws.edu/channels/finance/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="card card-hover-brand"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            padding: "18px 20px",
+            marginBottom: 26,
+            textDecoration: "none",
+          }}
+        >
+          <span
+            style={{
+              flexShrink: 0,
+              width: 44,
+              height: 44,
+              borderRadius: 11,
+              background: "var(--brandSolid)",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 3v18h18" />
+              <path d="M19 9l-5 5-4-4-3 3" />
+            </svg>
+          </span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", fontWeight: 700, fontSize: 16, color: "var(--text)", letterSpacing: "-0.01em" }}>
+              HWS Career Services — Finance
+            </span>
+            <span style={{ display: "block", fontSize: 14, color: "var(--muted)", lineHeight: 1.5, marginTop: 2 }}>
+              Explore every finance path, recruiting timelines, and resources on the official Career Services finance page.
+            </span>
+          </span>
+          <span aria-hidden="true" style={{ flexShrink: 0, color: "var(--brand)", fontWeight: 700, fontSize: 20 }}>→</span>
+        </a>
 
         <CareerList careers={careers} />
       </section>
@@ -204,7 +246,7 @@ export default function CareersPage() {
         <p style={{ color: "var(--text)", fontSize: 15.5, lineHeight: 1.65, margin: "clamp(24px,4vh,36px) auto 0" }}>
           Want advising, resume help, or recruiting events?{" "}
           <a
-            href="https://www.hws.edu/centers/career-services/default.aspx"
+            href="https://careerservices.hws.edu"
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: "var(--text)", fontWeight: 700, textDecoration: "underline" }}
