@@ -177,48 +177,6 @@ export default function SponsorsPage() {
         </div>
       </section>
 
-      {/* ---------------- What it means for the club ---------------- */}
-      <section className="container-x" style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
-          <h2
-            className="heading-nowrap"
-            style={{
-              fontWeight: 700,
-              fontSize: "clamp(24px,3.4vw,42px)",
-              letterSpacing: "-0.025em",
-              lineHeight: 1.12,
-              margin: 0,
-              color: "var(--text)",
-            }}
-          >
-            More than a name behind us
-          </h2>
-          <p style={{ color: "var(--muted)", fontSize: 16.5, lineHeight: 1.7, margin: "clamp(16px,2.5vh,22px) auto 0" }}>
-            The Institute’s support lets the Investment Club do more than meet and talk markets. It
-            means members can build on Bloomberg Terminals, earn modeling and valuation
-            certifications, take funded internships, and meet the professionals and alumni who
-            actually hire. It levels the playing field — a small-college club with the tools,
-            training, and network of a much bigger one.
-          </p>
-          <a
-            href="https://www.hws.edu/centers/melly-institute/default.aspx"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              marginTop: "clamp(20px,3vh,28px)",
-              color: "var(--text)",
-              fontWeight: 700,
-              fontSize: 15.5,
-              textDecoration: "underline",
-            }}
-          >
-            Visit the Melly Institute <span aria-hidden>→</span>
-          </a>
-        </div>
-      </section>
     </main>
   );
 }

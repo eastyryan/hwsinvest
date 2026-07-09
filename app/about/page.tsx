@@ -1,17 +1,9 @@
 import { board } from "@/data/board";
 import { contactEmail } from "@/data/club";
 import ContactForm from "@/components/ContactForm";
+import MemberCard from "@/components/MemberCard";
 
 export const metadata = { title: "About · HWS Investment Club" };
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
 
 const principles = [
   {
@@ -47,31 +39,6 @@ const principles = [
     ),
   },
 ];
-
-function LinkedInButton({ href }: { href?: string }) {
-  return (
-    <a
-      href={href || "#"}
-      target={href ? "_blank" : undefined}
-      rel="noopener noreferrer"
-      aria-label="LinkedIn profile"
-      style={{
-        flexShrink: 0,
-        width: 30,
-        height: 30,
-        borderRadius: 8,
-        background: "var(--text)",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--bg)">
-        <path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.22 8.06h4.56V24H.22V8.06zM8.34 8.06h4.37v2.18h.06c.61-1.16 2.1-2.38 4.32-2.38 4.62 0 5.47 3.04 5.47 6.99V24h-4.56v-7.05c0-1.68-.03-3.84-2.34-3.84-2.34 0-2.7 1.83-2.7 3.72V24H8.34V8.06z" />
-      </svg>
-    </a>
-  );
-}
 
 export default function AboutPage() {
   return (
@@ -197,70 +164,7 @@ export default function AboutPage() {
           }}
         >
           {board.map((m) => (
-            <div
-              key={m.name + m.role}
-              style={{
-                position: "relative",
-                borderRadius: 16,
-                overflow: "hidden",
-                aspectRatio: "4 / 5",
-                background: "var(--card2)",
-              }}
-            >
-              {m.img ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={m.img}
-                  alt={m.name}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    background: "var(--wsGreen)",
-                    color: "#fff",
-                    fontSize: "clamp(44px,7vw,64px)",
-                    fontWeight: 700,
-                    letterSpacing: "-0.02em",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {initials(m.name)}
-                </div>
-              )}
-
-              {/* Floating name/title label */}
-              <div
-                style={{
-                  position: "absolute",
-                  left: 12,
-                  right: 12,
-                  bottom: 12,
-                  background: "var(--card)",
-                  border: "1px solid var(--line)",
-                  borderRadius: 12,
-                  padding: "12px 14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  boxShadow: "0 6px 20px -8px rgba(0,0,0,0.25)",
-                }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontWeight: 700, fontSize: 15, color: "var(--text)", margin: 0, letterSpacing: "-0.01em" }}>
-                    {m.name}
-                  </p>
-                  <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "2px 0 0" }}>
-                    {m.role}
-                  </p>
-                </div>
-                <LinkedInButton href={m.linkedin || undefined} />
-              </div>
-            </div>
+            <MemberCard key={m.name + m.role} member={m} />
           ))}
         </div>
       </section>
