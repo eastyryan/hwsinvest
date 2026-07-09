@@ -255,6 +255,9 @@ body {
 .stat-item + .stat-item {
   border-left: 1px solid var(--brandSolid);
 }
+.stat-grid-green .stat-item + .stat-item {
+  border-left-color: var(--wsGreen);
+}
 
 /* Headings that stay on one line on desktop but may wrap on mobile. */
 .heading-nowrap {
@@ -268,6 +271,9 @@ body {
   .stat-item + .stat-item {
     border-left: none;
     border-top: 1px solid var(--brandSolid);
+  }
+  .stat-grid-green .stat-item + .stat-item {
+    border-top-color: var(--wsGreen);
   }
   .heading-nowrap {
     white-space: normal;

@@ -61,9 +61,6 @@ export default function SponsorsPage() {
         />
         <div style={{ position: "absolute", inset: 0, background: "rgba(9,7,16,0.55)" }} />
         <div style={{ position: "relative", textAlign: "center", padding: "0 20px" }}>
-          <p style={{ color: "rgba(255,255,255,0.85)", fontWeight: 700, fontSize: 14, letterSpacing: "0.02em", margin: 0 }}>
-            Proudly sponsored by
-          </p>
           <h1
             style={{
               color: "#fff",
@@ -71,7 +68,7 @@ export default function SponsorsPage() {
               fontSize: "clamp(34px,6vw,64px)",
               letterSpacing: "-0.03em",
               lineHeight: 1.08,
-              margin: "10px 0 0",
+              margin: 0,
             }}
           >
             The Melly Institute
@@ -92,29 +89,50 @@ export default function SponsorsPage() {
             color: "var(--text)",
           }}
         >
-          The HWS Investment Club is proud to be sponsored by{" "}
-          <span style={{ color: "var(--muted)" }}>
-            the Melly Institute for Business, Innovation and Leadership.
-          </span>
+          The HWS Investment Club is proud to be sponsored by the Melly Institute for Business,
+          Innovation and Leadership.
         </h2>
-        <p style={{ color: "var(--muted)", fontSize: 16.5, lineHeight: 1.7, margin: "20px 0 0", maxWidth: 680 }}>
-          The Institute was founded through a transformative $70 million gift from{" "}
-          <strong style={{ color: "var(--text)" }}>L. Thomas Melly ’52</strong>, an HWS alumnus
-          and Wall Street icon, and his wife{" "}
-          <strong style={{ color: "var(--text)" }}>Judith Hershey Melly</strong>. Their gift was
-          built to prepare a new generation of HWS students for careers in finance and business —
-          giving them the tools, the experience, and the connections that used to be reserved for
-          students at much larger schools. For our members, that support is what turns interest in
-          the markets into a real path onto Wall Street.
-        </p>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: "clamp(24px,4vw,44px)",
+            marginTop: "clamp(24px,4vh,36px)",
+          }}
+        >
+          <p style={{ flex: "1 1 340px", color: "var(--muted)", fontSize: 16.5, lineHeight: 1.7, margin: 0 }}>
+            The Institute was founded through a transformative $70 million gift from{" "}
+            <strong style={{ color: "var(--text)" }}>L. Thomas Melly ’52</strong>, an HWS alumnus
+            and Wall Street icon, and his wife{" "}
+            <strong style={{ color: "var(--text)" }}>Judith Hershey Melly</strong>. Their gift was
+            built to prepare a new generation of HWS students for careers in finance and business —
+            giving them the tools, the experience, and the connections that used to be reserved for
+            students at much larger schools. For our members, that support is what turns interest in
+            the markets into a real path onto Wall Street.
+          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/melly-couple.webp"
+            alt="L. Thomas Melly ’52 and Judith Hershey Melly"
+            style={{
+              flex: "1 1 360px",
+              width: "100%",
+              maxWidth: 480,
+              borderRadius: 16,
+              border: "1px solid var(--wsGreen)",
+              display: "block",
+            }}
+          />
+        </div>
       </section>
 
       {/* ---------------- Stat band ---------------- */}
       <section style={{ paddingTop: "clamp(40px,6vh,64px)" }}>
         <div
-          className="stat-grid"
+          className="stat-grid stat-grid-green"
           style={{
-            border: "1px solid var(--line)",
+            border: "1px solid var(--wsGreen)",
             borderRadius: 18,
             overflow: "hidden",
             background: "var(--card)",
@@ -137,22 +155,18 @@ export default function SponsorsPage() {
       {/* ---------------- What the gift funds ---------------- */}
       <section style={{ paddingTop: "clamp(56px,8vh,96px)" }}>
         <h2
+          className="heading-nowrap"
           style={{
             fontWeight: 700,
-            fontSize: "clamp(28px,4vw,46px)",
+            fontSize: "clamp(24px,3.4vw,42px)",
             letterSpacing: "-0.025em",
             lineHeight: 1.12,
-            margin: 0,
+            margin: "0 0 26px",
             color: "var(--text)",
-            maxWidth: "18ch",
           }}
         >
           What the gift puts in students’ hands
         </h2>
-        <p style={{ color: "var(--muted)", fontSize: 16, lineHeight: 1.65, margin: "12px 0 26px", maxWidth: 620 }}>
-          The Melly Institute funds the resources and experiences that our members lean on most as
-          they prepare for finance careers.
-        </p>
 
         <div
           style={{
