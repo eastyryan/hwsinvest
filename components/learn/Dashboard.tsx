@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Folder, ArrowRight } from "lucide-react";
+import { Folder, ArrowRight, LineChart } from "lucide-react";
 import { TRACKS } from "@/data/learn";
 import { TRACK_ICON } from "./icons";
 import { loadProgress, trackCompletion, type Progress } from "@/lib/progress";
@@ -28,17 +28,30 @@ export default function Dashboard({ admin }: { admin: boolean }) {
         </div>
       </div>
 
-      {/* Files */}
-      <Link href="/members/files" className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, margin: "clamp(28px,4vh,40px) 0 36px", textDecoration: "none" }}>
-        <span style={iconBadge}><Folder size={20} strokeWidth={1.9} /></span>
-        <div style={{ flex: 1 }}>
-          <div className="h-sub" style={{ fontSize: 18 }}>Club Files</div>
-          <p style={{ fontSize: 14, color: "var(--muted)", margin: "4px 0 0", lineHeight: 1.5 }}>
-            Browse, preview, and download every document — models, decks, guides, and recaps.
-          </p>
-        </div>
-        <ArrowRight size={20} color="var(--brand)" />
-      </Link>
+      {/* Tools */}
+      <div style={{ display: "grid", gap: 14, margin: "clamp(28px,4vh,40px) 0 36px" }}>
+        <Link href="/members/files" className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
+          <span style={iconBadge}><Folder size={20} strokeWidth={1.9} /></span>
+          <div style={{ flex: 1 }}>
+            <div className="h-sub" style={{ fontSize: 18 }}>Club Files</div>
+            <p style={{ fontSize: 14, color: "var(--muted)", margin: "4px 0 0", lineHeight: 1.5 }}>
+              Browse, preview, and download every document — models, decks, guides, and recaps.
+            </p>
+          </div>
+          <ArrowRight size={20} color="var(--brand)" />
+        </Link>
+
+        <Link href="/members/research" className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
+          <span style={iconBadge}><LineChart size={20} strokeWidth={1.9} /></span>
+          <div style={{ flex: 1 }}>
+            <div className="h-sub" style={{ fontSize: 18 }}>Company Research</div>
+            <p style={{ fontSize: 14, color: "var(--muted)", margin: "4px 0 0", lineHeight: 1.5 }}>
+              Pull any US-listed company&apos;s full financials from SEC filings — statements, ratios, charts, and Excel export.
+            </p>
+          </div>
+          <ArrowRight size={20} color="var(--brand)" />
+        </Link>
+      </div>
 
       {/* Tracks */}
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>

@@ -20,9 +20,12 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files — KEEP YOUR API KEYS OUT OF GIT
-.env*.local
 .env
+.env*
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# vercel (project link + downloaded OIDC token)
+.vercel

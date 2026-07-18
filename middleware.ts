@@ -64,6 +64,8 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Protect the members area and the admin uploader.
-  matcher: ["/members/:path*", "/admin/:path*"],
+  // Protect the members area, the admin uploader, and the research API the
+  // members-only company pages read from (those routes live outside /members,
+  // so they need to be listed explicitly or they'd be publicly callable).
+  matcher: ["/members/:path*", "/admin/:path*", "/api/research/:path*"],
 };
