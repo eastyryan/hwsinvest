@@ -3,6 +3,7 @@ import { Newsreader, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import ScrollReveal from "@/components/ScrollReveal";
 
 const newsreader = Newsreader({
   subsets: ["latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({
         <Nav />
         {children}
         <Footer />
+        <ScrollReveal />
       </body>
     </html>
   );

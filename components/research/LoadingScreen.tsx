@@ -29,7 +29,13 @@ export default function LoadingScreen({ name }: { name: string }) {
         padding: "0 24px",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 400 }}>
+      {/* One stable announcement. The rotating copy below is decorative: piping
+          it through a live region made a screen reader read six marketing lines
+          on a loop while the page loaded. */}
+      <p role="status" className="sr-only">
+        Loading financial statements for {name}.
+      </p>
+      <div style={{ width: "100%", maxWidth: 400 }} aria-hidden>
         <p className="rsch-panel-label">Opening the books on</p>
         <p
           className="h-sub"

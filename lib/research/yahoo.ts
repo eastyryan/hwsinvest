@@ -2,13 +2,16 @@
 // yfinance Python library wraps). Everything here degrades gracefully — the
 // app must render fully without it.
 
+import { fetchJson, singleFlight } from "./http";
+import { cached } from "./cache";
+import { isValidTicker } from "./validate";
+
 export interface CompanyProfile {
   sector?: string;
   industry?: string;
   description?: string;
   website?: string;
   marketCap?: number;
-  price?: number;
   currency?: string;
 }
 
@@ -17,18 +20,34 @@ const BROWSER_UA =
 
 let crumbCache: { cookie: string; crumb: string; at: number } | null = null;
 
+/** Timed fetch for the two non-JSON crumb calls, which fetchJson can't cover. */
+async function fetchWithTimeout(url: string, init: RequestInit, ms: number) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal, cache: "no-store" });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function getCrumb(): Promise<{ cookie: string; crumb: string } | null> {
   if (crumbCache && Date.now() - crumbCache.at < 30 * 60 * 1000) return crumbCache;
   try {
-    const r1 = await fetch("https://fc.yahoo.com", {
-      headers: { "User-Agent": BROWSER_UA },
-      redirect: "manual",
-    });
+    // This call is uncached and runs whenever the crumb is cold. Without a
+    // timeout a hung fc.yahoo.com pinned the function for the full maxDuration.
+    const r1 = await fetchWithTimeout(
+      "https://fc.yahoo.com",
+      { headers: { "User-Agent": BROWSER_UA }, redirect: "manual" },
+      5_000
+    );
     const cookie = r1.headers.get("set-cookie")?.split(";")[0] ?? "";
     if (!cookie) return null;
-    const r2 = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", {
-      headers: { "User-Agent": BROWSER_UA, Cookie: cookie },
-    });
+    const r2 = await fetchWithTimeout(
+      "https://query2.finance.yahoo.com/v1/test/getcrumb",
+      { headers: { "User-Agent": BROWSER_UA, Cookie: cookie } },
+      5_000
+    );
     const crumb = (await r2.text()).trim();
     if (!crumb || crumb.includes("<")) return null;
     crumbCache = { cookie, crumb, at: Date.now() };
@@ -38,53 +57,60 @@ async function getCrumb(): Promise<{ cookie: string; crumb: string } | null> {
   }
 }
 
+/**
+ * Sector/industry/market-cap decoration.
+ *
+ * Note this no longer fetches price: the chart endpoint it used duplicated the
+ * one getLatestQuote already calls, and fetch memoization does not apply in
+ * Route Handlers, so both requests actually went out on every page load.
+ */
 export async function getProfile(ticker: string): Promise<CompanyProfile | null> {
+  if (!isValidTicker(ticker)) return null;
+  const key = `yahooprofile:v2:${ticker.toUpperCase()}`;
   try {
-    const auth = await getCrumb();
-    let profile: CompanyProfile = {};
+    return await singleFlight(key, () =>
+      cached(key, { ttl: 3_600, tags: ["profile"] }, async () => {
+        const auth = await getCrumb();
+        if (!auth) return null;
 
-    if (auth) {
-      const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(
-        ticker
-      )}?modules=assetProfile,price&crumb=${encodeURIComponent(auth.crumb)}`;
-      const res = await fetch(url, {
-        headers: { "User-Agent": BROWSER_UA, Cookie: auth.cookie },
-        next: { revalidate: 3600 },
-      });
-      if (res.ok) {
-        const data = await res.json();
+        const data = await fetchJson<{
+          quoteSummary?: {
+            result?: {
+              assetProfile?: {
+                sector?: string;
+                industry?: string;
+                longBusinessSummary?: string;
+                website?: string;
+              };
+              price?: { marketCap?: { raw?: number }; currency?: string };
+            }[];
+          };
+        }>(
+          `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(
+            ticker
+          )}?modules=assetProfile,price&crumb=${encodeURIComponent(auth.crumb)}`,
+          {
+            source: "Yahoo Finance",
+            headers: { "User-Agent": BROWSER_UA, Cookie: auth.cookie },
+            timeoutMs: 8_000,
+            retries: 1,
+            nullOn: [401, 403, 404],
+          }
+        );
+
         const result = data?.quoteSummary?.result?.[0];
-        const ap = result?.assetProfile;
-        const pr = result?.price;
-        profile = {
-          sector: ap?.sector,
-          industry: ap?.industry,
-          description: ap?.longBusinessSummary,
-          website: ap?.website,
-          marketCap: pr?.marketCap?.raw,
-          price: pr?.regularMarketPrice?.raw,
-          currency: pr?.currency,
+        if (!result) return null;
+        const profile: CompanyProfile = {
+          sector: result.assetProfile?.sector,
+          industry: result.assetProfile?.industry,
+          description: result.assetProfile?.longBusinessSummary,
+          website: result.assetProfile?.website,
+          marketCap: result.price?.marketCap?.raw,
+          currency: result.price?.currency,
         };
-      }
-    }
-
-    // Fallback for price: the chart endpoint usually works without a crumb.
-    if (profile.price == null) {
-      const res = await fetch(
-        `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=1d&interval=1d`,
-        { headers: { "User-Agent": BROWSER_UA }, next: { revalidate: 900 } }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const meta = data?.chart?.result?.[0]?.meta;
-        if (meta?.regularMarketPrice != null) {
-          profile.price = meta.regularMarketPrice;
-          profile.currency = profile.currency ?? meta.currency;
-        }
-      }
-    }
-
-    return Object.values(profile).some((v) => v != null) ? profile : null;
+        return Object.values(profile).some((v) => v != null) ? profile : null;
+      })
+    );
   } catch {
     return null;
   }

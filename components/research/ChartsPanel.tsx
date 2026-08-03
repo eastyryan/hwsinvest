@@ -17,6 +17,8 @@ import {
 import type { CompanyFinancials, StatementSet } from "@/lib/research/edgar";
 import { fmtValue, fmtPct } from "@/lib/research/format";
 import { CHART, AXIS_TICK, TOOLTIP_STYLE } from "./palette";
+import usePrefersReducedMotion from "./usePrefersReducedMotion";
+import { currencyPrefix, fmtMillions, fmtMoney } from "./currency";
 
 interface PricePayload {
   points: { t: number; c: number }[];
@@ -27,27 +29,61 @@ interface PricePayload {
 
 const PRICE_RANGES = ["1y", "5y", "max"] as const;
 
+const EMPTY_STATE: React.CSSProperties = {
+  display: "flex",
+  height: "100%",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "0 16px",
+  textAlign: "center",
+  fontSize: 14,
+  color: "var(--muted)",
+};
+
 function PriceChart({ ticker }: { ticker: string }) {
+  const animate = !usePrefersReducedMotion();
   const [range, setRange] = useState<(typeof PRICE_RANGES)[number]>("5y");
-  const [data, setData] = useState<PricePayload | null>(null);
-  const [failed, setFailed] = useState(false);
+  // Unlike CompanyView, this component is not remounted when `range` changes,
+  // so a stale payload could otherwise render under a newly selected range.
+  // Tagging each result with the request that produced it makes the current
+  // data derivable, which avoids resetting state from inside the effect (a
+  // synchronous setState there triggers a cascading render).
+  const requestKey = `${ticker}:${range}`;
+  const [entry, setEntry] = useState<{
+    key: string;
+    data: PricePayload | null;
+    failed: boolean;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    setData(null);
-    setFailed(false);
     fetch(`/api/research/prices/${encodeURIComponent(ticker)}?range=${range}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d) => !cancelled && setData(d))
-      .catch(() => !cancelled && setFailed(true));
+      .then((d) => !cancelled && setEntry({ key: requestKey, data: d, failed: false }))
+      .catch(() => !cancelled && setEntry({ key: requestKey, data: null, failed: true }));
     return () => {
       cancelled = true;
     };
-  }, [ticker, range]);
+  }, [ticker, range, requestKey]);
 
+  const current = entry?.key === requestKey ? entry : null;
+  const data = current?.data ?? null;
+  const failed = current?.failed ?? false;
+
+  const hasPoints = !!data && data.points.length > 0;
   const first = data?.points[0]?.c;
   const last = data?.points[data.points.length - 1]?.c;
   const changePct = first && last ? (last - first) / first : null;
+
+  const ccy = data?.currency || "USD";
+  const money = (v: number, digits = 2) => fmtMoney(v, ccy, digits);
+
+  const rangeLabel = range === "max" ? "all available history" : `the last ${range}`;
+  const chartLabel = hasPoints
+    ? `Line chart of ${ticker} closing share price over ${rangeLabel}, in ${ccy}. ` +
+      `From ${first?.toFixed(2)} to ${last?.toFixed(2)}` +
+      (changePct != null ? `, a change of ${fmtPct(changePct)}.` : ".")
+    : "";
 
   return (
     <section className="rsch-panel">
@@ -61,13 +97,15 @@ function PriceChart({ ticker }: { ticker: string }) {
         }}
       >
         <div>
-          <p className="rsch-panel-label">Stock price</p>
+          <p className="rsch-panel-label">
+            Stock price{data?.currency ? ` (${data.currency})` : ""}
+          </p>
           {data?.price != null ? (
             <p
               className="mono nums"
               style={{ margin: "8px 0 0", fontSize: 30, fontWeight: 600 }}
             >
-              ${data.price.toLocaleString("en-US", { maximumFractionDigits: 2 })}
+              {money(data.price)}
               {changePct != null && (
                 <span
                   style={{
@@ -81,7 +119,7 @@ function PriceChart({ ticker }: { ticker: string }) {
                 </span>
               )}
             </p>
-          ) : failed ? (
+          ) : failed || data ? (
             <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--muted)" }}>
               Price data is temporarily unavailable.
             </p>
@@ -89,12 +127,13 @@ function PriceChart({ ticker }: { ticker: string }) {
             <div className="rsch-skeleton" style={{ marginTop: 10, height: 32, width: 160 }} />
           )}
         </div>
-        <div className="rsch-seg">
+        <div className="rsch-seg" role="group" aria-label="Price history range">
           {PRICE_RANGES.map((r) => (
             <button
               key={r}
               type="button"
               aria-pressed={range === r}
+              aria-label={r === "max" ? "All available history" : `Last ${r}`}
               onClick={() => setRange(r)}
               style={{ textTransform: "uppercase" }}
             >
@@ -104,8 +143,22 @@ function PriceChart({ ticker }: { ticker: string }) {
         </div>
       </div>
 
-      <div style={{ marginTop: 18, height: 260 }}>
-        {data && data.points.length > 0 && (
+      <div
+        style={{ marginTop: 18, height: 260 }}
+        role={hasPoints ? "img" : undefined}
+        aria-label={hasPoints ? chartLabel : undefined}
+      >
+        {failed ? (
+          <div style={EMPTY_STATE}>
+            Price history couldn&apos;t be loaded for {ticker}.
+          </div>
+        ) : !data ? (
+          <div className="rsch-skeleton" style={{ height: "100%" }} />
+        ) : !hasPoints ? (
+          <div style={EMPTY_STATE}>
+            No price history available for {ticker} over this range.
+          </div>
+        ) : (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data.points} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
               <CartesianGrid stroke={CHART.grid} vertical={false} />
@@ -128,17 +181,14 @@ function PriceChart({ ticker }: { ticker: string }) {
                 tickLine={false}
                 width={56}
                 domain={["auto", "auto"]}
-                tickFormatter={(v) => "$" + Number(v).toLocaleString("en-US")}
+                tickFormatter={(v) => currencyPrefix(ccy) + Number(v).toLocaleString("en-US")}
               />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
                 labelFormatter={(t) =>
                   new Date(Number(t)).toLocaleDateString("en-US", { dateStyle: "medium" })
                 }
-                formatter={(v) => [
-                  "$" + Number(v).toLocaleString("en-US", { maximumFractionDigits: 2 }),
-                  "Close",
-                ]}
+                formatter={(v) => [money(Number(v)), "Close"]}
               />
               <Line
                 type="monotone"
@@ -147,6 +197,7 @@ function PriceChart({ ticker }: { ticker: string }) {
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 4 }}
+                isAnimationActive={animate}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -166,19 +217,30 @@ function metricOptions(set: StatementSet): { key: string; label: string; group: 
   return out;
 }
 
-function MetricChart({ fin }: { fin: CompanyFinancials }) {
+function MetricChart({ fin, currency }: { fin: CompanyFinancials; currency: string }) {
+  const animate = !usePrefersReducedMotion();
   const [freq, setFreq] = useState<"annual" | "quarterly">("annual");
   const [metric, setMetric] = useState("revenue");
 
   const set = freq === "annual" ? fin.annual : fin.quarterly;
   const options = useMemo(() => metricOptions(set), [set]);
+  // Derived from the data, not a hard-coded list: a statement whose title ever
+  // changes upstream would otherwise silently vanish from the picker.
+  const groups = useMemo(() => [...new Set(options.map((o) => o.group))], [options]);
+
+  // A metric present in the annual statements may be absent from the quarterly
+  // ones (and vice versa). Fall back to the first available option so the
+  // <select> and the chart never disagree about what is selected.
+  const available = useMemo(() => new Set(options.map((o) => o.key)), [options]);
+  const activeMetric = available.has(metric) ? metric : (options[0]?.key ?? metric);
+
   const line = useMemo(() => {
     for (const st of set.statements) {
-      const l = st.lines.find((l) => l.key === metric);
+      const l = st.lines.find((l) => l.key === activeMetric);
       if (l) return l;
     }
     return null;
-  }, [set, metric]);
+  }, [set, activeMetric]);
 
   const data = useMemo(() => {
     if (!line) return [];
@@ -194,6 +256,19 @@ function MetricChart({ fin }: { fin: CompanyFinancials }) {
 
   const isPerShare = line?.perShare;
   const isShares = line?.shares;
+
+  const unitLabel = isPerShare
+    ? `${currency} per share`
+    : isShares
+      ? "average shares outstanding"
+      : `${currency}, millions`;
+  const metricChartLabel =
+    data.length > 0
+      ? `Bar chart of ${line?.label ?? "selected metric"} by ${freq} period, in ${unitLabel}, ` +
+        `across ${data.length} periods from ${data[0].label} to ${data[data.length - 1].label}. ` +
+        `Earliest value ${fmtValue(data[0].value ?? null, { perShare: isPerShare, shares: isShares })}, ` +
+        `latest value ${fmtValue(data[data.length - 1].value ?? null, { perShare: isPerShare, shares: isShares })}.`
+      : "";
 
   return (
     <section className="rsch-panel">
@@ -214,12 +289,12 @@ function MetricChart({ fin }: { fin: CompanyFinancials }) {
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
           <select
-            value={metric}
+            value={activeMetric}
             onChange={(e) => setMetric(e.target.value)}
             aria-label="Metric to chart"
             className="rsch-select"
           >
-            {["Income Statement", "Balance Sheet", "Cash Flow Statement"].map((group) => (
+            {groups.map((group) => (
               <optgroup key={group} label={group}>
                 {options
                   .filter((o) => o.group === group)
@@ -231,7 +306,7 @@ function MetricChart({ fin }: { fin: CompanyFinancials }) {
               </optgroup>
             ))}
           </select>
-          <div className="rsch-seg">
+          <div className="rsch-seg" role="group" aria-label="Reporting period for this chart">
             {(["annual", "quarterly"] as const).map((f) => (
               <button
                 key={f}
@@ -247,7 +322,11 @@ function MetricChart({ fin }: { fin: CompanyFinancials }) {
         </div>
       </div>
 
-      <div style={{ marginTop: 18, height: 290 }}>
+      <div
+        style={{ marginTop: 18, height: 290 }}
+        role={data.length > 0 ? "img" : undefined}
+        aria-label={data.length > 0 ? metricChartLabel : undefined}
+      >
         {data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
@@ -273,15 +352,23 @@ function MetricChart({ fin }: { fin: CompanyFinancials }) {
                 contentStyle={TOOLTIP_STYLE}
                 formatter={(v, _name, item) => {
                   const yoy = (item?.payload as { yoy?: number | null })?.yoy;
+                  // "(1,234)M" put the unit outside the accounting parentheses
+                  // and hard-coded a dollar sign for per-share figures.
                   const base = isPerShare
-                    ? "$" + Number(v).toFixed(2)
-                    : fmtValue(Number(v), { perShare: isPerShare, shares: isShares }) +
-                      (isShares ? "" : "M");
+                    ? fmtMoney(Number(v), currency)
+                    : isShares
+                      ? fmtValue(Number(v), { shares: true })
+                      : fmtMillions(Number(v), currency);
                   return [yoy != null ? `${base}  (${fmtPct(yoy)} YoY)` : base, line?.label];
                 }}
               />
               <ReferenceLine y={0} stroke={CHART.muted} strokeWidth={1} />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={40}>
+              <Bar
+                dataKey="value"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={40}
+                isAnimationActive={animate}
+              >
                 {data.map((d, i) => (
                   <Cell key={i} fill={(d.value ?? 0) < 0 ? CHART.negative : CHART.brand} />
                 ))}
@@ -289,26 +376,15 @@ function MetricChart({ fin }: { fin: CompanyFinancials }) {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div
-            style={{
-              display: "flex",
-              height: "100%",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 14,
-              color: "var(--muted)",
-            }}
-          >
-            No data for this metric.
-          </div>
+          <div style={EMPTY_STATE}>No data for this metric.</div>
         )}
       </div>
       <p className="rsch-note">
         {isPerShare
-          ? "USD per share"
+          ? `${currency} per share`
           : isShares
             ? "Average shares outstanding"
-            : "USD millions"}
+            : `${currency} millions`}
         , {freq}. Values as filed with the SEC.
       </p>
     </section>
@@ -356,16 +432,28 @@ const FUND_OPTIONS = [
 ] as const;
 type FundKey = (typeof FUND_OPTIONS)[number]["key"];
 
-function PriceVsFundamentals({ fin }: { fin: CompanyFinancials }) {
+function PriceVsFundamentals({
+  fin,
+  currency,
+}: {
+  fin: CompanyFinancials;
+  currency: string;
+}) {
+  const animate = !usePrefersReducedMotion();
   const [fund, setFund] = useState<FundKey>("pe");
   const [prices, setPrices] = useState<{ t: number; c: number }[] | null>(null);
+  const [priceCurrency, setPriceCurrency] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/research/prices/${encodeURIComponent(fin.ticker)}?range=5y`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d: PricePayload) => !cancelled && setPrices(d.points))
+      .then((d: PricePayload) => {
+        if (cancelled) return;
+        setPrices(d.points);
+        setPriceCurrency(d.currency ?? null);
+      })
       .catch(() => !cancelled && setFailed(true));
     return () => {
       cancelled = true;
@@ -398,6 +486,12 @@ function PriceVsFundamentals({ fin }: { fin: CompanyFinancials }) {
 
   const fundLabel = FUND_OPTIONS.find((f) => f.key === fund)!.label;
   const fundIsDollarsM = fund === "revenue" || fund === "netIncome";
+  // P/E and per-share figures are meaningless if price and filings use
+  // different currencies — say so rather than quietly mixing them.
+  const mixedCurrency = priceCurrency != null && priceCurrency !== currency;
+  // The price axis is quoted in the exchange's currency; the fundamentals axis
+  // in the filer's. They are not always the same, and neither is always USD.
+  const priceCcy = priceCurrency ?? currency;
 
   const dateFmt = (t: unknown) =>
     new Date(Number(t)).toLocaleDateString("en-US", { year: "numeric", month: "short" });
@@ -437,12 +531,25 @@ function PriceVsFundamentals({ fin }: { fin: CompanyFinancials }) {
         <p className="rsch-note">
           Price data is temporarily unavailable, so this chart can&apos;t render.
         </p>
-      ) : data.length === 0 ? (
+      ) : prices === null ? (
+        // Still fetching — the skeleton only belongs in this branch.
         <div className="rsch-skeleton" style={{ marginTop: 18, height: 160 }} />
+      ) : prices.length === 0 ? (
+        <p className="rsch-note">
+          No price history is available for {fin.ticker}, so this chart can&apos;t render.
+        </p>
+      ) : data.length === 0 ? (
+        <p className="rsch-note">
+          Not enough overlapping filing data to chart {fundLabel} against the price.
+        </p>
       ) : (
         <>
           {/* Two aligned panels sharing the same time axis — never a dual-axis chart */}
-          <div style={{ marginTop: 18, height: 176 }}>
+          <div
+            style={{ marginTop: 18, height: 176 }}
+            role="img"
+            aria-label={`Line chart of ${fin.ticker} share price over the last five years, shown above a matching chart of ${fundLabel}.`}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={data}
@@ -457,12 +564,14 @@ function PriceVsFundamentals({ fin }: { fin: CompanyFinancials }) {
                   axisLine={false}
                   width={56}
                   domain={["auto", "auto"]}
-                  tickFormatter={(v) => "$" + Number(v).toLocaleString("en-US")}
+                  tickFormatter={(v) =>
+                    currencyPrefix(priceCcy) + Number(v).toLocaleString("en-US")
+                  }
                 />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
                   labelFormatter={dateFmt}
-                  formatter={(v) => ["$" + Number(v).toFixed(2), "Price"]}
+                  formatter={(v) => [fmtMoney(Number(v), priceCcy), "Price"]}
                 />
                 <Line
                   type="monotone"
@@ -470,11 +579,16 @@ function PriceVsFundamentals({ fin }: { fin: CompanyFinancials }) {
                   stroke={CHART.brand}
                   strokeWidth={2}
                   dot={false}
+                  isAnimationActive={animate}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div style={{ height: 176 }}>
+          <div
+            style={{ height: 176 }}
+            role="img"
+            aria-label={`Line chart of ${fundLabel} for ${fin.ticker} over the last five years, stepping at each quarter end, aligned to the price chart above.`}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={data}
@@ -500,7 +614,7 @@ function PriceVsFundamentals({ fin }: { fin: CompanyFinancials }) {
                     fund === "pe"
                       ? Number(v).toFixed(0) + "x"
                       : fund === "eps"
-                        ? "$" + Number(v).toFixed(1)
+                        ? fmtMoney(Number(v), currency, 1)
                         : fmtValue(Number(v))
                   }
                 />
@@ -511,8 +625,8 @@ function PriceVsFundamentals({ fin }: { fin: CompanyFinancials }) {
                     fund === "pe"
                       ? Number(v).toFixed(1) + "x"
                       : fund === "eps"
-                        ? "$" + Number(v).toFixed(2)
-                        : fmtValue(Number(v)) + "M",
+                        ? fmtMoney(Number(v), currency)
+                        : fmtMillions(Number(v), currency),
                     fundLabel,
                   ]}
                 />
@@ -523,14 +637,26 @@ function PriceVsFundamentals({ fin }: { fin: CompanyFinancials }) {
                   strokeWidth={2}
                   dot={false}
                   connectNulls
+                  isAnimationActive={animate}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
           <p className="rsch-note">
-            {fundIsDollarsM ? "Fundamental in USD millions. " : ""}Fundamentals step at each
-            quarter end. When price rises faster than the line below it, you&apos;re paying
-            more per dollar of results.
+            {/* The units clause is conditional, so the sentence has to be able
+                to start without it — it used to read "fundamentals step…". */}
+            {fundIsDollarsM
+              ? `Fundamental shown in ${currency} millions. Fundamentals step `
+              : "Fundamentals step "}
+            at each quarter end. When price rises faster than the line below it,
+            you&apos;re paying more per unit of results.
+            {mixedCurrency && (
+              <>
+                {" "}
+                Note: the price is quoted in {priceCurrency} while the filings report in{" "}
+                {currency}, so the ratio is not currency-adjusted.
+              </>
+            )}
           </p>
         </>
       )}
@@ -538,12 +664,19 @@ function PriceVsFundamentals({ fin }: { fin: CompanyFinancials }) {
   );
 }
 
-export default function ChartsPanel({ fin }: { fin: CompanyFinancials }) {
+export default function ChartsPanel({
+  fin,
+  currency = "USD",
+}: {
+  fin: CompanyFinancials;
+  /** The filer's reporting currency for statement values — not always USD. */
+  currency?: string;
+}) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <PriceChart ticker={fin.ticker} />
-      <PriceVsFundamentals fin={fin} />
-      <MetricChart fin={fin} />
+      <PriceVsFundamentals fin={fin} currency={currency} />
+      <MetricChart fin={fin} currency={currency} />
     </div>
   );
 }

@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Download } from "lucide-react";
 import type { CompanyFinancials, StatementSet, LineValues } from "@/lib/research/edgar";
 import type { Insights } from "@/lib/research/insights";
-import { fmtMarketCap } from "@/lib/research/format";
+import type { Narrative } from "@/lib/research/narrative";
+import { fmtBig, fmtMoney, isRealNumber } from "./currency";
 import LoadingScreen from "./LoadingScreen";
 import StatementTable from "./StatementTable";
-import Summary from "./Summary";
+import Summary, { type AiSummary } from "./Summary";
 import SearchBox from "./SearchBox";
 import ChartsPanel from "./ChartsPanel";
 import RatiosTable from "./RatiosTable";
@@ -19,13 +20,21 @@ interface Profile {
   sector: string | null;
   industry: string | null;
   marketCap: number | null;
+  marketCapCurrency: string;
+  /** True when market cap is price x shares rather than a reported figure. */
+  marketCapIsDerived: boolean;
   price: number | null;
+  priceCurrency: string | null;
 }
 
 type Payload = CompanyFinancials & {
   insights: Insights;
-  aiSummary: string | null;
+  /** Deterministic read, computed server-side. Ships with the statements. */
+  narrative: Narrative;
   profile: Profile;
+  /** The filer's actual reporting currency — not always USD. */
+  currency: string;
+  sharesOutstanding: number | null;
 };
 
 const MIN_LOADING_MS = 1500;
@@ -43,12 +52,14 @@ type TabKey = (typeof TABS)[number]["key"];
 
 const STATEMENT_INDEX: Record<string, number> = { income: 0, balance: 1, cashflow: 2 };
 
+function tabFromHash(): TabKey | null {
+  if (typeof window === "undefined") return null;
+  const h = window.location.hash.slice(1);
+  return TABS.some((t) => t.key === h) ? (h as TabKey) : null;
+}
+
 function initialTab(): TabKey {
-  if (typeof window !== "undefined") {
-    const h = window.location.hash.slice(1);
-    if (TABS.some((t) => t.key === h)) return h as TabKey;
-  }
-  return "overview";
+  return tabFromHash() ?? "overview";
 }
 
 function findLine(set: StatementSet, key: string): LineValues | undefined {
@@ -70,12 +81,19 @@ export default function CompanyView({
 }) {
   const [data, setData] = useState<Payload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [summary, setSummary] = useState<AiSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
   const [freq, setFreq] = useState<"annual" | "quarterly">("annual");
   const [tab, setTab] = useState<TabKey>(initialTab);
+  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     let cancelled = false;
     const started = Date.now();
+    // No reset needed here: the mount site passes key={ticker}, so a different
+    // company remounts this component with fresh state. That key is what
+    // prevents one company's financials rendering under another's name — if it
+    // is ever removed, this effect must reset `data` and `error` instead.
     (async () => {
       try {
         const res = await fetch(
@@ -98,10 +116,72 @@ export default function CompanyView({
     };
   }, [cik, ticker, name]);
 
-  function selectTab(t: TabKey) {
+  // The AI summary is a slow LLM call on its own route. It is fetched
+  // independently so the statements render as soon as the financials land.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/research/summary/${cik}?ticker=${encodeURIComponent(ticker)}`
+        );
+        if (!res.ok) throw new Error();
+        const json: { summary: AiSummary | null } = await res.json();
+        if (!cancelled) setSummary(json.summary ?? null);
+      } catch {
+        if (!cancelled) setSummary(null);
+      } finally {
+        if (!cancelled) setSummaryLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [cik, ticker]);
+
+  // The tab lives in the hash so a view is linkable. Reading it once at mount
+  // is not enough: editing the hash, following an in-page link, or using
+  // back/forward across hash entries all change the URL without remounting, and
+  // the page would silently keep showing the old tab.
+  useEffect(() => {
+    function sync() {
+      const t = tabFromHash();
+      if (t) setTab(t);
+    }
+    window.addEventListener("hashchange", sync);
+    window.addEventListener("popstate", sync);
+    return () => {
+      window.removeEventListener("hashchange", sync);
+      window.removeEventListener("popstate", sync);
+    };
+  }, []);
+
+  const selectTab = useCallback((t: TabKey) => {
     setTab(t);
     window.history.replaceState(null, "", `#${t}`);
-  }
+  }, []);
+
+  // The tab strip scrolls horizontally on narrow screens, so a deep link to
+  // "Compare" would otherwise land with the active tab off-screen and no
+  // indication that the strip scrolls at all.
+  //
+  // Adjusting `scrollLeft` by hand rather than calling scrollIntoView: the
+  // strip lives inside the sticky header, and scrollIntoView walks *every*
+  // scrollable ancestor, so it nudged the whole document down and tucked the
+  // company name under the header on load.
+  useEffect(() => {
+    const nav = navRef.current;
+    const el = nav?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!nav || !el) return;
+    const navBox = nav.getBoundingClientRect();
+    const elBox = el.getBoundingClientRect();
+    const pad = 24;
+    if (elBox.left < navBox.left + pad) {
+      nav.scrollLeft += elBox.left - navBox.left - pad;
+    } else if (elBox.right > navBox.right - pad) {
+      nav.scrollLeft += elBox.right - navBox.right + pad;
+    }
+  }, [tab, data]);
 
   if (error) {
     return (
@@ -143,13 +223,31 @@ export default function CompanyView({
     tab === "balance" ? findLine(set, "totalAssets") : findLine(set, "revenue");
   const denominatorLabel = tab === "balance" ? "total assets" : "revenue";
 
+  // Filings are not always in USD. Say so rather than implying dollars.
+  const currency = data.currency || "USD";
+  const isForeignCurrency = currency !== "USD";
+  const marketCapCurrency = profile.marketCapCurrency || "USD";
+  const priceCurrency = profile.priceCurrency ?? marketCapCurrency;
+
+  // A market cap of exactly 0 is never real — it means the shares-outstanding
+  // input was missing, so price x shares collapsed. SPG shipped as
+  // "~$0M USD market cap", which is worse than saying nothing.
+  const marketCapText = isRealNumber(profile.marketCap)
+    ? (profile.marketCapIsDerived ? "~" : "") +
+      fmtBig(profile.marketCap, marketCapCurrency) +
+      " market cap" +
+      (profile.marketCapIsDerived ? " (est. from price × shares)" : "")
+    : null;
+  // A bare "226.79 USD" next to a market cap reads as another size figure.
+  const priceText = isRealNumber(profile.price)
+    ? `${fmtMoney(profile.price, priceCurrency)} per share`
+    : null;
+
   const meta =
     [
       [profile.sector, profile.industry].filter(Boolean).join(", "),
-      profile.marketCap != null ? fmtMarketCap(profile.marketCap) + " market cap" : null,
-      profile.price != null
-        ? "$" + profile.price.toLocaleString("en-US", { maximumFractionDigits: 2 })
-        : null,
+      marketCapText,
+      priceText,
     ]
       .filter(Boolean)
       .join("  ·  ") || `SEC CIK ${cik}`;
@@ -179,7 +277,7 @@ export default function CompanyView({
             <SearchBox />
           </div>
         </div>
-        <nav className="container-x rsch-tabs" aria-label="Company sections">
+        <nav ref={navRef} className="container-x rsch-tabs" aria-label="Company sections">
           {TABS.map((t) => (
             <button
               key={t.key}
@@ -206,18 +304,34 @@ export default function CompanyView({
           }}
         >
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
+            <div
+              style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 13 }}
+            >
               <h1 className="h-page" style={{ fontSize: "clamp(28px,4vw,40px)", margin: 0 }}>
                 {data.name}
               </h1>
               <span className="rsch-tag">{ticker}</span>
+              {isForeignCurrency && (
+                <span
+                  className="rsch-tag-ghost"
+                  title={`This company reports its financial statements in ${currency}, not US dollars.`}
+                  style={{
+                    borderColor: "var(--yellow)",
+                    color: "var(--orangeText)",
+                  }}
+                >
+                  Reports in {currency}
+                </span>
+              )}
             </div>
             <p style={{ margin: "9px 0 0", fontSize: 14.5, color: "var(--muted)" }}>{meta}</p>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {showFreqControls && (
-              <div className="rsch-seg">
+              // Not tabs — this picks the reporting period for the panel below,
+              // so it is a two-option group of toggle buttons.
+              <div className="rsch-seg" role="group" aria-label="Reporting period">
                 {(["annual", "quarterly"] as const).map((f) => (
                   <button
                     key={f}
@@ -243,19 +357,28 @@ export default function CompanyView({
 
         <div style={{ marginTop: 34 }}>
           {tab === "overview" && (
-            <Summary insights={data.insights} aiSummary={data.aiSummary} />
+            <Summary
+              insights={data.insights}
+              narrative={data.narrative}
+              summary={summary}
+              loading={summaryLoading}
+            />
           )}
           {isStatementTab && (
+            /* key={tab}: showAll/commonSize must reset per statement — the
+               common-size denominator differs between the balance sheet and the rest. */
             <StatementTable
+              key={tab}
               statement={set.statements[STATEMENT_INDEX[tab]]}
               periods={set.periods}
               quarterly={freq === "quarterly"}
               denominator={denominator}
               denominatorLabel={denominatorLabel}
+              currency={currency}
             />
           )}
           {tab === "ratios" && <RatiosTable fin={data} freq={freq} maxCols={8} />}
-          {tab === "charts" && <ChartsPanel fin={data} />}
+          {tab === "charts" && <ChartsPanel fin={data} currency={currency} />}
           {tab === "compare" && <Compare base={data} />}
         </div>
 

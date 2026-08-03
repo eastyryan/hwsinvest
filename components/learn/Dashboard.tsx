@@ -30,7 +30,7 @@ export default function Dashboard({ admin }: { admin: boolean }) {
 
       {/* Tools */}
       <div style={{ display: "grid", gap: 14, margin: "clamp(28px,4vh,40px) 0 36px" }}>
-        <Link href="/members/files" className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
+        <Link href="/members/files" data-reveal className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
           <span style={iconBadge}><Folder size={20} strokeWidth={1.9} /></span>
           <div style={{ flex: 1 }}>
             <div className="h-sub" style={{ fontSize: 18 }}>Club Files</div>
@@ -41,7 +41,7 @@ export default function Dashboard({ admin }: { admin: boolean }) {
           <ArrowRight size={20} color="var(--brand)" />
         </Link>
 
-        <Link href="/members/research" className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
+        <Link href="/members/research" data-reveal className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
           <span style={iconBadge}><LineChart size={20} strokeWidth={1.9} /></span>
           <div style={{ flex: 1 }}>
             <div className="h-sub" style={{ fontSize: 18 }}>Company Research</div>
@@ -69,7 +69,7 @@ export default function Dashboard({ admin }: { admin: boolean }) {
           const { done, total } = p ? trackCompletion(p, t.id, ids) : { done: 0, total: ids.length };
           const finished = done === total && total > 0;
           return (
-            <Link key={t.id} href={`/members/learn/${t.id}`} className="card lift card-hover-brand" style={{ display: "flex", flexDirection: "column", gap: 12, padding: 20, textDecoration: "none" }}>
+            <Link key={t.id} href={`/members/learn/${t.id}`} data-reveal className="card lift card-hover-brand" style={{ display: "flex", flexDirection: "column", gap: 12, padding: 20, textDecoration: "none" }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
                 <span style={iconBadge}>{Icon && <Icon size={20} strokeWidth={1.9} />}</span>
                 {done > 0 && <Ring done={done} total={total} finished={finished} />}

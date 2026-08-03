@@ -30,6 +30,11 @@ export default function RatiosTable({
     );
   }
 
+  const basis =
+    freq === "quarterly"
+      ? "Trailing-twelve-month figures at each quarter end"
+      : "Fiscal-year figures";
+
   return (
     <section>
       <div
@@ -45,22 +50,26 @@ export default function RatiosTable({
         <h2 className="h-sub" style={{ fontSize: 22 }}>
           Ratios &amp; Returns
         </h2>
-        <p style={{ margin: 0, fontSize: 12.5, color: "var(--faint)" }}>
-          {freq === "quarterly"
-            ? "Trailing-twelve-month figures at each quarter end"
-            : "Fiscal-year figures"}
-        </p>
+        <p style={{ margin: 0, fontSize: 12.5, color: "var(--faint)" }}>{basis}</p>
       </div>
 
       <div className="rsch-table-wrap">
         <table className="rsch-table">
+          <caption className="sr-only">
+            Ratios and returns. {basis}. Periods run newest first. Margins and returns
+            are percentages; multiples are shown with a trailing x.
+          </caption>
           <thead>
             <tr>
-              <th className="rsch-th-label rsch-sticky" style={{ minWidth: 230 }}>
+              <th
+                scope="col"
+                className="rsch-th-label rsch-sticky"
+                style={{ minWidth: 230 }}
+              >
                 Ratio
               </th>
               {cols.map((p) => (
-                <th key={p.key} className="rsch-th-num" style={{ minWidth: 96 }}>
+                <th key={p.key} scope="col" className="rsch-th-num" style={{ minWidth: 96 }}>
                   {p.label}
                 </th>
               ))}
@@ -69,7 +78,7 @@ export default function RatiosTable({
           <tbody>
             {ratios.lines.map((line) => (
               <tr key={line.key}>
-                <td className="rsch-td-label rsch-sticky">
+                <th scope="row" className="rsch-td-label rsch-sticky">
                   <span style={{ fontWeight: 600, color: "var(--text)" }}>{line.label}</span>
                   {line.note && (
                     <span
@@ -83,7 +92,7 @@ export default function RatiosTable({
                       {line.note}
                     </span>
                   )}
-                </td>
+                </th>
                 {cols.map((p) => (
                   <td key={p.key} className="rsch-td-num">
                     {fmtRatio(line.values[p.key], line.format)}

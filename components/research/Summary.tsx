@@ -1,6 +1,13 @@
 "use client";
 
 import type { Insights, Insight } from "@/lib/research/insights";
+import type { Narrative } from "@/lib/research/narrative";
+
+export interface AiSummary {
+  business: string;
+  momentum: string;
+  catalysts: string;
+}
 
 function Group({
   title,
@@ -64,20 +71,47 @@ function Group({
 
 export default function Summary({
   insights,
-  aiSummary,
+  narrative,
+  summary,
+  loading = false,
 }: {
   insights: Insights;
-  aiSummary?: string | null;
+  /** Deterministic read, computed from the filings. Always present. */
+  narrative?: Narrative | null;
+  /** Optional Claude version; supersedes the deterministic one when present. */
+  summary?: AiSummary | null;
+  loading?: boolean;
 }) {
+  // The deterministic narrative renders immediately and needs no API key. The
+  // model-written one replaces it only once it actually arrives, so there is no
+  // empty state and no waiting on a network call for the default experience.
+  const shown = summary ?? narrative ?? null;
+  const isAi = summary != null;
+
   return (
     <section>
-      {aiSummary && (
+      {shown && (
         <div style={{ marginBottom: 40 }}>
-          <h2 className="h-sub" style={{ fontSize: 22 }}>
-            Analyst read
-          </h2>
+          <div
+            style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 12 }}
+          >
+            <h2 className="h-sub" style={{ fontSize: 22 }}>
+              Analyst read
+            </h2>
+            {loading && !isAi && (
+              <span
+                role="status"
+                aria-live="polite"
+                style={{ fontSize: 12.5, color: "var(--faint)" }}
+              >
+                Refining with Claude&hellip;
+              </span>
+            )}
+          </div>
           <p className="rsch-note" style={{ marginTop: 5 }}>
-            Written by Claude from the filed numbers below. Not investment advice.
+            {isAi
+              ? "Written by Claude from the filed numbers below. Not investment advice."
+              : "Computed directly from the filed numbers below. Not investment advice."}
           </p>
           <div
             className="card"
@@ -88,7 +122,7 @@ export default function Summary({
               background: "var(--card2)",
             }}
           >
-            {aiSummary.split(/\n\n+/).map((para, i) => (
+            {[shown.business, shown.momentum, shown.catalysts].map((para, i) => (
               <p
                 key={i}
                 style={{

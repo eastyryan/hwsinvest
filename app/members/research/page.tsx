@@ -64,7 +64,7 @@ export default function ResearchPage() {
             body: "Chart any line item against price and fundamentals, or pull the whole history down as a formatted Excel workbook.",
           },
         ].map((f) => (
-          <div key={f.title} className="card" style={{ padding: 20 }}>
+          <div key={f.title} data-reveal className="card" style={{ padding: 20 }}>
             <div className="h-sub" style={{ fontSize: 17.5 }}>
               {f.title}
             </div>

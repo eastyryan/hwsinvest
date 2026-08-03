@@ -67,6 +67,23 @@ function avgGetter(set: StatementSet, key: string, periodsPerYear: number): Gett
 const div = (a: number | null, b: number | null): number | null =>
   a != null && b != null && b !== 0 ? a / b : null;
 
+/**
+ * Divide, but only where a positive denominator makes the result meaningful.
+ *
+ * Companies that have bought back stock for decades carry genuinely negative
+ * shareholders' equity — McDonald's, Boeing and Home Depot all do, and the
+ * balance sheets tie. Dividing by it is arithmetically fine and financially
+ * meaningless: Home Depot's return on equity came out at 1450% and McDonald's
+ * debt-to-equity at -22.8x, which reads as negative leverage when the truth is
+ * that the denominator is below zero.
+ *
+ * Every terminal reports these as not-meaningful rather than printing a number,
+ * because a reader cannot rank or compare them. Returning null does that: the
+ * cell renders as a dash and the Excel export omits the formula entirely.
+ */
+const divPositive = (a: number | null, b: number | null): number | null =>
+  a != null && b != null && b > 0 ? a / b : null;
+
 export function buildRatios(
   fin: CompanyFinancials,
   freq: "annual" | "quarterly"
@@ -108,11 +125,18 @@ export function buildRatios(
     return netIncome(i);
   };
 
+  // Averaged to match ROE and ROA. Previously this used point-in-time equity and
+  // debt while the numerator was a TTM flow, so one table mixed two conventions:
+  // ROE/ROA divided by an average balance, ROIC by a period-end snapshot.
+  const avgStDebt = avgGetter(set, "stDebt", ppy);
+  const avgLtDebt = avgGetter(set, "ltDebt", ppy);
   const investedCapital: Getter = (i) => {
-    const eq = equity(i);
-    const debt = totalDebt(i);
+    const eq = avgEquity(i);
     if (eq == null) return null;
-    return eq + (debt ?? 0);
+    const lt = avgLtDebt(i);
+    const st = avgStDebt(i);
+    const debt = lt == null && st == null ? 0 : (lt ?? 0) + (st ?? 0);
+    return eq + debt;
   };
 
   const defs: { key: string; label: string; format: RatioFormat; calc: Getter; note?: string }[] = [
@@ -124,21 +148,21 @@ export function buildRatios(
       key: "roe",
       label: "Return on Equity",
       format: "pct",
-      calc: (i) => div(netIncome(i), avgEquity(i)),
-      note: "Net income / average shareholders' equity",
+      calc: (i) => divPositive(netIncome(i), avgEquity(i)),
+      note: "Net income / average shareholders' equity. Not meaningful when equity is negative.",
     },
     {
       key: "roa",
       label: "Return on Assets",
       format: "pct",
-      calc: (i) => div(netIncome(i), avgAssets(i)),
+      calc: (i) => divPositive(netIncome(i), avgAssets(i)),
     },
     {
       key: "roic",
       label: "Return on Invested Capital",
       format: "pct",
-      calc: (i) => div(nopat(i), investedCapital(i)),
-      note: "After-tax operating profit / (equity + total debt)",
+      calc: (i) => divPositive(nopat(i), investedCapital(i)),
+      note: "After-tax operating profit / (equity + total debt). Not meaningful when invested capital is negative.",
     },
     {
       key: "rdPct",
@@ -156,7 +180,7 @@ export function buildRatios(
       key: "debtToEquity",
       label: "Debt / Equity",
       format: "x",
-      calc: (i) => div(totalDebt(i), equity(i)),
+      calc: (i) => divPositive(totalDebt(i), equity(i)),
     },
   ];
 
