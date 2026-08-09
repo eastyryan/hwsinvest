@@ -26,12 +26,12 @@
 //    year to balance (minority interest, deferred taxes). Both are held
 //    constant across the projection. Because the cash flow statement is built
 //    from the same drivers as the balance sheet, the projected balance sheet
-//    then balances by construction — the check row proves it rather than
+//    then balances by construction: the check row proves it rather than
 //    assuming it.
 //
 // 3. Operating expenses are driven *including* depreciation, so EBIT is gross
 //    profit less operating expenses and therefore reproduces reported operating
-//    income at the base year. EBITDA is then EBIT + D&A — the same definition
+//    income at the base year. EBITDA is then EBIT + D&A, the same definition
 //    the historical statements and the Model Checks sheet use.
 //
 //    An earlier version derived the opex ratio the same way but then subtracted
@@ -47,7 +47,7 @@
 // 4. A revolver funds any cash shortfall. Without one, an aggressive assumption
 //    (or a company that is simply burning cash) drove closing cash negative and
 //    the balance sheet then presented a negative number as an asset while the
-//    balance check still read zero — the model looked fine and was nonsense.
+//    balance check still read zero: the model looked fine and was nonsense.
 //    The revolver draws whatever is needed to hold cash at the minimum-cash
 //    input and sweeps surplus cash back against the balance. Interest accrues
 //    on its *opening* balance too, so the model stays acyclic.
@@ -211,7 +211,7 @@ function fade(start: number, end: number, years: number) {
  * A driver whose input is *missing* falls back to the stated default rather
  * than to zero. That distinction is load-bearing: Apple stopped tagging
  * interest expense, and coercing the missing value to zero before clamping into
- * [0, 0.2] produced a 0% interest rate on $99bn of debt — a plausible-looking
+ * [0, 0.2] produced a 0% interest rate on $99bn of debt, a plausible-looking
  * number that was pure artefact. Same for capex.
  */
 function deriveAssumptions(
@@ -236,7 +236,7 @@ function deriveAssumptions(
   growth = clamp(growth, -0.2, 0.35, 0.03);
   // Fade growth toward a mature long-run rate across the horizon rather than
   // holding the last reading flat for five years. A high grower reverting to
-  // ~3% is the defensible default — NVIDIA at 35% forever is not — and the model
+  // ~3% is the defensible default (NVIDIA at 35% forever is not), and the model
   // already accepts a per-year growth vector, so this only moves the starting
   // numbers, not the mechanics. We only ever fade DOWN: a company already at or
   // below the long-run rate is held flat rather than assumed to accelerate.
@@ -283,7 +283,7 @@ function deriveAssumptions(
   // Stock-based compensation is already inside operating expenses (it lowers
   // operating income), so it never touches EBIT here. It is carried as its own
   // driver only so the cash-flow add-back and the paid-in-capital credit can be
-  // sized — the two entries that a model without it silently omits, understating
+  // sized: the two entries that a model without it silently omits, understating
   // both operating cash flow and equity by the SBC each year. Defaults to zero:
   // a filer that reports no SBC should show none, not an invented charge.
   const sbcRaw = actual(set, "sbc");
@@ -336,8 +336,8 @@ function deriveAssumptions(
  * Project forward, mirroring exactly what the Excel formulas will compute.
  *
  * `overrides` replaces derived drivers before the recursion runs. The workbook
- * itself never passes them — the Assumptions sheet is where a user changes an
- * input — but they are how the model gets exercised at the extremes a user can
+ * itself never passes them: the Assumptions sheet is where a user changes an
+ * input: but they are how the model gets exercised at the extremes a user can
  * reach by typing, which is exactly where a three-statement model stops
  * articulating if anything is wired wrong.
  */
@@ -362,8 +362,8 @@ export function buildProjection(
   const operatingIncomeRaw = actual(set, "operatingIncome");
 
   // A gross-profit / operating-income structure is what this model is built on.
-  // Banks, insurers and trusts report neither — JPMorgan has no cost of revenue
-  // and no gross profit at all — and forcing a margin-driven model onto them
+  // Banks, insurers and trusts report neither, JPMorgan has no cost of revenue
+  // and no gross profit at all: and forcing a margin-driven model onto them
   // produces a sheet that balances but means nothing. Omitting the projection is
   // the honest outcome.
   if (grossProfitRaw == null || grossProfitRaw <= 0 || operatingIncomeRaw == null) {
@@ -380,7 +380,7 @@ export function buildProjection(
   // The reported `opex` line cannot be trusted for this: it resolves to either
   // `OperatingExpenses` or `CostsAndExpenses`, and the latter is *total* costs
   // including cost of revenue. Alphabet tags it that way, so using the line
-  // directly subtracted cost of revenue twice — a 59.7% gross margin against a
+  // directly subtracted cost of revenue twice: a 59.7% gross margin against a
   // 68% "opex" ratio, projecting a multi-billion loss for a highly profitable
   // company. The identity below gives 27.6%, which is the real figure.
   //
@@ -603,7 +603,7 @@ export function fillAssumptionsSheet(
     ws,
     "Assumptions",
     "Every blue cell is an input. Change one and the schedules, projections and checks all follow.",
-    "Column B is what the company actually did, unclamped. The blue columns start from it — they are a place to begin, not a forecast. Replace them with your own view.",
+    "Column B is what the company actually did, unclamped. The blue columns start from it. They are a place to begin, not a forecast. Replace them with your own view.",
     cols,
     TEAL,
     "Driver"
@@ -663,7 +663,7 @@ export function fillAssumptionsSheet(
     "EBIT is gross profit less operating expenses, so it reproduces reported operating income in the",
     "base year. Operating expenses are inclusive of depreciation; the D&A line is a memo that drives the",
     "PP&E roll-forward and the cash flow add-back. Raising it therefore shifts cost between cash and",
-    "non-cash rather than reducing EBIT — the driver above already fixes total operating cost.",
+    "non-cash rather than reducing EBIT. The driver above already fixes total operating cost.",
     "",
     "Interest is charged on the opening debt balance, not the average. Charging it on the average",
     "makes the model circular (interest → net income → cash → debt → interest), which Excel can only",
@@ -675,7 +675,7 @@ export function fillAssumptionsSheet(
     "",
     "Taxes are only charged on positive pre-tax income; loss years carry no benefit and no loss is",
     "carried forward. Dividends are only paid out of positive net income, and a payout above 100% is",
-    "accepted as typed — it will drain equity.",
+    "accepted as typed, and it will drain equity.",
     "",
     "This is a modelling tool, not a forecast and not investment advice.",
   ];
@@ -715,7 +715,7 @@ export function fillSchedulesSheet(
    * It used to sit on the opening row, which read as "FY2025 opening PP&E" in a
    * column headed FY2025 (A) while actually holding FY2025's closing figure.
    * Anchoring the closing row instead lets every opening row be the same
-   * formula — the cell to its left — and says what it means.
+   * formula (the cell to its left) and says what it means.
    */
   const anchor = (row: number, value: number) => {
     const c = ws.getRow(row).getCell(2);
@@ -1024,7 +1024,7 @@ export function fillProjectionsSheet(
 
   // --- the check
   label(P_ROW.bsCheck, "Balance check (must be zero)", true);
-  // The base year ties too — that is what the two plug lines are for — so the
+  // The base year ties too (that is what the two plug lines are for), so the
   // anchor column carries its own residual rather than leaving the reader to
   // take the construction on trust.
   const baseCheck =

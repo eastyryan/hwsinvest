@@ -1,12 +1,12 @@
 // Sector reference betas for the DCF's cost of equity, keyed by SIC code.
 //
-// The DCF defaulted every filer to a levered beta of 1.1 — fine as a neutral
+// The DCF defaulted every filer to a levered beta of 1.1, fine as a neutral
 // placeholder, wrong as a starting point for a utility (~0.5) or a chip maker
 // (~1.6). SEC filings carry a Standard Industrial Classification code, so we can
 // seed beta from the filer's own industry instead.
 //
 // The values are round, published-ballpark levered betas in the spirit of
-// Aswath Damodaran's freely distributed US industry dataset — reference points,
+// Aswath Damodaran's freely distributed US industry dataset, reference points,
 // not precision inputs. Beta stays a blue, editable cell in the workbook; this
 // only moves where it starts. Kept dependency-free and deterministic (a static
 // table, no network call), so it fits the no-external-data design.
@@ -23,7 +23,7 @@ const RULES: { lo: number; hi: number; sector: string; beta: number }[] = [
   { lo: 1300, hi: 1399, sector: "Oil & Gas", beta: 1.0 },
   { lo: 1000, hi: 1299, sector: "Mining & Materials", beta: 1.15 },
   { lo: 1400, hi: 1499, sector: "Mining & Materials", beta: 1.15 },
-  // Food, beverage, tobacco, household — consumer staples
+  // Food, beverage, tobacco, household, consumer staples
   { lo: 2000, hi: 2199, sector: "Consumer Staples", beta: 0.6 },
   { lo: 2840, hi: 2844, sector: "Household & Personal Products", beta: 0.85 },
   // Pharma & biotech

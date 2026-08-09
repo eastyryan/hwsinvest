@@ -192,7 +192,7 @@ function businessParagraph(fin: CompanyFinancials, ctx: MarketContext): string {
   // note would be pure filler.
   //
   // No industry is named here. The filings don't contain one, and guessing from
-  // margin alone was wrong in practice — it labeled a car manufacturer as
+  // margin alone was wrong in practice: it labeled a car manufacturer as
   // "typical of retail and distribution".
   if (gm != null) {
     if (gm >= 0.7) out.push("That gross margin is software-like");
@@ -308,7 +308,7 @@ function momentumParagraph(fin: CompanyFinancials): string {
   if (revYoy != null && opYoy != null && revYoy > 0) {
     // Explicitly scoped to the quarter. This sits next to a trailing-twelve-
     // month margin move below, and the two can point in opposite directions
-    // legitimately — an unlabeled pair reads as a contradiction.
+    // legitimately: an unlabeled pair reads as a contradiction.
     if (opYoy > revYoy + 0.03) {
       out.push(
         `In that quarter operating income grew faster than revenue (${delta(opYoy)} against ${delta(revYoy)}), the signature of operating leverage rather than growth bought with spending`
@@ -385,7 +385,7 @@ function catalystsParagraph(fin: CompanyFinancials, insights: Insights): string 
   // Both phrasings name the inputs explicitly. "Net debt" against cash and
   // short-term investments alone overstates leverage for filers that park large
   // sums in long-term marketable securities, which this line set doesn't
-  // capture — Apple being the obvious case.
+  // capture: Apple being the obvious case.
   if (hasBalance) {
     const netCash = cash - debt;
     const ocf = ttm(q, "ocf");
@@ -459,7 +459,7 @@ function catalystsParagraph(fin: CompanyFinancials, insights: Insights): string 
 }
 
 /**
- * Build the narrative. Pure, synchronous, and free — no network, no API key.
+ * Build the narrative. Pure, synchronous, and free, no network, no API key.
  */
 export function buildNarrative(
   fin: CompanyFinancials,

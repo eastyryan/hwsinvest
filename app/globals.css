@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ============================================================
-   HWS Investment Club — design system
+   HWS Investment Club: design system
    Single light theme. Color tokens live on :root and cascade
    everywhere.
    ============================================================ */
@@ -338,7 +338,7 @@ body {
   border-color: var(--brand);
 }
 
-/* Dashboard stat band — purple dividers like the home stat band. */
+/* Dashboard stat band: purple dividers like the home stat band. */
 .learn-stat-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -458,7 +458,7 @@ body {
   background: var(--card2);
 }
 
-/* Ticker chip — mono, brand-filled. */
+/* Ticker chip: mono, brand-filled. */
 .rsch-tag {
   display: inline-flex;
   align-items: center;
@@ -778,7 +778,7 @@ body {
   .rsch-skeleton {
     animation: none;
   }
-  /* Smooth anchor scrolling is motion too — jump straight to the target. */
+  /* Smooth anchor scrolling is motion too: jump straight to the target. */
   html {
     scroll-behavior: auto;
   }

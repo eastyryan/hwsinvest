@@ -2,7 +2,7 @@
 //
 // Vercel's Fluid Compute reuses one instance across concurrent invocations, so
 // they share a heap. Building an Excel workbook costs roughly 17 MB of heap and
-// 21 MB of RSS while it runs — measured, not estimated — and scales linearly
+// 21 MB of RSS while it runs (measured, not estimated) and scales linearly
 // with concurrency. Against a ~240 MB baseline that puts the OOM-kill at about
 // 37 simultaneous builds on a 1 GB function and 86 on 2 GB.
 //

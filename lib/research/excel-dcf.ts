@@ -17,7 +17,7 @@
 // 1. Free cash flow is *unlevered*: NOPAT (EBIT after cash tax, with no interest
 //    shield) plus D&A, less capex, less the increase in net working capital.
 //    Stock-based compensation is left inside EBIT as the real cost it is, rather
-//    than added back — the conservative treatment, and the one that avoids
+//    than added back: the conservative treatment, and the one that avoids
 //    valuing a company on cash flow it never keeps.
 //
 // 2. Discounting is done with an explicit discount-factor row, each cell the one
@@ -27,7 +27,7 @@
 //
 // 3. The sensitivity grid recomputes value per share for each (WACC, growth)
 //    pair from the same fixed free-cash-flow cells, so it needs no What-If data
-//    table — which recalculates unreliably outside desktop Excel — and stays
+//    table (which recalculates unreliably outside desktop Excel) and stays
 //    consistent with the headline number by construction.
 
 import type ExcelJS from "exceljs";
@@ -121,7 +121,7 @@ export interface Dcf {
   waccAxis: number[];
   growthAxis: number[];
   sensitivity: number[][]; // [waccIndex][growthIndex] -> value per share
-  // Reverse DCF — present only when a market price was available.
+  // Reverse DCF: present only when a market price was available.
   reverse: ReverseDcf | null;
 }
 
@@ -202,7 +202,7 @@ function valuePerShare(
 
 /**
  * Build the DCF off a finished projection. Returns null when the projection is
- * absent (banks, trusts) — there is no unlevered cash flow to discount.
+ * absent (banks, trusts), there is no unlevered cash flow to discount.
  *
  * `overrides` exist for the same reason the projection's do: to exercise the
  * model at the extremes a user can type. The workbook never passes them.
@@ -311,7 +311,7 @@ export function buildDcf(
   );
 
   // Reverse DCF: hold the free-cash-flow path fixed and back out what today's
-  // price implies. Two readings — the discount rate that makes our cash flows
+  // price implies. Two readings, the discount rate that makes our cash flows
   // worth the market's enterprise value (the return being priced in), and the
   // perpetual growth that does the same at our base WACC.
   let reverse: ReverseDcf | null = null;
@@ -501,7 +501,7 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
   // --- WACC build-up
   sectionRow(ws, 6, "Cost of capital (WACC)", cols.length, NAVY);
   one(R.riskFree, "Risk-free rate", null, d.inputs.riskFree, PCT_FMT, { input: true });
-  one(R.beta, d.sector ? `Beta (levered — ${d.sector} ref.)` : "Beta (levered)",
+  one(R.beta, d.sector ? `Beta (levered, ${d.sector} ref.)` : "Beta (levered)",
     null, d.inputs.beta, "0.00", { input: true });
   one(R.erp, "Equity risk premium", null, d.inputs.equityRiskPremium, PCT_FMT, { input: true });
   one(R.costEquity, "Cost of equity  (rf + β × ERP)",
@@ -565,7 +565,7 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
   one(R.ev, "Enterprise value",
     `C${R.sumPv}+C${R.pvTermValue}`, d.enterpriseValue / M, MONEY_FMT, { bold: true, color: NAVY });
   // Debt, cash and share count are last-actual figures, so they are plain values
-  // (not formulas) — the equity bridge below references them.
+  // (not formulas): the equity bridge below references them.
   one(R.lessDebt, "Less: total debt", null, -d.debt / M, MONEY_FMT, { indent: true });
   one(R.addCash, "Add: cash & equivalents", null, d.cash / M, MONEY_FMT, { indent: true });
   one(R.equity, "Equity value",
@@ -599,7 +599,7 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
 
   // --- sensitivity grid: value per share vs WACC (rows) × growth (cols)
   const gr = ws.getRow(R.sensTitle);
-  gr.getCell(1).value = "Sensitivity — implied value per share";
+  gr.getCell(1).value = "Sensitivity: implied value per share";
   gr.getCell(1).font = { size: 10, bold: true, color: { argb: NAVY } };
   // Growth header across D..H; the corner labels the WACC axis below it.
   const hdr = ws.getRow(R.sensGrowthHeader);
@@ -626,7 +626,7 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
       const r1 = `(1+${wRef})`;
       // Horner over the fixed FCF cells C..G on row R.fcf: discount at this row's
       // WACC and add the Gordon terminal value at this column's growth, then run
-      // the equity bridge and divide by shares. Only + − × ÷ — no powers.
+      // the equity bridge and divide by shares. Only + − × ÷, no powers.
       const fcfCell = (t: number) => `$${colLetter(t + 3)}$${R.fcf}`;
       const n = cols.length;
       const tv = `${fcfCell(n - 1)}*(1+${gHdr})/(${wRef}-${gHdr})`;
@@ -653,7 +653,7 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
   });
 
   // --- reverse DCF: what today's price implies
-  sectionRow(ws, R.revTitle, "Reverse DCF — what the price implies", cols.length, NAVY);
+  sectionRow(ws, R.revTitle, "Reverse DCF: what the price implies", cols.length, NAVY);
   if (d.reverse) {
     const rv = d.reverse;
     one(R.revPrice, "Current market price", null, rv.marketPrice, PER_SHARE_FMT, { input: true });
@@ -668,13 +668,13 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
     one(R.revBaseEV, "Base-case enterprise value (Gordon)", `C${R.ev}`, d.enterpriseValue / M,
       MONEY_FMT, { indent: true });
     // Solved constants, not formulas: they need iteration Excel won't do on open.
-    one(R.revReturn, `Implied expected return (priced in)${rv.returnClamped ? " — bounded" : ""}`,
+    one(R.revReturn, `Implied expected return (priced in)${rv.returnClamped ? " (bounded)" : ""}`,
       null, rv.impliedReturn, PCT_FMT, { bold: true, color: NAVY });
-    one(R.revGrowth, `Implied perpetual growth (at base WACC)${rv.growthClamped ? " — bounded" : ""}`,
+    one(R.revGrowth, `Implied perpetual growth (at base WACC)${rv.growthClamped ? " (bounded)" : ""}`,
       null, rv.impliedGrowth, PCT_FMT, { bold: true });
   } else {
     const c = ws.getCell(R.revTitle + 1, 1);
-    c.value = "Market price unavailable — reverse DCF omitted for this filer.";
+    c.value = "Market price unavailable, so the reverse DCF is omitted for this filer.";
     c.font = { size: 9, italic: true, color: { argb: GREY } };
   }
 
@@ -684,7 +684,7 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
     "Terminal value uses Gordon growth as the headline and the exit multiple as a cross-check; the two rarely",
     "agree exactly, and a wide gap is a signal to revisit the assumptions rather than an error.",
     "Equity value is enterprise value less total debt plus cash. Non-operating assets such as long-term",
-    "investments are not added back — fold them in yourself if your definition of value includes them.",
+    "investments are not added back. Fold them in yourself if your definition of value includes them.",
     "Reverse DCF holds the cash-flow path fixed and backs out what the price implies: the discount rate that makes",
     "those flows worth the market's enterprise value (the return priced in), and the perpetual growth that does the",
     "same at the base WACC. Editing the price updates the bridge; re-solve the implied figures with Goal Seek.",

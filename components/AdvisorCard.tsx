@@ -52,7 +52,7 @@ export default function AdvisorCard({ advisor }: { advisor: Advisor }) {
         </div>
       )}
 
-      {/* Green reveal — a circle centred on the toggle that scales to fill the
+      {/* Green reveal: a circle centred on the toggle that scales to fill the
           card when open and retracts back into the button when closed. */}
       <div
         aria-hidden
@@ -72,7 +72,7 @@ export default function AdvisorCard({ advisor }: { advisor: Advisor }) {
         }}
       />
 
-      {/* Single persistent toggle — stays in the same spot, + rotates to × */}
+      {/* Single persistent toggle: stays in the same spot, + rotates to × */}
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
@@ -102,7 +102,7 @@ export default function AdvisorCard({ advisor }: { advisor: Advisor }) {
         +
       </button>
 
-      {/* Collapsed label — name + title (fades out as the green fills) */}
+      {/* Collapsed label: name + title (fades out as the green fills) */}
       <div
         style={{
           position: "absolute",
@@ -140,7 +140,7 @@ export default function AdvisorCard({ advisor }: { advisor: Advisor }) {
         </p>
       </div>
 
-      {/* Expanded content — full bio, fades in once the green has filled */}
+      {/* Expanded content: full bio, fades in once the green has filled */}
       <div
         style={{
           position: "absolute",

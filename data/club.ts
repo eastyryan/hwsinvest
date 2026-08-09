@@ -1,4 +1,4 @@
-// Editable club facts — update these as the club grows.
+// Editable club facts: update these as the club grows.
 
 export const clubStats = [
   { value: "55+", label: "Members", note: "and growing every semester" },
@@ -8,7 +8,7 @@ export const clubStats = [
 export const meeting = {
   day: "Tuesdays",
   time: "7:00–8:00 PM",
-  blurb: "Open to every HWS student — no experience or finance background needed.",
+  blurb: "Open to every HWS student, no experience or finance background needed.",
 };
 
 // Where the contact form sends. Update to the club's real inbox.

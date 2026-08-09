@@ -2,7 +2,7 @@
 // jitter, and a client-side rate limiter for SEC's fair-access rules.
 //
 // Every outbound call in this app goes through fetchJson(). Nothing else should
-// call global fetch() against a third party — without a timeout a hung upstream
+// call global fetch() against a third party: without a timeout a hung upstream
 // pins the function for the whole maxDuration budget.
 
 export class UpstreamError extends Error {
@@ -146,7 +146,7 @@ export function singleFlight<T>(key: string, fn: () => Promise<T>): Promise<T> {
   return p;
 }
 
-/** Message safe to return to a client — never leaks upstream response bodies. */
+/** Message safe to return to a client: never leaks upstream response bodies. */
 export function publicErrorMessage(e: unknown, fallback: string): string {
   if (e instanceof UpstreamError || e instanceof TimeoutError) {
     return e.publicMessage;

@@ -1,5 +1,5 @@
 // A rules-based quality scorecard, computed entirely from the normalized
-// statements — no market data, no model, no judgement call that isn't a printed
+// statements: no market data, no model, no judgement call that isn't a printed
 // threshold. It scores five dimensions an analyst eyeballs first (growth,
 // returns, cash conversion, leverage, coverage) on transparent bands, averages
 // the ones the filing supports, and grades the result.
@@ -75,7 +75,7 @@ export function buildScorecard(fin: CompanyFinancials): Scorecard {
   const a = fin.annual;
   const factors: ScoreFactor[] = [];
 
-  // 1. Revenue growth — trailing 3-year CAGR (fall back to 1-year).
+  // 1. Revenue growth, trailing 3-year CAGR (fall back to 1-year).
   const rev0 = val(a, "revenue");
   const rev3 = val(a, "revenue", 3);
   const rev1 = val(a, "revenue", 1);
@@ -100,7 +100,7 @@ export function buildScorecard(fin: CompanyFinancials): Scorecard {
     band: "<0% → 20 · 0% → 40 · 5% → 60 · 10% → 80 · ≥20% → 100",
   });
 
-  // 2. Returns on capital — NOPAT / (debt + equity).
+  // 2. Returns on capital, NOPAT / (debt + equity).
   const ebit = val(a, "operatingIncome");
   const pretax = val(a, "pretaxIncome");
   const taxes = val(a, "taxes");
@@ -130,7 +130,7 @@ export function buildScorecard(fin: CompanyFinancials): Scorecard {
     band: "<5% → 45 · 10% → 65 · 15% → 85 · ≥25% → 100",
   });
 
-  // 3. Cash conversion — free cash flow / net income.
+  // 3. Cash conversion, free cash flow / net income.
   const ni = val(a, "netIncome");
   let fcf = val(a, "fcf");
   if (fcf == null) {
@@ -156,7 +156,7 @@ export function buildScorecard(fin: CompanyFinancials): Scorecard {
     band: "<0.4× → 50 · 0.7× → 75 · ≥0.9× → 100 (profit years only)",
   });
 
-  // 4. Leverage — net debt / EBITDA (lower is better; net cash scores full).
+  // 4. Leverage, net debt / EBITDA (lower is better; net cash scores full).
   const da = num(val(a, "da"));
   const ebitda = ebit != null ? ebit + da : null;
   const cash = num(val(a, "cash"));
@@ -185,7 +185,7 @@ export function buildScorecard(fin: CompanyFinancials): Scorecard {
     band: "net cash → 100 · ≤1× → 90 · ≤2× → 75 · ≤3× → 55 · >4× → 15",
   });
 
-  // 5. Interest coverage — EBIT / interest (no interest scores full).
+  // 5. Interest coverage, EBIT / interest (no interest scores full).
   const interest = Math.abs(num(val(a, "interestExpense")));
   const coverage = ebit != null && interest > 0 ? ebit / interest : ebit != null ? Infinity : null;
   factors.push({
@@ -212,7 +212,7 @@ export function buildScorecard(fin: CompanyFinancials): Scorecard {
   const composite = scored.length ? scored.reduce((x, y) => x + y, 0) / scored.length : null;
   const grade =
     composite == null
-      ? "—"
+      ? "n/a"
       : composite >= 85
         ? "A"
         : composite >= 70
@@ -235,7 +235,7 @@ export function fillScorecardSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials
     ws,
     "Quality Scorecard",
     "Five dimensions an analyst reads first, scored on printed thresholds and averaged.",
-    "A rules-based heuristic computed only from the statements — every band is shown. Not a rating and not investment advice.",
+    "A rules-based heuristic computed only from the statements. Every band is shown. Not a rating and not investment advice.",
     ["Metric", "Value", "Score", "Bands"],
     NAVY,
     "Dimension"
@@ -266,7 +266,7 @@ export function fillScorecardSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials
     }
     const scCell = r.getCell(4);
     if (f.score == null) {
-      scCell.value = "—";
+      scCell.value = "n/a";
       scCell.font = { size: 10, color: { argb: MUTED } };
     } else {
       scCell.value = f.score;
@@ -308,7 +308,7 @@ export function fillScorecardSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials
     cc.numFmt = "0";
     cc.font = { size: 12, bold: true, color: { argb: scoreColor(sc.composite) } };
   } else {
-    cc.value = "—";
+    cc.value = "n/a";
   }
   row++;
   const gr = ws.getRow(row);

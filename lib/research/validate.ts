@@ -4,7 +4,7 @@
  * SEC CIKs are numeric, at most 10 digits.
  *
  * This matters because the CIK is interpolated into the EDGAR URL after
- * `padStart(10, "0")` — and padStart only prepends, it strips nothing. A cik of
+ * `padStart(10, "0")`, and padStart only prepends, it strips nothing. A cik of
  * "../../foo" produced ".../companyfacts/CIK0../../foo.json", which normalizes
  * to a different data.sec.gov path whose JSON was handed straight back to the
  * caller.

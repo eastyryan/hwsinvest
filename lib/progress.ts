@@ -1,5 +1,5 @@
 // Client-side study progress, stored per-device in localStorage.
-// Intentionally minimal — this is a study tool, not a game. We only remember
+// Intentionally minimal: this is a study tool, not a game. We only remember
 // which lessons a member has completed (for a quiet "reviewed" check) and their
 // best score on each (for self-assessment). No points, streaks, or levels.
 

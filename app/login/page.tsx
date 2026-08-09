@@ -7,7 +7,7 @@ import Logo from "@/components/Logo";
 function LoginForm() {
   const params = useSearchParams();
   // `next` is attacker-controllable via the query string, and we hand it to
-  // window.location below — so only same-origin paths are allowed. "//evil.com"
+  // window.location below, so only same-origin paths are allowed. "//evil.com"
   // and "https://evil.com" are both rejected; either would otherwise send a
   // member off-site right after they typed the club password.
   const raw = params.get("next") || "/members";
@@ -35,16 +35,16 @@ function LoginForm() {
       }
       // Full navigation rather than router.push(). Signing in changes the
       // server-rendered output of every gated route, but the App Router caches
-      // RSC payloads client-side — including the middleware redirect that sent
+      // RSC payloads client-side: including the middleware redirect that sent
       // us to this page. A soft push can replay that cached redirect and bounce
       // straight back here with the button stuck on "Signing in…". Reloading
       // re-requests from the server with the new session cookie. Sign-out in
       // components/learn/Dashboard.tsx navigates the same way.
       window.location.assign(next);
-      // Deliberately leave `loading` set — the page is on its way out, and
+      // Deliberately leave `loading` set: the page is on its way out, and
       // clearing it would flash the form back to an enabled state mid-unload.
     } catch {
-      setError("Network error — try again");
+      setError("Network error, try again");
       setLoading(false);
     }
   }

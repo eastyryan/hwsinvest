@@ -12,7 +12,7 @@ const KEY = "hwsRecentCompanies";
 
 /**
  * localStorage is user-writable and can hold anything (a stale schema, `"5"`,
- * `null`). Validate the shape before trusting it — a bare length check lets a
+ * `null`). Validate the shape before trusting it, a bare length check lets a
  * string through and blows up on `.map`.
  */
 function parseRecent(raw: string | null): RecentEntry[] {

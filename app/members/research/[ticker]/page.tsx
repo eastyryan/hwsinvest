@@ -38,7 +38,7 @@ export default async function CompanyPage({ params }: { params: { ticker: string
         <h1 className="h-sub">Couldn&apos;t reach SEC EDGAR</h1>
         <p className="lede" style={{ maxWidth: "44ch", marginTop: 0 }}>
           The company directory didn&apos;t load, so we can&apos;t look up &ldquo;{upper}
-          &rdquo; right now. This is usually temporary — try again in a moment.
+          &rdquo; right now. This is usually temporary. Try again in a moment.
         </p>
         <Link
           href={`/members/research/${upper.toLowerCase()}`}

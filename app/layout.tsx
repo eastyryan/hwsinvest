@@ -23,7 +23,7 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "HWS Investment Club",
   description:
-    "Markets, research, and careers — the Hobart and William Smith Colleges Investment Club.",
+    "Markets, research, and careers at the Hobart and William Smith Colleges Investment Club.",
 };
 
 export default function RootLayout({

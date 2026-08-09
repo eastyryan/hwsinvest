@@ -3,7 +3,7 @@
 // Primarily guards the AI summary endpoint, which spends real money per call:
 // without this, a script iterating CIKs runs up an Anthropic bill.
 //
-// State is per-instance, so this is a speed bump rather than a hard guarantee —
+// State is per-instance, so this is a speed bump rather than a hard guarantee,
 // a distributed limiter needs shared storage. It still removes the trivial
 // abuse case, and the response cache absorbs most repeat traffic.
 

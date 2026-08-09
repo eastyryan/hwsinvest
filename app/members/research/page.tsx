@@ -32,7 +32,7 @@ export default function ResearchPage() {
         </h1>
         <p className="lede" style={{ maxWidth: "52ch" }}>
           Search any US-listed company and read its full financial history straight from SEC
-          filings — income statement, balance sheet, cash flow, ratios, and charts.
+          filings: income statement, balance sheet, cash flow, ratios, and charts.
         </p>
       </div>
 
@@ -57,7 +57,7 @@ export default function ResearchPage() {
           },
           {
             title: "Ratios and comparisons",
-            body: "Margins, returns, and leverage computed from the filings — then stack up to three companies side by side.",
+            body: "Margins, returns, and leverage computed from the filings, then stack up to three companies side by side.",
           },
           {
             title: "Charts and export",

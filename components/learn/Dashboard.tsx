@@ -35,7 +35,7 @@ export default function Dashboard({ admin }: { admin: boolean }) {
           <div style={{ flex: 1 }}>
             <div className="h-sub" style={{ fontSize: 18 }}>Club Files</div>
             <p style={{ fontSize: 14, color: "var(--muted)", margin: "4px 0 0", lineHeight: 1.5 }}>
-              Browse, preview, and download every document — models, decks, guides, and recaps.
+              Browse, preview, and download every document: models, decks, guides, and recaps.
             </p>
           </div>
           <ArrowRight size={20} color="var(--brand)" />
@@ -46,7 +46,7 @@ export default function Dashboard({ admin }: { admin: boolean }) {
           <div style={{ flex: 1 }}>
             <div className="h-sub" style={{ fontSize: 18 }}>Company Research</div>
             <p style={{ fontSize: 14, color: "var(--muted)", margin: "4px 0 0", lineHeight: 1.5 }}>
-              Pull any US-listed company&apos;s full financials from SEC filings — statements, ratios, charts, and Excel export.
+              Pull any US-listed company&apos;s full financials from SEC filings: statements, ratios, charts, and Excel export.
             </p>
           </div>
           <ArrowRight size={20} color="var(--brand)" />
@@ -59,7 +59,7 @@ export default function Dashboard({ admin }: { admin: boolean }) {
           Study Tracks
         </p>
         <span style={{ fontSize: 12.5, color: "var(--faint)" }}>
-          Free practice — review any lesson, any order
+          Free practice: review any lesson, any order
         </span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(252px, 1fr))", gap: 16 }}>

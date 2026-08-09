@@ -390,7 +390,7 @@ export default function Compare({ base }: { base: ComparableCompany }) {
               {companies.map((c) => (
                 <th key={c.ticker} scope="col" className="rsch-th-num">
                   {c.ticker}
-                  {/* Fiscal years don't line up across companies — labelling
+                  {/* Fiscal years don't line up across companies, labelling
                       the whole column "latest" invited an apples-to-oranges
                       read of, say, a September filer next to a December one. */}
                   <span

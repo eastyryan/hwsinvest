@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 // Renders a firm's logo centered in a fixed-size box so every mark reads at a
-// consistent visual size — no cards, no captions. Broken images are hidden.
+// consistent visual size: no cards, no captions. Broken images are hidden.
 export default function FirmLogo({ name, logo }: { name: string; logo: string }) {
   const [errored, setErrored] = useState(false);
   if (errored) return null;

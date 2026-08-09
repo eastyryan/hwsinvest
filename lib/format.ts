@@ -1,10 +1,10 @@
 export const usd = (n: number | undefined) =>
   n == null || Number.isNaN(n)
-    ? "—"
+    ? "n/a"
     : n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 export const pct = (n: number | undefined) =>
-  n == null || Number.isNaN(n) ? "—" : `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
+  n == null || Number.isNaN(n) ? "n/a" : `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 
 export const isUp = (n: number | undefined) => (n ?? 0) >= 0;
 
@@ -12,7 +12,7 @@ export const isUp = (n: number | undefined) => (n ?? 0) >= 0;
 export type EconFmt = "pct" | "index" | "gdp" | "payrolls" | "sentiment";
 
 export function formatEcon(v: number | undefined, fmt: EconFmt): string {
-  if (v == null || Number.isNaN(v)) return "—";
+  if (v == null || Number.isNaN(v)) return "n/a";
   switch (fmt) {
     case "pct":
       return `${v.toFixed(2)}%`;

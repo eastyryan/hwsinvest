@@ -2,7 +2,7 @@
 //
 // Today: a single shared club password (CLUB_PASSWORD) grants the "member"
 // role, and ADMIN_PASSWORD grants "admin" (which also implies member access).
-// Sessions are a signed cookie — no database — so this stays trivial to run.
+// Sessions are a signed cookie (no database), so this stays trivial to run.
 //
 // Later: when HWS student-email / SSO login is ready, only this file and the
 // /login route need to change. Everything downstream just reads the role off

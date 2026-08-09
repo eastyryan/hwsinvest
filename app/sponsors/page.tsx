@@ -9,7 +9,7 @@ const stats = [
 const support = [
   {
     title: "Bloomberg Terminals",
-    body: "The same terminals used on trading floors — for pulling live market data, building equity research, and managing real money the way professionals do.",
+    body: "The same terminals used on trading floors, for pulling live market data, building equity research, and managing real money the way professionals do.",
   },
   {
     title: "Financial modeling & valuation",
@@ -17,7 +17,7 @@ const support = [
   },
   {
     title: "A guaranteed internship program",
-    body: "Funded internships so a summer in finance is possible regardless of a student’s background — the experience that turns into a full-time offer.",
+    body: "Funded internships so a summer in finance is possible regardless of a student’s background, the experience that turns into a full-time offer.",
   },
   {
     title: "Professionals-in-Residence",
@@ -29,7 +29,7 @@ const support = [
   },
   {
     title: "A home for finance clubs",
-    body: "Support for the Finance Society and Investment Management Group — where students analyze markets, compete nationally, and manage real funds.",
+    body: "Support for the Finance Society and Investment Management Group, where students analyze markets, compete nationally, and manage real funds.",
   },
 ];
 
@@ -94,7 +94,7 @@ export default function SponsorsPage() {
             <strong style={{ color: "var(--text)" }}>L. Thomas Melly ’52</strong>, an HWS alumnus
             and Wall Street icon, and his wife{" "}
             <strong style={{ color: "var(--text)" }}>Judith Hershey Melly</strong>. Their gift was
-            built to prepare a new generation of HWS students for careers in finance and business —
+            built to prepare a new generation of HWS students for careers in finance and business,
             giving them the tools, the experience, and the connections that used to be reserved for
             students at much larger schools. For our members, that support is what turns interest in
             the markets into a real path onto Wall Street.

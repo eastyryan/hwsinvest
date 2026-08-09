@@ -50,7 +50,7 @@ function Bullet({ head, body }: { head: string; body: string }) {
         }}
       />
       <span style={{ color: "var(--text)", fontSize: "15.5px", lineHeight: 1.6 }}>
-        <strong style={{ fontWeight: 700 }}>{head}</strong> — {body}
+        <strong style={{ fontWeight: 700 }}>{head}</strong>: {body}
       </span>
     </li>
   );
@@ -92,10 +92,10 @@ export default function MissionJoin({ showCta = false }: { showCta?: boolean }) 
   return (
     <div>
       {/* Mission */}
-      <Section kicker="Our mission" heading="Make finance approachable — and hands-on">
+      <Section kicker="Our mission" heading="Make finance approachable and hands-on">
         <p style={{ color: "var(--text)", fontSize: "16.5px", lineHeight: 1.7, margin: "16px auto 0", maxWidth: 680 }}>
           We believe you learn markets by participating in them. No prior
-          experience required — just curiosity. Members research real companies,
+          experience required, just curiosity. Members research real companies,
           debate ideas in the open, and put a thesis to the test against a live,
           simulated portfolio.
         </p>
@@ -111,7 +111,7 @@ export default function MissionJoin({ showCta = false }: { showCta?: boolean }) 
       {/* Join */}
       <Section kicker="Join us" heading="Everyone's first meeting is an open one">
         <p style={{ color: "var(--text)", fontSize: "16.5px", lineHeight: 1.7, margin: "16px auto 0", maxWidth: 680 }}>
-          Meetings are open to all HWS students — come once, no commitment, and
+          Meetings are open to all HWS students. Come once, no commitment, and
           see if it&rsquo;s for you. Here&rsquo;s how to get started.
         </p>
         <ul style={{ margin: "22px auto 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 13, maxWidth: 620 }}>

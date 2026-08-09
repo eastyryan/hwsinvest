@@ -2,7 +2,7 @@
 //
 // Auth model: a long-lived *refresh token* (created once, see SETUP notes in
 // .env.example) is exchanged for short-lived access tokens on demand. This is
-// the only Dropbox auth flow that survives unattended on a server — raw
+// the only Dropbox auth flow that survives unattended on a server, raw
 // "generated access tokens" from the Dropbox console expire after 4 hours.
 //
 // Everything lives under one base folder (DROPBOX_FOLDER). With an "App folder"
@@ -12,7 +12,7 @@
 export type DropboxEntry = {
   type: "file" | "folder";
   name: string;
-  path: string; // path_lower — used for navigate / download / delete
+  path: string; // path_lower, used for navigate / download / delete
   size: number;
   modified: string; // ISO date (files only)
 };

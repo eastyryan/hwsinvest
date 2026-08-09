@@ -13,7 +13,7 @@ import { usePathname } from "next/navigation";
  * Three things this deliberately does NOT do:
  *
  * 1. Hide anything in CSS. The "hidden" state is applied from JavaScript, so if
- *    the script never runs — no JS, a bundle error, a crawler — the page is
+ *    the script never runs (no JS, a bundle error, a crawler), the page is
  *    fully visible rather than a column of blank space. Content visibility must
  *    not depend on an enhancement.
  * 2. Hide anything already on screen. An element painted above the fold is
@@ -24,7 +24,7 @@ import { usePathname } from "next/navigation";
  */
 
 // Top-level page blocks. The research tool's tables and sticky toolbar live
-// under `main > div`, so they are intentionally not matched — a data tool
+// under `main > div`, so they are intentionally not matched, a data tool
 // should feel immediate, not animated. Anything else opts in with `data-reveal`.
 const SELECTOR = "[data-reveal], main > section, main > div[data-reveal-scope] > section";
 
@@ -61,7 +61,7 @@ export default function ScrollReveal() {
     );
 
     // Siblings marked data-reveal come in one after another rather than as a
-    // single slab — card grids read much better that way.
+    // single slab: card grids read much better that way.
     const seenPerParent = new Map<Element, number>();
     const fold = window.innerHeight * 0.92;
 

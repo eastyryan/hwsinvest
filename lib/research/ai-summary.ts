@@ -1,7 +1,7 @@
 // Optional Claude-written narrative summary. Active only when ANTHROPIC_API_KEY
 // is set; the app falls back to the rule-based insights otherwise.
 //
-// This runs on its own endpoint, not on the financials request path — the model
+// This runs on its own endpoint, not on the financials request path, the model
 // call takes seconds and previously blocked the statements, charts, and ratios
 // from rendering at all.
 
@@ -21,8 +21,8 @@ export interface AiSummary {
  * Structured output instead of free prose.
  *
  * The UI used to split the response on blank lines and render each chunk as a
- * paragraph, so any deviation — a heading, a bullet list, four paragraphs
- * instead of three — silently degraded the layout. Naming the three fields
+ * paragraph, so any deviation, a heading, a bullet list, four paragraphs
+ * instead of three: silently degraded the layout. Naming the three fields
  * makes the contract explicit and lets each render into its own slot.
  */
 const SUMMARY_SCHEMA = {

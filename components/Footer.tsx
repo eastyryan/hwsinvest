@@ -73,7 +73,7 @@ export default function Footer() {
                 margin: "14px 0 0",
               }}
             >
-              For educational purposes only — not investment advice. Data may be
+              For educational purposes only, not investment advice. Data may be
               delayed and is provided by Finnhub and FRED.
             </p>
           </div>

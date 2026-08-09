@@ -1,5 +1,5 @@
 // Rule-based analysis of what's growing, slowing, and potential catalysts.
-// Pure functions over the normalized statements — an AI-written narrative can
+// Pure functions over the normalized statements, an AI-written narrative can
 // replace the output of buildInsights() later without touching callers.
 
 import type { CompanyFinancials, StatementSet, LineValues } from "./edgar";

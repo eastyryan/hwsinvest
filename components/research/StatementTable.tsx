@@ -25,7 +25,7 @@ type ComparisonIndex = Record<string, string[]>;
  * 52/53-week calendars still line up. Reconstructing it here is what lets the
  * table tell a real growth rate apart from a sign flip.
  *
- * Built once per period axis rather than per cell — a quarterly statement with
+ * Built once per period axis rather than per cell, a quarterly statement with
  * every period shown is 70-odd columns across 17 rows, and rescanning the axis
  * inside each cell turned "show all periods" into a visible stall.
  */
@@ -63,7 +63,7 @@ function comparisonValue(
  * layer as -214%; the next column is +203%, then -118%. Those numbers say
  * nothing about the business, and a row of them next to real growth rates is
  * the fastest way to lose a reader who reads statements for a living. The
- * convention in every filing-derived model is "n/m" — not meaningful.
+ * convention in every filing-derived model is "n/m", not meaningful.
  *
  * When the comparison period can't be located (a line whose series doesn't sit
  * on the shared period axis) the raw percentage is shown, which is no worse
@@ -113,7 +113,7 @@ function ChangeCell({
  * Compound annual growth between the latest period and the one ~`years` back.
  *
  * Indexing `periods[years]` assumes the annual axis is gapless, which is not
- * guaranteed — a filer that skipped a year, changed its fiscal calendar, or
+ * guaranteed: a filer that skipped a year, changed its fiscal calendar, or
  * simply has no anchor fact for one year leaves a hole, and the "10y CAGR"
  * then silently annualises an 11-year span. Match on the end *date* instead
  * and annualise over the span actually found, dropping the figure when nothing
@@ -159,7 +159,7 @@ export default function StatementTable({
   quarterly: boolean;
   denominator?: LineValues; // revenue (income/cash flow) or total assets (balance)
   denominatorLabel?: string;
-  /** The filer's reporting currency — not always USD. */
+  /** The filer's reporting currency: not always USD. */
   currency?: string;
 }) {
   const [showAll, setShowAll] = useState(false);
@@ -189,7 +189,7 @@ export default function StatementTable({
       return fmtValue(v, { perShare: line.perShare, shares: line.shares });
     }
     const d = denominator?.values[p.key];
-    if (v == null || d == null || d === 0) return "—";
+    if (v == null || d == null || d === 0) return "n/a";
     return ((v / d) * 100).toFixed(1) + "%";
   }
 
@@ -290,7 +290,7 @@ export default function StatementTable({
                       const v = cagr(line, periods, y);
                       return (
                         <td key={y} className="rsch-td-cagr">
-                          {v == null ? "—" : fmtPct(v)}
+                          {v == null ? "n/a" : fmtPct(v)}
                         </td>
                       );
                     })}

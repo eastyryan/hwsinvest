@@ -269,7 +269,7 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
 
       {configured && !loading && entries.length === 0 && !error && (
         <div style={{ ...infoBox, textAlign: "center" }}>
-          This folder is empty{admin ? " — upload files or create a folder above." : "."}
+          This folder is empty{admin ? ". Upload files or create a folder above." : "."}
         </div>
       )}
 
@@ -405,7 +405,7 @@ function PreviewModal({ preview, onClose }: { preview: Preview; onClose: () => v
             officeSrc ? (
               <iframe src={officeSrc} title={preview.name} style={{ width: "100%", height: "100%", border: "none" }} />
             ) : (
-              <p style={{ color: "var(--muted)", padding: 24 }}>Preview unavailable — try Download.</p>
+              <p style={{ color: "var(--muted)", padding: 24 }}>Preview unavailable. Try Download.</p>
             )
           ) : (
             // pdf + text

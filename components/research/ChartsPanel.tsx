@@ -487,7 +487,7 @@ function PriceVsFundamentals({
   const fundLabel = FUND_OPTIONS.find((f) => f.key === fund)!.label;
   const fundIsDollarsM = fund === "revenue" || fund === "netIncome";
   // P/E and per-share figures are meaningless if price and filings use
-  // different currencies — say so rather than quietly mixing them.
+  // different currencies: say so rather than quietly mixing them.
   const mixedCurrency = priceCurrency != null && priceCurrency !== currency;
   // The price axis is quoted in the exchange's currency; the fundamentals axis
   // in the filer's. They are not always the same, and neither is always USD.
@@ -532,7 +532,7 @@ function PriceVsFundamentals({
           Price data is temporarily unavailable, so this chart can&apos;t render.
         </p>
       ) : prices === null ? (
-        // Still fetching — the skeleton only belongs in this branch.
+        // Still fetching: the skeleton only belongs in this branch.
         <div className="rsch-skeleton" style={{ marginTop: 18, height: 160 }} />
       ) : prices.length === 0 ? (
         <p className="rsch-note">
@@ -544,7 +544,7 @@ function PriceVsFundamentals({
         </p>
       ) : (
         <>
-          {/* Two aligned panels sharing the same time axis — never a dual-axis chart */}
+          {/* Two aligned panels sharing the same time axis, never a dual-axis chart */}
           <div
             style={{ marginTop: 18, height: 176 }}
             role="img"
@@ -644,7 +644,7 @@ function PriceVsFundamentals({
           </div>
           <p className="rsch-note">
             {/* The units clause is conditional, so the sentence has to be able
-                to start without it — it used to read "fundamentals step…". */}
+                to start without it: it used to read "fundamentals step…". */}
             {fundIsDollarsM
               ? `Fundamental shown in ${currency} millions. Fundamentals step `
               : "Fundamentals step "}
@@ -669,7 +669,7 @@ export default function ChartsPanel({
   currency = "USD",
 }: {
   fin: CompanyFinancials;
-  /** The filer's reporting currency for statement values — not always USD. */
+  /** The filer's reporting currency for statement values, not always USD. */
   currency?: string;
 }) {
   return (

@@ -92,7 +92,7 @@ async function fromTwelveData(ticker: string, rangeKey: string): Promise<PriceSe
     // The key travels in a header, not the query string. Next patches global
     // fetch and opens an OpenTelemetry span whose name and `http.url` attribute
     // are the full URL, so a query-string key is handed to any APM the moment
-    // one is enabled — and it sits in the provider's access logs regardless.
+    // one is enabled: and it sits in the provider's access logs regardless.
     `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(
       ticker
     )}&interval=${interval}&outputsize=${outputsize}`,

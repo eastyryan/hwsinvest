@@ -32,7 +32,7 @@ type Payload = CompanyFinancials & {
   /** Deterministic read, computed server-side. Ships with the statements. */
   narrative: Narrative;
   profile: Profile;
-  /** The filer's actual reporting currency — not always USD. */
+  /** The filer's actual reporting currency: not always USD. */
   currency: string;
   sharesOutstanding: number | null;
 };
@@ -92,7 +92,7 @@ export default function CompanyView({
     const started = Date.now();
     // No reset needed here: the mount site passes key={ticker}, so a different
     // company remounts this component with fresh state. That key is what
-    // prevents one company's financials rendering under another's name — if it
+    // prevents one company's financials rendering under another's name, if it
     // is ever removed, this effect must reset `data` and `error` instead.
     (async () => {
       try {
@@ -229,7 +229,7 @@ export default function CompanyView({
   const marketCapCurrency = profile.marketCapCurrency || "USD";
   const priceCurrency = profile.priceCurrency ?? marketCapCurrency;
 
-  // A market cap of exactly 0 is never real — it means the shares-outstanding
+  // A market cap of exactly 0 is never real: it means the shares-outstanding
   // input was missing, so price x shares collapsed. SPG shipped as
   // "~$0M USD market cap", which is worse than saying nothing.
   const marketCapText = isRealNumber(profile.marketCap)
@@ -329,7 +329,7 @@ export default function CompanyView({
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {showFreqControls && (
-              // Not tabs — this picks the reporting period for the panel below,
+              // Not tabs: this picks the reporting period for the panel below,
               // so it is a two-option group of toggle buttons.
               <div className="rsch-seg" role="group" aria-label="Reporting period">
                 {(["annual", "quarterly"] as const).map((f) => (
@@ -365,7 +365,7 @@ export default function CompanyView({
             />
           )}
           {isStatementTab && (
-            /* key={tab}: showAll/commonSize must reset per statement — the
+            /* key={tab}: showAll/commonSize must reset per statement, the
                common-size denominator differs between the balance sheet and the rest. */
             <StatementTable
               key={tab}

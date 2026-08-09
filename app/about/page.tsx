@@ -8,7 +8,7 @@ export const metadata = { title: "About · HWS Investment Club" };
 const principles = [
   {
     title: "Learn by doing",
-    body: "Members research real companies, pitch ideas, and manage a live simulated portfolio — not just theory.",
+    body: "Members research real companies, pitch ideas, and manage a live simulated portfolio, not just theory.",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 3v18h18" />
@@ -98,7 +98,7 @@ export default function AboutPage() {
           <span style={{ color: "var(--muted)" }}>
             you learn the markets by being in them.
           </span>{" "}
-          No experience needed — just curiosity.
+          No experience needed, just curiosity.
         </h2>
 
         <div

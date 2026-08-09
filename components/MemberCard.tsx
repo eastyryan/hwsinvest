@@ -25,13 +25,15 @@ function LinkedInButton({ href, dark }: { href: string; dark?: boolean }) {
         width: 30,
         height: 30,
         borderRadius: 8,
-        background: dark ? "#fff" : "var(--text)",
+        // Collapsed sits on the light label chip, so it carries the brand
+        // green. Expanded sits on the green fill, so it inverts to white.
+        background: dark ? "#fff" : "var(--wsGreen)",
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
       }}
     >
-      <svg width="15" height="15" viewBox="0 0 24 24" fill={dark ? "var(--wsGreen)" : "var(--bg)"}>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill={dark ? "var(--wsGreen)" : "#fff"}>
         <path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.22 8.06h4.56V24H.22V8.06zM8.34 8.06h4.37v2.18h.06c.61-1.16 2.1-2.38 4.32-2.38 4.62 0 5.47 3.04 5.47 6.99V24h-4.56v-7.05c0-1.68-.03-3.84-2.34-3.84-2.34 0-2.7 1.83-2.7 3.72V24H8.34V8.06z" />
       </svg>
     </a>
@@ -134,7 +136,7 @@ export default function MemberCard({ member }: { member: Member }) {
         </button>
       )}
 
-      {/* Collapsed label — name + role + LinkedIn */}
+      {/* Collapsed label: name + role + LinkedIn */}
       <div
         style={{
           position: "absolute",
@@ -164,7 +166,7 @@ export default function MemberCard({ member }: { member: Member }) {
         {member.linkedin ? <LinkedInButton href={member.linkedin} /> : null}
       </div>
 
-      {/* Expanded content — bio */}
+      {/* Expanded content: bio */}
       {hasBio && (
         <div
           style={{

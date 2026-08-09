@@ -5,7 +5,7 @@ import type { CompanyFinancials } from "@/lib/research/edgar";
 import { buildRatios } from "@/lib/research/ratios";
 
 function fmtRatio(v: number | null, format: "pct" | "x"): string {
-  if (v == null) return "—";
+  if (v == null) return "n/a";
   return format === "pct" ? (v * 100).toFixed(1) + "%" : v.toFixed(2) + "x";
 }
 

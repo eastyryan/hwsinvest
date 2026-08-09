@@ -62,7 +62,7 @@ function schemaFingerprint(): string {
   return fingerprintCache;
 }
 
-/** Bad input from the caller, not an upstream failure — maps to a 400. */
+/** Bad input from the caller, not an upstream failure, maps to a 400. */
 export class InvalidCikError extends Error {
   constructor(cik: string) {
     super(`Invalid CIK: ${JSON.stringify(cik)}`);
@@ -70,7 +70,7 @@ export class InvalidCikError extends Error {
   }
 }
 
-/** The company exists but files no US-GAAP facts — maps to a 404, not a 502. */
+/** The company exists but files no US-GAAP facts, maps to a 404, not a 502. */
 export class NoFactsError extends Error {
   constructor() {
     super("No US-GAAP facts available for this company");
@@ -123,7 +123,7 @@ export interface CompanyFinancials {
   ticker: string;
   /** ISO 4217 code the filer actually reports in. Not always USD. */
   currency: string;
-  /** Cover-page shares outstanding — the correct market-cap input. */
+  /** Cover-page shares outstanding: the correct market-cap input. */
   sharesOutstanding: number | null;
   annual: StatementSet;
   quarterly: StatementSet;
@@ -194,7 +194,7 @@ interface TagSeries {
 
 /**
  * Split a tag's facts into annual and quarterly series keyed by period end.
- * Exported for tests — not part of the module's intended public surface.
+ * Exported for tests: not part of the module's intended public surface.
  */
 export function buildSeries(facts: Fact[], kind: Kind, q4Mode: "subtract" | "average" = "subtract"): TagSeries {
   const annual = new Map<string, number>();
@@ -215,8 +215,8 @@ export function buildSeries(facts: Fact[], kind: Kind, q4Mode: "subtract" | "ave
 
   // Flow facts. Two reporting styles coexist and both must be handled:
   //
-  //   discrete — each 10-Q reports the 3 months just ended (start moves forward)
-  //   YTD      — each 10-Q reports cumulatively from the fiscal year start
+  //   discrete: each 10-Q reports the 3 months just ended (start moves forward)
+  //   YTD     : each 10-Q reports cumulatively from the fiscal year start
   //              (start is fixed; durations run ~90 / ~181 / ~273 / ~365)
   //
   // Cash-flow statements are very commonly YTD. The previous implementation
@@ -227,7 +227,7 @@ export function buildSeries(facts: Fact[], kind: Kind, q4Mode: "subtract" | "ave
   // Grouping by `start` separates the two styles cleanly: YTD facts within a
   // fiscal year all share one start date, while discrete facts each have their
   // own. Differencing consecutive members of a shared-start ladder recovers the
-  // discrete quarters — and because a 10-K's annual fact shares that same start,
+  // discrete quarters: and because a 10-K's annual fact shares that same start,
   // Q4 falls out of the same operation for free.
   const byStart = new Map<string, Fact[]>();
   const annualFacts: Fact[] = [];
@@ -236,8 +236,8 @@ export function buildSeries(facts: Fact[], kind: Kind, q4Mode: "subtract" | "ave
     const d = daysBetween(f.start, f.end);
     if (d < 60 || d > 400) continue; // not a quarter/YTD/annual window
     // A 365-day duration alone does not make a fact annual. Amazon reports
-    // trailing-twelve-month figures inside its 10-Qs — 102 of them, ending at
-    // quarter ends — and treating those as fiscal years put quarter-end columns
+    // trailing-twelve-month figures inside its 10-Qs, 102 of them, ending at
+    // quarter ends: and treating those as fiscal years put quarter-end columns
     // on the annual axis, three of them per year all labelled the same.
     // Requiring an annual filing is what actually distinguishes a fiscal year.
     if (d >= 340 && d <= 380 && isAnnualFiling(f)) annualFacts.push(f);
@@ -276,7 +276,7 @@ export function buildSeries(facts: Fact[], kind: Kind, q4Mode: "subtract" | "ave
         // This assumes every rung shares one measurement basis, which a stock
         // split inside the fiscal year breaks: the YTD averages restate onto
         // the post-split basis while the prior rung is pre-split, so the
-        // subtraction mixes bases and yields nonsense — NVIDIA's split years
+        // subtraction mixes bases and yields nonsense, NVIDIA's split years
         // produced a Q4 diluted share count of -1.2 billion and, elsewhere,
         // 92 billion against a real ~2.5 billion. A discrete quarter's average
         // must be positive and sit within a sane band of the cumulative average
@@ -325,7 +325,7 @@ export function buildSeries(facts: Fact[], kind: Kind, q4Mode: "subtract" | "ave
   // non-positive, or more than twice the largest annual figure in the series.
   // NVIDIA's 10-for-1 split produced a Q4 diluted count of -27 billion this
   // way, and elsewhere values near 92 billion against a real ~2.5 billion.
-  // Dropping leaves a gap, which is the honest outcome — the split-basis
+  // Dropping leaves a gap, which is the honest outcome, the split-basis
   // inconsistency across the full history is a separate, known limitation.
   if (q4Mode === "average" && annual.size > 0) {
     const maxAnnual = Math.max(...annual.values());
@@ -370,7 +370,7 @@ function pctChange(cur: number | null, prev: number | null): number | null {
  * downstream.
  *
  * The correction is applied per period, not once for the whole series, because
- * the convention changes mid-history — McDonald's switched to millions in 2021
+ * the convention changes mid-history: McDonald's switched to millions in 2021
  * and reported honest unit counts before that, so a single global factor is
  * wrong in one direction or the other for most of the axis.
  *
@@ -476,7 +476,7 @@ function buildStatementSet(
         // Recency is measured over the tag's whole fact set, not the series for
         // this frequency. Measuring per frequency let the annual and quarterly
         // axes crown different winners, so a concept could mean one thing on
-        // one view and something else on the other — Progressive's quarterly
+        // one view and something else on the other: Progressive's quarterly
         // revenue resolved to investment income while its annual revenue
         // resolved to the total, and the four quarters summed to 3% of the
         // year. The tag a concept resolves to must not depend on which view
@@ -555,8 +555,8 @@ function buildStatementSet(
   const sorted = [...allEnds].sort().reverse(); // newest first
   // Fiscal-year labels come from the filer's own `fy` field where available.
   // Deriving them from the calendar year of the end date mislabels every
-  // off-calendar filer — a retailer whose FY2024 ends 2025-02-01 was shown as
-  // FY2025 — and there is no universal rule to infer it, which is precisely why
+  // off-calendar filer: a retailer whose FY2024 ends 2025-02-01 was shown as
+  // FY2025: and there is no universal rule to infer it, which is precisely why
   // the field exists. (Walmart's FY ending Jan 2025 is FY2025; Target's FY
   // ending Feb 2025 is FY2024.)
   const periods: PeriodCol[] = sorted.map((end) => ({
@@ -571,7 +571,7 @@ function buildStatementSet(
         : fmtQuarterLabel(end),
   }));
 
-  // Two quarter ends can land in the same calendar month — a 52/53-week filer
+  // Two quarter ends can land in the same calendar month, a 52/53-week filer
   // whose quarter drifts across a month boundary produces "Mar '11" twice.
   // Adding the day only where it is needed keeps the common case readable.
   if (freq === "quarterly") {
@@ -587,8 +587,8 @@ function buildStatementSet(
   }
 
   // Fiscal years must decrease strictly as the axis goes back in time. Filers
-  // do stamp the wrong `fy` on their own filings — Walmart labels the year
-  // ending 2014-01-31 as fy=2013 — which produces two columns with the same
+  // do stamp the wrong `fy` on their own filings, Walmart labels the year
+  // ending 2014-01-31 as fy=2013: which produces two columns with the same
   // heading and no way for a reader to tell which is which. Where the sequence
   // breaks, the neighbouring years win and the outlier is renumbered.
   if (freq === "annual") {
@@ -674,7 +674,7 @@ export async function fetchCompanyFacts(cik: string): Promise<CompanyFactsRaw> {
  * Actual shares outstanding as of the latest cover page.
  *
  * Distinct from the `sharesDiluted` income-statement line, which is
- * WeightedAverageNumberOfDilutedSharesOutstanding — a *period average*, and
+ * WeightedAverageNumberOfDilutedSharesOutstanding, a *period average*, and
  * structurally the wrong input for a market-cap calculation.
  */
 function latestSharesOutstanding(raw: CompanyFactsRaw): number | null {
@@ -689,7 +689,7 @@ function latestSharesOutstanding(raw: CompanyFactsRaw): number | null {
       best = f;
     }
   }
-  // Some filers tag a zero here — Simon Property does, being an UPREIT whose
+  // Some filers tag a zero here: Simon Property does, being an UPREIT whose
   // units sit with the operating partnership. Zero is not a share count, and
   // treating it as one produced a $0 market cap and a narrative announcing the
   // company was "priced at 0.0x trailing earnings".
@@ -704,7 +704,7 @@ function latestSharesOutstanding(raw: CompanyFactsRaw): number | null {
  * post-split bases, yielding negatives or values many times the true count.
  * Those are impossible, not merely imprecise, so they are removed. A value is
  * kept only if it is positive and within an order of magnitude of the largest
- * share figure the company reports — wide enough to tolerate a 10-for-1 split,
+ * share figure the company reports: wide enough to tolerate a 10-for-1 split,
  * narrow enough to reject a de-averaging blowup.
  */
 function sanitizeShareCounts(set: StatementSet): void {
@@ -724,11 +724,11 @@ function sanitizeShareCounts(set: StatementSet): void {
   }
 }
 
-/** Exported for tests — not part of the module's intended public surface. */
+/** Exported for tests: not part of the module's intended public surface. */
 /**
  * A quarter cannot equal its own fiscal year.
  *
- * Oracle's FY2022 10-K tags Revenues of 42.44B — the full year — with a 91-day
+ * Oracle's FY2022 10-K tags Revenues of 42.44B (the full year) with a 91-day
  * duration of March to May 2022, alongside the correct 364-day fact carrying
  * the same value. Its later filings dropped the bad one. Read literally, Q4
  * revenue equals annual revenue and the four quarters sum to 172% of the year.
@@ -797,7 +797,7 @@ export function normalize(
   //
   // It cannot fix the start of history. XBRL only became mandatory in 2009, so
   // the first 10-K a filer tagged carries FY2008 and FY2007 comparatives that
-  // appear nowhere else — three period ends, all stamped fy=2009, with no
+  // appear nowhere else: three period ends, all stamped fy=2009, with no
   // earlier filing to disambiguate them. Apple, Microsoft, Walmart and most
   // large filers all have this.
   //
@@ -851,7 +851,7 @@ export function normalize(
   const quarterly = buildStatementSet(gaap, "quarterly", ctx);
   repairQuarterEqualToYear(annual, quarterly);
   // Final sanitize, after every pass. A share count cannot be negative on any
-  // axis, whichever pass produced it — the per-tag guards in buildSeries can't
+  // axis, whichever pass produced it, the per-tag guards in buildSeries can't
   // see values that a later cross-statement pass injects. Splits across a
   // fiscal year make quarterly weighted-average share counts unrecoverable, so
   // an impossible one is blanked rather than shown (NVIDIA's split produced a
@@ -881,8 +881,8 @@ export async function getCompanyFinancials(
   ticker: string
 ): Promise<CompanyFinancials> {
   if (!isValidCik(cik)) throw new InvalidCikError(cik);
-  // Keyed on the CIK alone. The ticker is a display label — the data depends
-  // only on the CIK — but including it in the key made every distinct ticker
+  // Keyed on the CIK alone. The ticker is a display label, the data depends
+  // only on the CIK: but including it in the key made every distinct ticker
   // string a guaranteed miss in both cache tiers *and* a separate singleFlight
   // slot. Since the validator admits on the order of 10^21 ticker strings and
   // the route needs no authentication, a caller could force unlimited cold
@@ -1011,7 +1011,7 @@ export async function searchTickers(query: string, limit = 8): Promise<TickerEnt
  * profile lookups, whose caches are keyed on it. The validator admits on the
  * order of 10^21 strings, so a caller could vary it to force uncached upstream
  * calls indefinitely even after the expensive SEC leg was made CIK-only.
- * Resolving from the directory — itself cached for a day — means the client's
+ * Resolving from the directory (itself cached for a day) means the client's
  * value never reaches an upstream or a cache key.
  *
  * Falls back to the supplied value only when the CIK is absent from the

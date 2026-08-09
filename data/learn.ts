@@ -1,4 +1,4 @@
-// Study content for the members "Academy" — original questions written to
+// Study content for the members "Academy": original questions written to
 // teach the same concepts covered in the club's resource PDFs (Investment
 // Dictionary, Accounting & Financial Statement Analysis, Economic Data
 // Releases, Excel guides, and the standard IB/equity-research technical canon).
@@ -44,7 +44,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 0,
             explain:
-              "Alpha is return earned above the benchmark/expected return — value added by a strategy. A stock's sensitivity to the market is beta.",
+              "Alpha is return earned above the benchmark/expected return, value added by a strategy. A stock's sensitivity to the market is beta.",
           },
           {
             type: "mc",
@@ -65,7 +65,7 @@ export const TRACKS: Track[] = [
             choices: ["Apple", "The NYSE", "Bonds", "A 401(k)"],
             answer: 2,
             explain:
-              "An asset class is a group of securities with similar features — the big three are stocks, bonds, and cash equivalents.",
+              "An asset class is a group of securities with similar features. The big three are stocks, bonds, and cash equivalents.",
           },
           {
             type: "tf",
@@ -79,7 +79,7 @@ export const TRACKS: Track[] = [
             choices: ["Coupon rate", "Compound growth rate", "Dividend yield", "Expense ratio"],
             answer: 1,
             explain:
-              "Annualized return averages performance over multiple years while accounting for compounding — also called the compound growth rate.",
+              "Annualized return averages performance over multiple years while accounting for compounding, also called the compound growth rate.",
           },
           {
             type: "mc",
@@ -111,7 +111,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "A bond is debt — the issuer borrows and pays the holder interest (coupons), repaying principal at maturity.",
+              "A bond is debt: the issuer borrows and pays the holder interest (coupons), repaying principal at maturity.",
           },
           {
             type: "mc",
@@ -152,7 +152,7 @@ export const TRACKS: Track[] = [
             choices: ["Spread", "Margin", "Yield", "Premium"],
             answer: 0,
             explain:
-              "The bid-ask spread is the gap between what buyers will pay and sellers will accept — tighter spreads mean more liquidity.",
+              "The bid-ask spread is the gap between what buyers will pay and sellers will accept. Tighter spreads mean more liquidity.",
           },
           {
             type: "tf",
@@ -232,7 +232,7 @@ export const TRACKS: Track[] = [
             choices: ["Liquidity", "Volatility / risk", "Profitability", "Valuation"],
             answer: 1,
             explain:
-              "Standard deviation quantifies how much returns swing around their average — a standard proxy for volatility/risk.",
+              "Standard deviation quantifies how much returns swing around their average, a standard proxy for volatility/risk.",
           },
         ],
       },
@@ -245,7 +245,7 @@ export const TRACKS: Track[] = [
             q: "Bond prices and interest rates (yields) move in opposite directions.",
             answer: true,
             explain:
-              "When rates rise, existing bonds paying lower coupons become less attractive, so their prices fall — and vice versa.",
+              "When rates rise, existing bonds paying lower coupons become less attractive, so their prices fall, and vice versa.",
           },
           {
             type: "mc",
@@ -292,7 +292,7 @@ export const TRACKS: Track[] = [
             choices: ["Treasury", "Junk / high-yield bond", "Municipal bond", "Zero-coupon bond"],
             answer: 1,
             explain:
-              "Below-investment-grade bonds carry higher default risk, so they pay higher yields — hence “high-yield” or “junk.”",
+              "Below-investment-grade bonds carry higher default risk, so they pay higher yields, hence “high-yield” or “junk.”",
           },
           {
             type: "tf",
@@ -331,7 +331,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "The expense ratio is the annual fee charged as a percentage of assets — lower is better, all else equal.",
+              "The expense ratio is the annual fee charged as a percentage of assets. Lower is better, all else equal.",
           },
           {
             type: "mc",
@@ -344,7 +344,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 0,
             explain:
-              "NAV per share = (fund assets − liabilities) ÷ shares outstanding — the per-share value of the fund's holdings.",
+              "NAV per share = (fund assets − liabilities) ÷ shares outstanding, the per-share value of the fund's holdings.",
           },
           {
             type: "mc",
@@ -381,7 +381,7 @@ export const TRACKS: Track[] = [
   {
     id: "accounting",
     title: "Accounting & 3 Statements",
-    blurb: "The income statement, balance sheet, and cash flow — and how they connect.",
+    blurb: "The income statement, balance sheet, and cash flow, and how they connect.",
     source: "General Knowledge · Accounting & Financial Statement Analysis",
     lessons: [
       {
@@ -394,14 +394,14 @@ export const TRACKS: Track[] = [
             choices: ["Balance Sheet", "Income Statement", "Cash Flow Statement", "Equity Statement"],
             answer: 1,
             explain:
-              "The income statement runs from revenue down through expenses to net income — the “bottom line.”",
+              "The income statement runs from revenue down through expenses to net income, the “bottom line.”",
           },
           {
             type: "mc",
             q: "The final line of the income statement is…",
             choices: ["Gross Profit", "Operating Income", "Net Income", "EBITDA"],
             answer: 2,
-            explain: "Net income is the bottom line — what remains after all expenses, interest, and taxes.",
+            explain: "Net income is the bottom line, what remains after all expenses, interest, and taxes.",
           },
           {
             type: "mc",
@@ -413,7 +413,7 @@ export const TRACKS: Track[] = [
               "Cash = Assets − Liabilities",
             ],
             answer: 1,
-            explain: "Assets = Liabilities + Shareholders' Equity — it must always balance.",
+            explain: "Assets = Liabilities + Shareholders' Equity, and it must always balance.",
           },
           {
             type: "mc",
@@ -475,7 +475,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "Accrual accounting records revenue/expenses when earned or incurred — not when cash moves (that's cash-basis).",
+              "Accrual accounting records revenue/expenses when earned or incurred, not when cash moves (that's cash-basis).",
           },
           {
             type: "mc",
@@ -502,7 +502,7 @@ export const TRACKS: Track[] = [
             choices: ["Revenue", "Net Income", "Free Cash Flow", "Gross Profit"],
             answer: 2,
             explain:
-              "Free cash flow (operating cash flow minus capex) shows real cash generation — net income includes non-cash items.",
+              "Free cash flow (operating cash flow minus capex) shows real cash generation. Net income includes non-cash items.",
           },
         ],
       },
@@ -538,7 +538,7 @@ export const TRACKS: Track[] = [
             q: "After this change, the balance sheet still balances: Assets fall $6 (Cash +$4, PP&E −$10) and Equity falls $6 (retained earnings).",
             answer: true,
             explain:
-              "Assets: +$4 cash − $10 PP&E = −$6. Equity: net income −$6 into retained earnings. Both sides fall $6 — it balances.",
+              "Assets: +$4 cash − $10 PP&E = −$6. Equity: net income −$6 into retained earnings. Both sides fall $6, so it balances.",
           },
           {
             type: "mc",
@@ -551,7 +551,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "Depreciation is a non-cash expense that reduces taxable income — the “depreciation tax shield” saves cash on taxes.",
+              "Depreciation is a non-cash expense that reduces taxable income. The “depreciation tax shield” saves cash on taxes.",
           },
         ],
       },
@@ -577,7 +577,7 @@ export const TRACKS: Track[] = [
             choices: ["Source", "Use", "Neither", "Financing source"],
             answer: 1,
             explain:
-              "Higher receivables mean you've booked revenue but not collected cash yet — a use of cash (it reduces operating cash flow).",
+              "Higher receivables mean you've booked revenue but not collected cash yet, a use of cash (it reduces operating cash flow).",
           },
           {
             type: "mc",
@@ -585,11 +585,11 @@ export const TRACKS: Track[] = [
             choices: ["Use", "Source", "Neither", "Investing use"],
             answer: 1,
             explain:
-              "Delaying payment to suppliers conserves cash — rising payables is a source of cash.",
+              "Delaying payment to suppliers conserves cash. Rising payables is a source of cash.",
           },
           {
             type: "tf",
-            q: "A company that collects from customers before paying suppliers can operate with negative working capital — which can be a good sign of efficiency.",
+            q: "A company that collects from customers before paying suppliers can operate with negative working capital, which can be a good sign of efficiency.",
             answer: true,
             explain:
               "Subscription, retail, and some platform businesses get paid first, financing operations with suppliers' money.",
@@ -626,7 +626,7 @@ export const TRACKS: Track[] = [
             choices: ["Amortization", "Acquisitions", "Allocation", "Assets"],
             answer: 0,
             explain:
-              "EBITDA adds back D&A to operating earnings — a rough proxy for operating cash flow that's capital-structure neutral.",
+              "EBITDA adds back D&A to operating earnings, a rough proxy for operating cash flow that's capital-structure neutral.",
           },
           {
             type: "mc",
@@ -645,7 +645,7 @@ export const TRACKS: Track[] = [
             q: "Operating margin is operating income divided by revenue.",
             answer: true,
             explain:
-              "Operating margin = operating income (EBIT) / revenue — profitability from core operations before interest and taxes.",
+              "Operating margin = operating income (EBIT) / revenue, profitability from core operations before interest and taxes.",
           },
           {
             type: "mc",
@@ -681,7 +681,7 @@ export const TRACKS: Track[] = [
               "EBITDA × shares",
             ],
             answer: 0,
-            explain: "Equity value = share price × diluted shares — the market value of all equity.",
+            explain: "Equity value = share price × diluted shares, the market value of all equity.",
           },
           {
             type: "mc",
@@ -714,7 +714,7 @@ export const TRACKS: Track[] = [
             q: "EV/EBITDA pairs an enterprise-value metric with a pre-interest profit metric, which is why it's capital-structure neutral.",
             answer: true,
             explain:
-              "EBITDA is before interest, so it belongs to all capital providers — matching enterprise value. P/E pairs equity value with net income.",
+              "EBITDA is before interest, so it belongs to all capital providers, matching enterprise value. P/E pairs equity value with net income.",
           },
           {
             type: "mc",
@@ -785,7 +785,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "Because explicit forecasts are only ~5–10 years, terminal value commonly makes up 60–80%+ of the DCF — so its assumptions matter enormously.",
+              "Because explicit forecasts are only ~5–10 years, terminal value commonly makes up 60–80%+ of the DCF, so its assumptions matter enormously.",
           },
         ],
       },
@@ -826,7 +826,7 @@ export const TRACKS: Track[] = [
             q: "A lower P/E always means a stock is a better buy.",
             answer: false,
             explain:
-              "Not necessarily — a low P/E can signal low growth or high risk (a “value trap”), while a high P/E may reflect strong growth prospects.",
+              "Not necessarily. A low P/E can signal low growth or high risk (a “value trap”), while a high P/E may reflect strong growth prospects.",
           },
           {
             type: "mc",
@@ -890,7 +890,7 @@ export const TRACKS: Track[] = [
               "Investment bankers",
             ],
             answer: 1,
-            explain: "Acquirers pay above the trading price to gain control and capture synergies — the control premium.",
+            explain: "Acquirers pay above the trading price to gain control and capture synergies, the control premium.",
           },
           {
             type: "mc",
@@ -963,7 +963,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "Adding cheaper, tax-advantaged debt can lower WACC — but only until rising leverage/risk pushes the cost of debt and equity up.",
+              "Adding cheaper, tax-advantaged debt can lower WACC, but only until rising leverage/risk pushes the cost of debt and equity up.",
           },
         ],
       },
@@ -994,7 +994,7 @@ export const TRACKS: Track[] = [
             q: "Soft data (like surveys) tends to lead hard data as an early indicator.",
             answer: true,
             explain:
-              "Sentiment shifts before official statistics catch up, so soft data often moves markets first — but can give false signals.",
+              "Sentiment shifts before official statistics catch up, so soft data often moves markets first, but can give false signals.",
           },
           {
             type: "mc",
@@ -1002,14 +1002,14 @@ export const TRACKS: Track[] = [
             choices: ["Soft data", "Hard data", "Leading sentiment surveys", "Technical indicators"],
             answer: 1,
             explain:
-              "These are hard data — official statistics of real economic activity that tend to drive larger, sustained moves.",
+              "These are hard data, official statistics of real economic activity that tend to drive larger, sustained moves.",
           },
           {
             type: "mc",
             q: "The Consumer Price Index (CPI) primarily tracks…",
             choices: ["Employment", "Inflation / consumer prices", "Stock returns", "Manufacturing orders"],
             answer: 1,
-            explain: "CPI measures the change in prices of a basket of consumer goods — a key inflation gauge.",
+            explain: "CPI measures the change in prices of a basket of consumer goods, a key inflation gauge.",
           },
           {
             type: "tf",
@@ -1059,7 +1059,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "Higher rates make borrowing costlier, slowing demand and inflation. Cutting rates does the opposite — it stimulates.",
+              "Higher rates make borrowing costlier, slowing demand and inflation. Cutting rates does the opposite. It stimulates.",
           },
           {
             type: "tf",
@@ -1113,7 +1113,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "Normally investors demand more yield to lend for longer, so longer maturities yield more — an upward slope.",
+              "Normally investors demand more yield to lend for longer, so longer maturities yield more, an upward slope.",
           },
           {
             type: "mc",
@@ -1168,14 +1168,14 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "F4 cycles a reference between relative and absolute ($A$1, A$1, $A1, A1) — essential for dragging formulas.",
+              "F4 cycles a reference between relative and absolute ($A$1, A$1, $A1, A1), essential for dragging formulas.",
           },
           {
             type: "mc",
             q: "Which shortcut opens the Format Cells dialog?",
             choices: ["CTRL + 1", "CTRL + F", "ALT + =", "F2"],
             answer: 0,
-            explain: "CTRL + 1 opens Format Cells — number formats, borders, fonts, and more.",
+            explain: "CTRL + 1 opens Format Cells: number formats, borders, fonts, and more.",
           },
           {
             type: "mc",
@@ -1189,7 +1189,7 @@ export const TRACKS: Track[] = [
             q: "ALT + = (equals) inserts which function?",
             choices: ["AVERAGE", "COUNT", "SUM", "IF"],
             answer: 2,
-            explain: "ALT + = drops in the SUM function for the adjacent range — a huge time-saver.",
+            explain: "ALT + = drops in the SUM function for the adjacent range, a huge time-saver.",
           },
           {
             type: "mc",
@@ -1281,7 +1281,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "IFERROR(value, alternative) returns your fallback when a formula would otherwise show an error — keeps models clean.",
+              "IFERROR(value, alternative) returns your fallback when a formula would otherwise show an error, which keeps models clean.",
           },
           {
             type: "tf",
@@ -1347,14 +1347,14 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "Selecting part of a formula and pressing F9 evaluates that fragment in place — great for debugging complex formulas.",
+              "Selecting part of a formula and pressing F9 evaluates that fragment in place, great for debugging complex formulas.",
           },
           {
             type: "tf",
             q: "Consistent, clearly-labeled assumptions make a model easier for others to audit and trust.",
             answer: true,
             explain:
-              "Transparent structure and assumptions are core to good modeling — reviewers must be able to follow your logic quickly.",
+              "Transparent structure and assumptions are core to good modeling. Reviewers must be able to follow your logic quickly.",
           },
         ],
       },
@@ -1391,7 +1391,7 @@ export const TRACKS: Track[] = [
             choices: ["Income Statement", "Cash Flow Statement", "Equity Statement", "None of these"],
             answer: 1,
             explain:
-              "A company can be profitable on the income statement yet run out of cash — the cash flow statement reveals real liquidity.",
+              "A company can be profitable on the income statement yet run out of cash. The cash flow statement reveals real liquidity.",
           },
           {
             type: "tf",
@@ -1406,7 +1406,7 @@ export const TRACKS: Track[] = [
             choices: ["−$10", "−$6", "+$4", "No change"],
             answer: 1,
             explain:
-              "The write-down is a $10 pre-tax expense; with a 40% tax shield, net income falls $6 — same mechanics as the depreciation walk-through.",
+              "The write-down is a $10 pre-tax expense; with a 40% tax shield, net income falls $6, same mechanics as the depreciation walk-through.",
           },
           {
             type: "mc",
@@ -1445,7 +1445,7 @@ export const TRACKS: Track[] = [
               "Do nothing",
             ],
             answer: 1,
-            explain: "Equity value = enterprise value − debt + cash (i.e., minus net debt) — the reverse of the EV bridge.",
+            explain: "Equity value = enterprise value − debt + cash (i.e., minus net debt), the reverse of the EV bridge.",
           },
           {
             type: "tf",
@@ -1465,7 +1465,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "Small tweaks to long-dated growth, margins, or WACC dramatically change the result — “garbage in, garbage out.” That's why it's triangulated with comps.",
+              "Small tweaks to long-dated growth, margins, or WACC dramatically change the result: “garbage in, garbage out.” That's why it's triangulated with comps.",
           },
           {
             type: "mc",
@@ -1520,7 +1520,7 @@ export const TRACKS: Track[] = [
             choices: ["Comparable companies", "Precedent transactions", "Discounted cash flow", "52-week high"],
             answer: 2,
             explain:
-              "A DCF values a company on its own projected cash flows (intrinsic). Comps and precedents are relative — they price off other companies/deals.",
+              "A DCF values a company on its own projected cash flows (intrinsic). Comps and precedents are relative. They price off other companies/deals.",
           },
           {
             type: "mc",
@@ -1559,7 +1559,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "Using higher-P/E (more “expensive”) stock to buy a lower-P/E target adds EPS — accretive. The reverse is dilutive.",
+              "Using higher-P/E (more “expensive”) stock to buy a lower-P/E target adds EPS, which is accretive. The reverse is dilutive.",
           },
           {
             type: "mc",
@@ -1591,7 +1591,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 0,
             explain:
-              "Goodwill is the premium over the fair value of identifiable net assets — it plugs the balance sheet in purchase accounting.",
+              "Goodwill is the premium over the fair value of identifiable net assets. It plugs the balance sheet in purchase accounting.",
           },
         ],
       },
@@ -1617,7 +1617,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 2,
             explain:
-              "LBO returns come from debt paydown, EBITDA growth, and multiple expansion — not from quarterly common dividends.",
+              "LBO returns come from debt paydown, EBITDA growth, and multiple expansion, not from quarterly common dividends.",
           },
           {
             type: "mc",
@@ -1651,7 +1651,7 @@ export const TRACKS: Track[] = [
             ],
             answer: 1,
             explain:
-              "Leverage magnifies returns on the smaller equity investment — though it also magnifies losses and risk if cash flows disappoint.",
+              "Leverage magnifies returns on the smaller equity investment, though it also magnifies losses and risk if cash flows disappoint.",
           },
         ],
       },

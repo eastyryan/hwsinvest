@@ -6,7 +6,7 @@ import { sectors } from "@/data/sectors";
 const CLASS_YEARS = ["Freshman", "Sophomore", "Junior", "Senior", "Graduate"];
 
 // Opens the visitor's email client with a prepared message to the club.
-// No backend required — just a mailto with the form contents.
+// No backend required: just a mailto with the form contents.
 export default function ContactForm({ email }: { email: string }) {
   const [name, setName] = useState("");
   const [from, setFrom] = useState("");
@@ -16,12 +16,12 @@ export default function ContactForm({ email }: { email: string }) {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const subject = `HWS Investment Club — interest from ${name || "a student"}`;
+    const subject = `HWS Investment Club: interest from ${name || "a student"}`;
     const body =
       `Name: ${name}\n` +
       `Email: ${from}\n` +
-      `Class: ${year || "—"}\n` +
-      `Sector of interest: ${sector || "—"}\n\n` +
+      `Class: ${year || "n/a"}\n` +
+      `Sector of interest: ${sector || "n/a"}\n\n` +
       `${message}`;
     window.location.href = `mailto:${email}?subject=${encodeURIComponent(
       subject

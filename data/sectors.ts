@@ -47,7 +47,7 @@ export const sectors: Sector[] = [
     name: "Consumer Discretionary",
     etf: "XLY",
     blurb:
-      "Retail, autos, travel, and leisure — spending consumers can postpone. Cyclical.",
+      "Retail, autos, travel, and leisure: spending consumers can postpone. Cyclical.",
     holdings: ["AMZN", "TSLA", "HD", "MCD"],
   },
   {

@@ -36,7 +36,7 @@ export async function GET(
   const ticker = await canonicalTicker(cik, rawTicker);
 
   try {
-    // The AI summary is deliberately NOT awaited here — it lives on
+    // The AI summary is deliberately NOT awaited here, it lives on
     // /api/summary/[cik] so a multi-second model call can't hold up the
     // statements, ratios, and charts.
     const [financials, yahooProfile, secProfile, quote] = await Promise.all([
@@ -50,7 +50,7 @@ export async function GET(
 
     // Market cap: Yahoo's if available, else price x cover-page shares
     // outstanding. Only computed when the quote currency matches the filer's
-    // reporting currency — multiplying a non-USD quote by USD share counts
+    // reporting currency: multiplying a non-USD quote by USD share counts
     // produced a confidently wrong number labeled as USD.
     let marketCap = yahooProfile?.marketCap ?? null;
     let marketCapCurrency = yahooProfile?.currency ?? financials.currency;

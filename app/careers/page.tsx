@@ -25,7 +25,7 @@ const careers: Career[] = [
     title: "Investment Banking",
     blurb: "M&A and capital raising",
     detail:
-      "Advise companies on mergers, acquisitions, and raising money through stock or debt. Analysts spend most of their time building financial models and putting together pitch books. It's the most common first job for people who want to end up in private equity or at a hedge fund — long hours, but you learn fast.",
+      "Advise companies on mergers, acquisitions, and raising money through stock or debt. Analysts spend most of their time building financial models and putting together pitch books. It's the most common first job for people who want to end up in private equity or at a hedge fund. Long hours, but you learn fast.",
     skills: "Excel modeling, accounting, valuation, stamina.",
     timeline: "Recruiting runs 9–12 months ahead: you apply and interview in sophomore spring (roughly Nov–Mar) for the following summer. Full-time analyst recruiting then begins in junior fall.",
   },
@@ -33,7 +33,7 @@ const careers: Career[] = [
     title: "Sales & Trading",
     blurb: "Markets desk",
     detail:
-      "Work on a trading floor making markets and executing trades for clients across stocks, bonds, currencies, and credit. Sales covers the clients; trading manages the risk. Fast-paced and very markets-driven — good if you'd rather follow the tape than build models all night.",
+      "Work on a trading floor making markets and executing trades for clients across stocks, bonds, currencies, and credit. Sales covers the clients; trading manages the risk. Fast-paced and very markets-driven. Good if you'd rather follow the tape than build models all night.",
     skills: "Quick mental math, market intuition, communication, composure.",
     timeline: "Spring-week and summer internships; junior-year recruiting.",
   },
@@ -49,7 +49,7 @@ const careers: Career[] = [
     title: "Asset & Wealth Management",
     blurb: "Managing portfolios",
     detail:
-      "Build and manage investment portfolios — either for big institutions (asset management) or for individuals and families (wealth management). The work is more about long-term strategy and client relationships than the deal-by-deal grind of banking.",
+      "Build and manage investment portfolios, either for big institutions (asset management) or for individuals and families (wealth management). The work is more about long-term strategy and client relationships than the deal-by-deal grind of banking.",
     skills: "Portfolio theory, client relationships, discipline.",
     timeline: "Asset-management applications open in junior fall (Aug–Dec) with interviews into early winter. Wealth management hires closer to year-round, with a key July–September window. The CFA (Level I) is highly valued.",
   },
@@ -57,17 +57,17 @@ const careers: Career[] = [
     title: "Private Equity",
     blurb: "Buying companies",
     detail:
-      "Invest in private companies — source deals, underwrite them, and work to grow the businesses you buy before selling them later. Almost always a move you make after a couple of years in banking or consulting, though a few analyst programs exist.",
+      "Invest in private companies: source deals, underwrite them, and work to grow the businesses you buy before selling them later. Almost always a move you make after a couple of years in banking or consulting, though a few analyst programs exist.",
     skills: "Modeling, judgment, deal sense.",
-    timeline: "Almost always a post-banking move — most people enter after 2+ years in investment banking or consulting. Direct undergrad hiring is rare and rolling (fall–spring) at smaller firms.",
+    timeline: "Almost always a post-banking move. Most people enter after 2+ years in investment banking or consulting. Direct undergrad hiring is rare and rolling (fall–spring) at smaller firms.",
   },
   {
     title: "Venture Capital",
     blurb: "Funding startups",
     detail:
-      "Invest in early-stage startups and help them grow. The job is part finding promising founders, part evaluating markets, and part supporting the companies you back. Less about spreadsheets than PE — more about judgment, networks, and conviction.",
+      "Invest in early-stage startups and help them grow. The job is part finding promising founders, part evaluating markets, and part supporting the companies you back. Less about spreadsheets than PE, more about judgment, networks, and conviction.",
     skills: "Market sense, networking, pattern recognition.",
-    timeline: "More open to undergrads than PE — part-time roles appear in the fall, scout/analyst spots peak in winter–spring, and full-time roles post fall–winter at smaller firms. Networking is everything.",
+    timeline: "More open to undergrads than PE. Part-time roles appear in the fall, scout/analyst spots peak in winter–spring, and full-time roles post fall–winter at smaller firms. Networking is everything.",
   },
   {
     title: "Hedge Funds",
@@ -89,7 +89,7 @@ const careers: Career[] = [
     title: "Commercial & Corporate Banking",
     blurb: "Lending to businesses",
     detail:
-      "Lend to and manage relationships with businesses — everything from local companies to large corporations. You assess credit risk and structure loans. More predictable hours than investment banking, and a solid foundation in how companies actually use money.",
+      "Lend to and manage relationships with businesses, everything from local companies to large corporations. You assess credit risk and structure loans. More predictable hours than investment banking, and a solid foundation in how companies actually use money.",
     skills: "Credit analysis, relationship management, judgment.",
     timeline: "Summer-internship applications open in junior fall (Aug–Oct), with interviews and offers between November and January. Many full-time seats are filled by returning interns.",
   },
@@ -97,7 +97,7 @@ const careers: Career[] = [
     title: "Consulting",
     blurb: "Advising companies",
     detail:
-      "Not strictly finance, but a huge destination for finance-minded grads. Help companies solve strategy and operations problems across industries. The exit options are wide — including private equity and corporate roles — which is part of the appeal.",
+      "Not strictly finance, but a huge destination for finance-minded grads. Help companies solve strategy and operations problems across industries. The exit options are wide, including private equity and corporate roles, which is part of the appeal.",
     skills: "Problem solving, communication, structured thinking.",
     timeline: "Applications open late summer–early fall (Aug–Oct) for the following summer, with rolling interviews Sept–Nov and many offers extended before winter break.",
   },
@@ -253,7 +253,7 @@ export default function CareersPage() {
             Weekly markets recaps and stock pitches so you can talk confidently in
             an interview, Excel and modeling workshops, resume reviews and mock
             interviews before recruiting season, and alumni connections through
-            Career Services. No finance background required — just show up.
+            Career Services. No finance background required, just show up.
           </p>
         </div>
       </section>

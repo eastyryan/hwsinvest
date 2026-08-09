@@ -18,7 +18,7 @@ export default async function FilesPage() {
       <p className="kicker">Members</p>
       <h1 className="h-page" style={{ fontSize: "clamp(28px,4vw,40px)" }}>Club Files</h1>
       <p className="lede" style={{ marginBottom: 30 }}>
-        Research, models, pitch decks, and guides — preview in your browser or download.
+        Research, models, pitch decks, and guides. Preview in your browser or download.
       </p>
 
       <MemberFiles />

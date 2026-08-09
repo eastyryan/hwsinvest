@@ -98,8 +98,8 @@ export default function Home() {
             <div style={statValue}>55+</div>
             <div style={statSub}>Members</div>
             <p style={statPara}>
-              Drawn from every major — economics and finance to the sciences and
-              humanities — and growing every semester. No prior background required.
+              Drawn from every major, from economics and finance to the sciences and
+              humanities, and growing every semester. No prior background required.
             </p>
           </div>
           <div>
@@ -107,7 +107,7 @@ export default function Home() {
             <div style={statSub}>7:00 – 8:00 PM</div>
             <p style={statPara}>
               Open to every HWS student. Come to a single meeting, bring a friend,
-              and see if it&rsquo;s for you — no experience needed.
+              and see if it&rsquo;s for you. No experience needed.
             </p>
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function Home() {
           >
             The HWS Investment Club brings together students from every major to
             learn how markets actually work. We focus on fundamental, bottom-up
-            research — studying real companies, debating ideas in the open, and
+            research: studying real companies, debating ideas in the open, and
             testing a thesis against a live, simulated portfolio. No prior
             experience is required: whether you&rsquo;re aiming for Wall Street or
             just want to understand the news, there&rsquo;s a place for you here.

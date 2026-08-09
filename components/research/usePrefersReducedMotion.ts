@@ -6,7 +6,7 @@ import { useSyncExternalStore } from "react";
  * Shared subscription to `(prefers-reduced-motion: reduce)`.
  *
  * The CSS animations in globals.css are already gated on this media query, but
- * Recharts animates in JavaScript and ignores it entirely — every chart wipes
+ * Recharts animates in JavaScript and ignores it entirely, every chart wipes
  * itself in over ~1.5s on mount and on every data change. That is exactly the
  * kind of motion the preference exists to suppress, so the charts read it too.
  *

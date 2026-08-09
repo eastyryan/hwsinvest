@@ -1,5 +1,5 @@
 // Chart palette for the research tool. Recharts writes these straight into SVG
-// attributes, so they're literals rather than var() references — keep them in
+// attributes, so they're literals rather than var() references, keep them in
 // sync with the matching tokens in globals.css.
 
 export const CHART = {
@@ -11,7 +11,7 @@ export const CHART = {
   muted: "#8a8a90", // --faint
 };
 
-/** Fixed categorical order — color follows the company slot, never re-cycled. */
+/** Fixed categorical order: color follows the company slot, never re-cycled. */
 export const SERIES = [CHART.brand, CHART.orange, CHART.green];
 
 export const AXIS_TICK = { fill: CHART.muted, fontSize: 11 } as const;

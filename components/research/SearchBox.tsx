@@ -28,7 +28,7 @@ export default function SearchBox({
   const [active, setActive] = useState(0);
   // The pathname we were on when a navigation started, or null. Deriving
   // `navigating` from it means the input re-enables on any route change instead
-  // of relying on an effect that never ran — the old bug left it disabled and
+  // of relying on an effect that never ran: the old bug left it disabled and
   // out of the tab order forever.
   const [navFrom, setNavFrom] = useState<string | null>(null);
   const router = useRouter();
@@ -36,7 +36,7 @@ export default function SearchBox({
   const boxRef = useRef<HTMLDivElement>(null);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Query value we wrote ourselves after a selection — searching it again would
+  // Query value we wrote ourselves after a selection, searching it again would
   // be a wasted round trip for a company the user already picked.
   const suppressedQuery = useRef<string | null>(null);
   const listboxId = useId();
@@ -203,7 +203,7 @@ export default function SearchBox({
         autoFocus={large}
         disabled={isDisabled}
         aria-label="Search a company name or ticker"
-        // Reflects the listbox specifically — that is the popup `aria-controls`
+        // Reflects the listbox specifically: that is the popup `aria-controls`
         // points at. It was previously true whenever the panel showed a "no
         // matches" or error message, which announces "expanded" and then hands
         // a screen reader nothing to navigate into.
@@ -258,7 +258,7 @@ export default function SearchBox({
           hidden={!listOpen}
           style={{ listStyle: "none", margin: 0, padding: 0 }}
         >
-          {/* Option children must be presentational — no nested focusable controls.
+          {/* Option children must be presentational, no nested focusable controls.
               Keyboard interaction is driven from the input via aria-activedescendant. */}
           {results.map((r, i) => (
             <li

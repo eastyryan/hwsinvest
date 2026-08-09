@@ -71,7 +71,7 @@ const div = (a: number | null, b: number | null): number | null =>
  * Divide, but only where a positive denominator makes the result meaningful.
  *
  * Companies that have bought back stock for decades carry genuinely negative
- * shareholders' equity — McDonald's, Boeing and Home Depot all do, and the
+ * shareholders' equity: McDonald's, Boeing and Home Depot all do, and the
  * balance sheets tie. Dividing by it is arithmetically fine and financially
  * meaningless: Home Depot's return on equity came out at 1450% and McDonald's
  * debt-to-equity at -22.8x, which reads as negative leverage when the truth is

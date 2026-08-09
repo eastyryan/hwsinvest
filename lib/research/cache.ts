@@ -76,8 +76,8 @@ export interface CachedOptions {
  * cache miss.
  *
  * Storing the bare value made `null` unreadable: three call sites return null on
- * their normal path — the AI summary on a refusal, the Yahoo profile whenever
- * its crumb handshake fails, the SEC profile on a 404 — and each re-ran on every
+ * their normal path: the AI summary on a refusal, the Yahoo profile whenever
+ * its crumb handshake fails, the SEC profile on a 404, and each re-ran on every
  * single request forever. Yahoo's handshake is blocked from datacenter IPs, so
  * in production that meant two uncached upstream fetches per page view that
  * could never succeed, and a null AI summary meant a fresh Opus call per
@@ -92,7 +92,7 @@ interface Boxed<T> {
  * returns it. Concurrent misses for the same key are collapsed by the caller
  * via singleFlight().
  *
- * Cache failures are never fatal — a broken cache degrades to a slow request,
+ * Cache failures are never fatal: a broken cache degrades to a slow request,
  * not an error.
  */
 export async function cached<T>(
@@ -126,7 +126,7 @@ export async function cached<T>(
     try {
       await remote.set(key, boxed, { ttl, tags: opts.tags });
     } catch (e) {
-      // Most likely the 2MB item limit. Worth surfacing — it means this key is
+      // Most likely the 2MB item limit. Worth surfacing, it means this key is
       // effectively memory-only and will miss across instances.
       console.warn(`[cache] runtime cache write failed for ${key}:`, e);
     }

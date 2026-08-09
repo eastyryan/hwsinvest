@@ -23,7 +23,7 @@ const SERIES: { id: string; label: string; fmt: EconFmt; note: string; desc: str
     label: "10-Year Treasury",
     fmt: "pct",
     note: "daily",
-    desc: "The yield on the 10-year U.S. government bond — the benchmark 'risk-free' rate. It influences mortgage rates, corporate borrowing costs, and how stocks are valued.",
+    desc: "The yield on the 10-year U.S. government bond, the benchmark 'risk-free' rate. It influences mortgage rates, corporate borrowing costs, and how stocks are valued.",
   },
   {
     id: "DGS30",
@@ -44,14 +44,14 @@ const SERIES: { id: string; label: string; fmt: EconFmt; note: string; desc: str
     label: "Unemployment",
     fmt: "pct",
     note: "monthly",
-    desc: "The share of the labor force that is without a job and actively looking for one. A core gauge of labor-market health — low is generally strong, but very low can signal an overheating economy.",
+    desc: "The share of the labor force that is without a job and actively looking for one. A core gauge of labor-market health. Low is generally strong, but very low can signal an overheating economy.",
   },
   {
     id: "CPIAUCSL",
     label: "CPI (Index)",
     fmt: "index",
     note: "monthly",
-    desc: "The Consumer Price Index tracks the average price of a basket of goods and services households buy. It's the most widely watched measure of inflation — rising values mean prices are climbing.",
+    desc: "The Consumer Price Index tracks the average price of a basket of goods and services households buy. It's the most widely watched measure of inflation. Rising values mean prices are climbing.",
   },
   {
     id: "GDPC1",
@@ -65,7 +65,7 @@ const SERIES: { id: string; label: string; fmt: EconFmt; note: string; desc: str
     label: "Core PCE (Index)",
     fmt: "index",
     note: "monthly",
-    desc: "Core Personal Consumption Expenditures prices — inflation excluding volatile food and energy. This is the Federal Reserve's preferred inflation gauge for judging progress toward its 2% target.",
+    desc: "Core Personal Consumption Expenditures prices, inflation excluding volatile food and energy. This is the Federal Reserve's preferred inflation gauge for judging progress toward its 2% target.",
   },
   {
     id: "PAYEMS",
@@ -86,7 +86,7 @@ const SERIES: { id: string; label: string; fmt: EconFmt; note: string; desc: str
     label: "30-Yr Mortgage",
     fmt: "pct",
     note: "weekly",
-    desc: "The average interest rate on a 30-year fixed-rate home loan. It's a key driver of housing affordability — higher rates cool home demand, lower rates fuel it.",
+    desc: "The average interest rate on a 30-year fixed-rate home loan. It's a key driver of housing affordability. Higher rates cool home demand, lower rates fuel it.",
   },
   {
     id: "T10Y2Y",
@@ -147,7 +147,7 @@ export default async function MarketsPage() {
   const dgs10Hist = histories[SERIES.findIndex((s) => s.id === "DGS10")] ?? [];
   const tenYearChart = dgs10Hist.slice(-90);
   const dgs10Latest = dgs10Hist[dgs10Hist.length - 1];
-  const latestYield = dgs10Latest ? `${dgs10Latest.value}%` : "—";
+  const latestYield = dgs10Latest ? `${dgs10Latest.value}%` : "n/a";
 
   return (
     <main>

@@ -4,12 +4,12 @@ A professional markets dashboard for the Hobart and William Smith Colleges Inves
 
 ## Pages
 
-- `/` — Landing: campus hero, live indices, navigation tiles
-- `/markets` — Indices, sector tiles, club watchlist
-- `/markets/[sector]` — Sector ETF + representative holdings
-- `/economy` — Treasury yields, Fed funds, CPI, unemployment + 10Y yield chart
-- `/careers` — Finance career paths and how the club prepares you
-- `/about` — Mission and board showcase
+- `/`: Landing: campus hero, live indices, navigation tiles
+- `/markets`: Indices, sector tiles, club watchlist
+- `/markets/[sector]`: Sector ETF + representative holdings
+- `/economy`: Treasury yields, Fed funds, CPI, unemployment + 10Y yield chart
+- `/careers`: Finance career paths and how the club prepares you
+- `/about`: Mission and board showcase
 
 ## Local setup
 
@@ -21,7 +21,7 @@ npm run dev                  # http://localhost:3000
 
 ### Environment variables
 
-Create `.env.local` (git-ignored — never commit real keys):
+Create `.env.local` (git-ignored, never commit real keys):
 
 ```
 FINNHUB_API_KEY=your_finnhub_key   # https://finnhub.io
@@ -52,4 +52,4 @@ Both are read **only on the server** (no `NEXT_PUBLIC_` prefix), so they never r
 
 - Index and sector values use ETFs (SPY, QQQ, DIA, XLK, …) since those work on Finnhub's free tier.
 - Data is cached briefly (`revalidate`) to respect free-tier rate limits.
-- For educational purposes only — not investment advice. Data may be delayed.
+- For educational purposes only: not investment advice. Data may be delayed.

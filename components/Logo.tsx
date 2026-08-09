@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-// Renders the official HWS shield logo from /public/hws-shield.png — the Hobart
+// Renders the official HWS shield logo from /public/hws-shield.png, the Hobart
 // DISCE shield alongside the William Smith lamp shield. If that file ever fails
 // to load, it falls back to a self-contained brand mark so the header/footer
 // never show a broken image.
@@ -39,7 +39,7 @@ export default function Logo({
       aria-label="Hobart and William Smith Colleges"
       style={{ display: "block", flexShrink: 0, width: "auto" }}
     >
-      {/* Hobart — purple shield with orange quarters */}
+      {/* Hobart: purple shield with orange quarters */}
       <path
         d="M2 7 Q44 0 86 7 V40 Q86 76 44 98 Q2 76 2 40 Z"
         fill="#542785"
@@ -48,7 +48,7 @@ export default function Logo({
       <path d="M58 4 Q72 3 86 7 V30 H58 Z" fill="#F36F21" />
       <rect x="30" y="34" width="28" height="22" rx="2" fill="#FFFFFF" />
 
-      {/* William Smith — green shield with the lamp of learning */}
+      {/* William Smith: green shield with the lamp of learning */}
       <path
         d="M110 7 Q152 0 194 7 V40 Q194 76 152 98 Q110 76 110 40 Z"
         fill="#0F6B37"

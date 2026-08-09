@@ -19,7 +19,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files — KEEP YOUR API KEYS OUT OF GIT
+# local env files: KEEP YOUR API KEYS OUT OF GIT
 .env
 .env*
 
