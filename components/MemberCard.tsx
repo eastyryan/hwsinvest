@@ -22,9 +22,10 @@ function LinkedInButton({ href, dark }: { href: string; dark?: boolean }) {
       onClick={(e) => e.stopPropagation()}
       style={{
         flexShrink: 0,
-        width: 30,
-        height: 30,
-        borderRadius: 8,
+        // Matches the "+" toggle above so the two line up card to card.
+        width: 34,
+        height: 34,
+        borderRadius: 9,
         // Collapsed sits on the light label chip, so it carries the brand
         // green. Expanded sits on the green fill, so it inverts to white.
         background: dark ? "#fff" : "var(--wsGreen)",
@@ -33,7 +34,7 @@ function LinkedInButton({ href, dark }: { href: string; dark?: boolean }) {
         justifyContent: "center",
       }}
     >
-      <svg width="15" height="15" viewBox="0 0 24 24" fill={dark ? "var(--wsGreen)" : "#fff"}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill={dark ? "var(--wsGreen)" : "#fff"}>
         <path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.22 8.06h4.56V24H.22V8.06zM8.34 8.06h4.37v2.18h.06c.61-1.16 2.1-2.38 4.32-2.38 4.62 0 5.47 3.04 5.47 6.99V24h-4.56v-7.05c0-1.68-.03-3.84-2.34-3.84-2.34 0-2.7 1.83-2.7 3.72V24H8.34V8.06z" />
       </svg>
     </a>
@@ -89,8 +90,10 @@ export default function MemberCard({ member }: { member: Member }) {
           aria-hidden
           style={{
             position: "absolute",
+            // Stays centred on the toggle (26 + 34/2 == 23 + 40/2) so the
+            // reveal still grows out of the button.
             top: 9,
-            right: 9,
+            right: 23,
             width: 40,
             height: 40,
             borderRadius: "50%",
@@ -113,7 +116,9 @@ export default function MemberCard({ member }: { member: Member }) {
           style={{
             position: "absolute",
             top: 12,
-            right: 12,
+            // 26 = the label chip's 12px inset plus its 14px padding, which
+            // puts this on the same vertical axis as the LinkedIn button.
+            right: 26,
             zIndex: 4,
             width: 34,
             height: 34,
@@ -183,10 +188,10 @@ export default function MemberCard({ member }: { member: Member }) {
             pointerEvents: open ? "auto" : "none",
           }}
         >
-          <p style={{ fontWeight: 700, fontSize: 19, margin: "2px 0 0", letterSpacing: "-0.01em", paddingRight: 40 }}>
+          <p style={{ fontWeight: 700, fontSize: 19, margin: "2px 0 0", letterSpacing: "-0.01em", paddingRight: 48 }}>
             {member.name}
           </p>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", margin: "4px 0 0", fontWeight: 600, paddingRight: 40 }}>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", margin: "4px 0 0", fontWeight: 600, paddingRight: 48 }}>
             {[member.role, member.year, member.focus].filter(Boolean).join(" · ")}
           </p>
           <p style={{ fontSize: 14, lineHeight: 1.6, margin: "14px 0 0", color: "rgba(255,255,255,0.95)" }}>
