@@ -158,7 +158,9 @@ export default function AboutPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            // 300px min keeps the six-person board at a clean 3 x 2 on desktop
+            // instead of 4 + 2 orphans; still collapses to 2 then 1.
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
             gap: 20,
             marginTop: "clamp(28px,4vh,44px)",
           }}

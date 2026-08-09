@@ -12,11 +12,11 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-function LinkedInButton({ href, dark }: { href?: string; dark?: boolean }) {
+function LinkedInButton({ href, dark }: { href: string; dark?: boolean }) {
   return (
     <a
-      href={href || "#"}
-      target={href ? "_blank" : undefined}
+      href={href}
+      target="_blank"
       rel="noopener noreferrer"
       aria-label="LinkedIn profile"
       onClick={(e) => e.stopPropagation()}
@@ -161,7 +161,7 @@ export default function MemberCard({ member }: { member: Member }) {
           </p>
           <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "2px 0 0" }}>{member.role}</p>
         </div>
-        <LinkedInButton href={member.linkedin || undefined} />
+        {member.linkedin ? <LinkedInButton href={member.linkedin} /> : null}
       </div>
 
       {/* Expanded content — bio */}
@@ -185,8 +185,7 @@ export default function MemberCard({ member }: { member: Member }) {
             {member.name}
           </p>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", margin: "4px 0 0", fontWeight: 600, paddingRight: 40 }}>
-            {member.role} · {member.year}
-            {member.focus ? ` · ${member.focus}` : ""}
+            {[member.role, member.year, member.focus].filter(Boolean).join(" · ")}
           </p>
           <p style={{ fontSize: 14, lineHeight: 1.6, margin: "14px 0 0", color: "rgba(255,255,255,0.95)" }}>
             {member.bio}
