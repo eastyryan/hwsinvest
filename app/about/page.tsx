@@ -5,41 +5,6 @@ import MemberCard from "@/components/MemberCard";
 
 export const metadata = { title: "About · HWS Investment Club" };
 
-const principles = [
-  {
-    title: "Learn by doing",
-    body: "Members research real companies, pitch ideas, and manage a live simulated portfolio, not just theory.",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 3v18h18" />
-        <path d="M19 9l-5 5-4-4-3 3" />
-      </svg>
-    ),
-  },
-  {
-    title: "Open to everyone",
-    body: "No finance background required, and every major is welcome. Come to one meeting and see if it's for you.",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-  },
-  {
-    title: "Built for careers",
-    body: "Modeling workshops, mock interviews, and an alumni network that helps members land roles across finance.",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="7" width="20" height="14" rx="2" />
-        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-      </svg>
-    ),
-  },
-];
-
 export default function AboutPage() {
   return (
     <main className="container-x" style={{ paddingTop: "clamp(24px,4vh,40px)" }}>
@@ -81,61 +46,64 @@ export default function AboutPage() {
         </h1>
       </section>
 
-      {/* ---------------- Principles ---------------- */}
+      {/* ---------------- Letter from the president ---------------- */}
       <section style={{ paddingTop: "clamp(48px,7vh,84px)" }}>
-        <h2
+        <span className="kicker" style={{ color: "var(--wsGreen)" }}>
+          From the President
+        </span>
+
+        <p
           style={{
-            fontWeight: 700,
-            fontSize: "clamp(26px,3.6vw,40px)",
-            letterSpacing: "-0.025em",
-            lineHeight: 1.18,
-            margin: "18px 0 0",
-            maxWidth: "20ch",
+            margin: "22px 0 0",
+            maxWidth: "62ch",
             color: "var(--text)",
+            fontSize: "clamp(18px,2.1vw,23px)",
+            lineHeight: 1.62,
+            letterSpacing: "-0.005em",
           }}
         >
-          The HWS Investment Club runs on one idea:{" "}
-          <span style={{ color: "var(--muted)" }}>
-            you learn the markets by being in them.
-          </span>{" "}
-          No experience needed, just curiosity.
-        </h2>
+          I started coming to meetings because I wanted somewhere to argue about
+          markets and learn from people who cared about them as much as I did,
+          and I ended up running the club. We&rsquo;re students from every major,
+          and most of us walked in without knowing what a DCF was, myself
+          included. What we do is pretty simple: we pull companies apart, pitch
+          them to each other, run a simulated portfolio together, and get things
+          wrong in a room where that is allowed. This year I want more members pitching than we&rsquo;ve
+          ever had, research good enough that anyone can check the numbers
+          themselves, and an alumni network our members can actually call on when
+          they&rsquo;re going after a first internship. If that sounds like your
+          kind of thing, come to one meeting. You don&rsquo;t have to know
+          anything yet.
+        </p>
 
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-            gap: 16,
-            marginTop: "clamp(28px,4vh,44px)",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            marginTop: "clamp(24px,3.5vh,34px)",
           }}
         >
-          {principles.map((p) => (
-            <div
-              key={p.title}
-              className="card"
-              style={{ padding: 24, display: "flex", flexDirection: "column" }}
-            >
-              <span
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 11,
-                  background: "var(--wsGreen)",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {p.icon}
-              </span>
-              <h3 style={{ fontWeight: 700, fontSize: 19, color: "var(--text)", margin: "44px 0 0", letterSpacing: "-0.01em" }}>
-                {p.title}
-              </h3>
-              <p style={{ color: "var(--muted)", fontSize: 14.5, lineHeight: 1.6, margin: "10px 0 0" }}>
-                {p.body}
-              </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/board/easton.jpg"
+            alt="Easton Ryan"
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: "50%",
+              objectFit: "cover",
+              border: "1px solid var(--line)",
+            }}
+          />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 16, color: "var(--text)", letterSpacing: "-0.01em" }}>
+              Easton Ryan
             </div>
-          ))}
+            <div style={{ color: "var(--muted)", fontSize: 14 }}>
+              President, Class of 2027
+            </div>
+          </div>
         </div>
       </section>
 
@@ -144,11 +112,12 @@ export default function AboutPage() {
         <h2
           style={{
             fontWeight: 700,
-            fontSize: "clamp(28px,4vw,46px)",
+            // Sized so the line fits the container in one row on desktop and
+            // only wraps once the viewport gets narrow.
+            fontSize: "clamp(26px,3.4vw,42px)",
             letterSpacing: "-0.025em",
             lineHeight: 1.12,
             margin: "18px 0 0",
-            maxWidth: "16ch",
             color: "var(--text)",
           }}
         >
