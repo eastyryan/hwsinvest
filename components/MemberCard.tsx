@@ -22,7 +22,8 @@ function LinkedInButton({ href, dark }: { href: string; dark?: boolean }) {
       onClick={(e) => e.stopPropagation()}
       style={{
         flexShrink: 0,
-        // Matches the "+" toggle above so the two line up card to card.
+        // Same size as the "+" toggle, and the bar's 14px padding puts its
+        // right edge on the toggle's 14px inset, so the two share an axis.
         width: 34,
         height: 34,
         borderRadius: 9,
@@ -90,10 +91,10 @@ export default function MemberCard({ member }: { member: Member }) {
           aria-hidden
           style={{
             position: "absolute",
-            // Stays centred on the toggle (26 + 34/2 == 23 + 40/2) so the
+            // Stays centred on the toggle (14 + 34/2 == 11 + 40/2) so the
             // reveal still grows out of the button.
-            top: 9,
-            right: 23,
+            top: 11,
+            right: 11,
             width: 40,
             height: 40,
             borderRadius: "50%",
@@ -115,10 +116,10 @@ export default function MemberCard({ member }: { member: Member }) {
           aria-label={open ? `Hide ${member.name}'s bio` : `Show ${member.name}'s bio`}
           style={{
             position: "absolute",
-            top: 12,
-            // 26 = the label chip's 12px inset plus its 14px padding, which
-            // puts this on the same vertical axis as the LinkedIn button.
-            right: 26,
+            // Even inset off the corner. The label bar below uses the same 14px
+            // padding, so its LinkedIn button lands on this exact axis.
+            top: 14,
+            right: 14,
             zIndex: 4,
             width: 34,
             height: 34,
@@ -145,18 +146,19 @@ export default function MemberCard({ member }: { member: Member }) {
       <div
         style={{
           position: "absolute",
-          left: 12,
-          right: 12,
-          bottom: 12,
+          // Full bleed: spans the card and runs to the bottom edge, square
+          // across the top. The card's own overflow clip rounds the two
+          // bottom corners for it.
+          left: 0,
+          right: 0,
+          bottom: 0,
           zIndex: 1,
           background: "var(--card)",
-          border: "1px solid var(--line)",
-          borderRadius: 12,
-          padding: "12px 14px",
+          padding: 14,
           display: "flex",
           alignItems: "center",
           gap: 10,
-          boxShadow: "0 6px 20px -8px rgba(0,0,0,0.25)",
+          boxShadow: "0 -8px 22px -14px rgba(0,0,0,0.3)",
           opacity: open ? 0 : 1,
           transition: open ? "opacity 0.12s ease" : "opacity 0.25s ease 0.12s",
           pointerEvents: open ? "none" : "auto",
