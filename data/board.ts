@@ -9,6 +9,7 @@ export type Member = {
   img?: string; // e.g. "/board/easton.jpg", optional; falls back to initials
   bio?: string;
   linkedin?: string;
+  hidden?: boolean; // keep the profile here but leave it off the About page
 };
 
 // President first, then the rest alphabetically by last name.
@@ -39,6 +40,7 @@ export const board: Member[] = [
     img: "/board/conor.jpg",
     bio: "Conor owns the data behind the club's research: pulling price and fundamental series, keeping our screens and dashboards current, and making sure every pitch rests on numbers other members can reproduce.",
     linkedin: "https://www.linkedin.com/in/conor-lally-97593930b/",
+    hidden: true,
   },
   {
     name: "Inigo Llosa",

@@ -158,14 +158,14 @@ export default function AboutPage() {
         <div
           style={{
             display: "grid",
-            // 300px min keeps the six-person board at a clean 3 x 2 on desktop
-            // instead of 4 + 2 orphans; still collapses to 2 then 1.
+            // 300px min keeps the board at a clean 3-up on desktop instead of
+            // 4 + orphans; still collapses to 2 then 1.
             gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
             gap: 20,
             marginTop: "clamp(28px,4vh,44px)",
           }}
         >
-          {board.map((m) => (
+          {board.filter((m) => !m.hidden).map((m) => (
             <MemberCard key={m.name + m.role} member={m} />
           ))}
         </div>
