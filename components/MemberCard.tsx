@@ -56,7 +56,10 @@ export default function MemberCard({ member }: { member: Member }) {
         borderRadius: 16,
         overflow: "hidden",
         aspectRatio: "4 / 5",
-        background: "var(--card2)",
+        // White, not --card2: the rounded clip antialiases against this, and a
+        // grey fallback leaves a hairline arc tracing the bottom corners of the
+        // white label bar.
+        background: "var(--card)",
       }}
     >
       {member.img ? (
@@ -154,6 +157,10 @@ export default function MemberCard({ member }: { member: Member }) {
           bottom: 0,
           zIndex: 1,
           background: "var(--card)",
+          // Rounds itself to the card's radius rather than leaning on the
+          // parent's clip, which is what left a seam at the corners.
+          borderBottomLeftRadius: 16,
+          borderBottomRightRadius: 16,
           padding: 14,
           display: "flex",
           alignItems: "center",
