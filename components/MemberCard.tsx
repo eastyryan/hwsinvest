@@ -3,6 +3,10 @@
 import { useState } from "react";
 import type { Member } from "@/data/board";
 
+// A step darker than the #828476 backdrop in the headshots, so the outline
+// reads against every portrait without turning into a hard line.
+const CARD_EDGE = "#6f7165";
+
 function initials(name: string) {
   return name
     .split(" ")
@@ -54,6 +58,7 @@ export default function MemberCard({ member }: { member: Member }) {
       style={{
         position: "relative",
         borderRadius: 16,
+        border: `1px solid ${CARD_EDGE}`,
         overflow: "hidden",
         aspectRatio: "4 / 5",
         // White, not --card2: the rounded clip antialiases against this, and a
@@ -157,10 +162,11 @@ export default function MemberCard({ member }: { member: Member }) {
           bottom: 0,
           zIndex: 1,
           background: "var(--card)",
-          // Rounds itself to the card's radius rather than leaning on the
-          // parent's clip, which is what left a seam at the corners.
-          borderBottomLeftRadius: 16,
-          borderBottomRightRadius: 16,
+          // Rounds itself rather than leaning on the parent's clip, which is
+          // what left a seam at the corners. 15 = the card's 16 radius less
+          // its 1px border, i.e. the inner curve this sits against.
+          borderBottomLeftRadius: 15,
+          borderBottomRightRadius: 15,
           padding: 14,
           display: "flex",
           alignItems: "center",
