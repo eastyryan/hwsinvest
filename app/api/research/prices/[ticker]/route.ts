@@ -5,9 +5,9 @@ export const maxDuration = 30;
 
 export async function GET(
   req: Request,
-  { params }: { params: { ticker: string } }
+  { params }: { params: {  ticker: string  } }
 ) {
-  const { ticker } = params;
+  const { ticker  } = params;
   const requested = new URL(req.url).searchParams.get("range") ?? "5y";
   // Unknown ranges fall back rather than erroring; isValidRange uses
   // Object.hasOwn so inherited keys like "toString" can't slip through.

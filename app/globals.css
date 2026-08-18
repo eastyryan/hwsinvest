@@ -819,3 +819,120 @@ body {
     transition: none;
   }
 }
+
+/* ---------- Research tool (synced from finance app) ---------- */
+
+.dark {
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-rise {
+    animation: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes tickerScan {
+    0% {
+      transform: scaleX(0.1);
+    }
+    50% {
+      transform: scaleX(1);
+    }
+    100% {
+      transform: scaleX(0.1);
+    }
+  }
+  .animate-ticker-scan {
+    animation: tickerScan 1.4s ease-in-out infinite;
+    transform-origin: left;
+  }
+
+  @keyframes fadeSwap {
+    0%,
+    15% {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    25%,
+    85% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    95%,
+    100% {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+  .animate-fade-swap {
+    animation: fadeSwap 2.4s ease-in-out both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin,
+  .animate-pulse,
+  .animate-rise,
+  .animate-ticker-scan,
+  .animate-fade-swap {
+    animation: none;
+  }
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .no-print,
+  nav,
+  footer {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-sheet {
+    break-inside: avoid;
+  }
+
+  .overview-section-body {
+    display: block !important;
+  }
+
+  .print-sheet,
+  .print-sheet * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a[href]::after {
+    content: none !important;
+  }
+
+  header.sticky {
+    position: static !important;
+  }
+}
+
+.print-only {
+  display: none;
+}

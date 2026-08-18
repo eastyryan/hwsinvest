@@ -10,6 +10,8 @@ A professional markets dashboard for the Hobart and William Smith Colleges Inves
 - `/economy`: Treasury yields, Fed funds, CPI, unemployment + 10Y yield chart
 - `/careers`: Finance career paths and how the club prepares you
 - `/about`: Mission and board showcase
+- `/members`: Password-gated dashboard (learn tracks, files, research)
+- `/members/research`: Company research tool (synced from the finance app): SEC statements, ratios, ownership, segments, valuation suite, screener, watchlist, Excel export
 
 ## Local setup
 

@@ -20,52 +20,22 @@ export default function LoadingScreen({ name }: { name: string }) {
   }, []);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "70vh",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "0 24px",
-      }}
-    >
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-8 px-6">
       {/* One stable announcement. The rotating copy below is decorative: piping
           it through a live region made a screen reader read six marketing lines
           on a loop while the page loaded. */}
       <p role="status" className="sr-only">
         Loading financial statements for {name}.
       </p>
-      <div style={{ width: "100%", maxWidth: 400 }} aria-hidden>
-        <p className="rsch-panel-label">Opening the books on</p>
-        <p
-          className="h-sub"
-          style={{
-            fontSize: 26,
-            marginTop: 6,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {name}
+      <div className="w-full max-w-sm" aria-hidden>
+        <p className="font-mono text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          Opening the books on
         </p>
-        <div
-          style={{
-            marginTop: 22,
-            height: 4,
-            width: "100%",
-            overflow: "hidden",
-            borderRadius: 999,
-            background: "var(--card2)",
-          }}
-        >
-          <div className="rsch-scan" />
+        <p className="mt-1 truncate text-2xl font-semibold tracking-tight">{name}</p>
+        <div className="mt-6 h-1 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+          <div className="animate-ticker-scan h-full w-full rounded-full bg-zinc-900 dark:bg-zinc-100" />
         </div>
-        <p
-          key={idx}
-          className="rsch-fade"
-          style={{ marginTop: 16, fontSize: 14.5, color: "var(--muted)" }}
-        >
+        <p key={idx} className="animate-fade-swap mt-4 text-sm text-zinc-500 dark:text-zinc-400">
           {LINES[idx]}&hellip;
         </p>
       </div>

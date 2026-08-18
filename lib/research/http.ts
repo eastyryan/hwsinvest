@@ -2,7 +2,7 @@
 // jitter, and a client-side rate limiter for SEC's fair-access rules.
 //
 // Every outbound call in this app goes through fetchJson(). Nothing else should
-// call global fetch() against a third party: without a timeout a hung upstream
+// call global fetch() against a third party — without a timeout a hung upstream
 // pins the function for the whole maxDuration budget.
 
 export class UpstreamError extends Error {
@@ -73,9 +73,12 @@ export interface FetchJsonOptions {
   nullOn?: number[];
 }
 
-export async function fetchJson<T>(
+type FetchBody = "json" | "text";
+
+async function fetchUpstream<T>(
   url: string,
-  opts: FetchJsonOptions
+  opts: FetchJsonOptions,
+  body: FetchBody
 ): Promise<T | null> {
   const {
     source,
@@ -109,6 +112,7 @@ export async function fetchJson<T>(
         });
         if (nullOn.includes(res.status)) return null;
         if (!res.ok) throw new UpstreamError(source, res.status);
+        if (body === "text") return (await res.text()) as T;
         return (await res.json()) as T;
       } finally {
         clearTimeout(timer);
@@ -131,6 +135,21 @@ export async function fetchJson<T>(
   throw lastError;
 }
 
+export async function fetchJson<T>(
+  url: string,
+  opts: FetchJsonOptions
+): Promise<T | null> {
+  return fetchUpstream<T>(url, opts, "json");
+}
+
+/** Same policy as fetchJson, but returns the raw response body as text (XML, HTML). */
+export async function fetchText(
+  url: string,
+  opts: FetchJsonOptions
+): Promise<string | null> {
+  return fetchUpstream<string>(url, opts, "text");
+}
+
 /**
  * Collapses concurrent calls for the same key into one in-flight promise.
  * Without this, N simultaneous cold requests for the same company each trigger
@@ -146,7 +165,7 @@ export function singleFlight<T>(key: string, fn: () => Promise<T>): Promise<T> {
   return p;
 }
 
-/** Message safe to return to a client: never leaks upstream response bodies. */
+/** Message safe to return to a client — never leaks upstream response bodies. */
 export function publicErrorMessage(e: unknown, fallback: string): string {
   if (e instanceof UpstreamError || e instanceof TimeoutError) {
     return e.publicMessage;

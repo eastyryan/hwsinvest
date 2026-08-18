@@ -1,5 +1,5 @@
 export function fmtValue(v: number | null, opts?: { perShare?: boolean; shares?: boolean }): string {
-  if (v == null) return "n/a";
+  if (v == null) return "—";
   if (opts?.perShare) return v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (opts?.shares) {
     const m = v / 1e6;

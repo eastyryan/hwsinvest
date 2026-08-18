@@ -46,7 +46,7 @@ export default function Dashboard({ admin }: { admin: boolean }) {
           <div style={{ flex: 1 }}>
             <div className="h-sub" style={{ fontSize: 18 }}>Company Research</div>
             <p style={{ fontSize: 14, color: "var(--muted)", margin: "4px 0 0", lineHeight: 1.5 }}>
-              Pull any US-listed company&apos;s full financials from SEC filings: statements, ratios, charts, and Excel export.
+              Pull any US-listed company&apos;s full financials from SEC filings: statements, ratios, ownership, valuation models, screener, and Excel export.
             </p>
           </div>
           <ArrowRight size={20} color="var(--brand)" />

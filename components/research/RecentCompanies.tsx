@@ -1,18 +1,19 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { CaretDown } from "@phosphor-icons/react";
 
 export interface RecentEntry {
   ticker: string;
   name: string;
 }
 
-const KEY = "hwsRecentCompanies";
+const KEY = "recentCompanies";
 
 /**
  * localStorage is user-writable and can hold anything (a stale schema, `"5"`,
- * `null`). Validate the shape before trusting it, a bare length check lets a
+ * `null`). Validate the shape before trusting it — a bare length check lets a
  * string through and blows up on `.map`.
  */
 function parseRecent(raw: string | null): RecentEntry[] {
@@ -52,17 +53,12 @@ export function recordRecent(entry: RecentEntry) {
   }
 }
 
-// localStorage is an external store, so read it with the primitive built for
-// that rather than a setState-in-effect round trip. The server snapshot is a
-// stable empty array, which also keeps SSR and the pre-hydration render matched.
 const EMPTY: RecentEntry[] = [];
 let snapshot: RecentEntry[] | null = null;
 const listeners = new Set<() => void>();
 
 function subscribe(onStoreChange: () => void): () => void {
   listeners.add(onStoreChange);
-  // `storage` fires for changes made in *other* tabs; recordRecent() in this tab
-  // goes through invalidate().
   const handler = () => {
     snapshot = null;
     onStoreChange();
@@ -74,64 +70,91 @@ function subscribe(onStoreChange: () => void): () => void {
   };
 }
 
-// useSyncExternalStore requires a referentially stable snapshot; re-parsing on
-// every call would return a new array each time and loop forever.
 function getSnapshot(): RecentEntry[] {
   if (snapshot === null) snapshot = readRecent();
   return snapshot;
 }
 
-/**
- * Called by recordRecent() so the list refreshes without a reload.
- *
- * Dropping the memo is not enough on its own: `useSyncExternalStore` only
- * re-reads when a subscriber is notified, so a mounted list would keep
- * rendering the stale array until something else happened to nudge it.
- */
 function invalidate() {
   snapshot = null;
   for (const l of listeners) l();
 }
 
-export default function RecentCompanies() {
+/**
+ * Left half under home search: plain expandable name list (no card chrome).
+ */
+export default function RecentCompanies({
+  shifted = false,
+}: {
+  shifted?: boolean;
+} = {}) {
   const recent = useSyncExternalStore(subscribe, getSnapshot, () => EMPTY);
-
-  if (recent.length === 0) return null;
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <div style={{ marginTop: 30 }}>
-      <p className="rsch-panel-label">Recently viewed</p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 9, marginTop: 11 }}>
-        {recent.map((e) => (
-          <Link
-            key={e.ticker}
-            href={`/members/research/${e.ticker.toLowerCase()}`}
-            className="card card-hover-brand"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 9,
-              padding: "7px 12px 7px 8px",
-              borderRadius: 10,
-              textDecoration: "none",
-              color: "var(--text)",
-            }}
-          >
-            <span className="rsch-tag rsch-tag-ghost">{e.ticker}</span>
-            <span
-              style={{
-                fontSize: 13.5,
-                color: "var(--muted)",
-                maxWidth: 180,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {e.name}
+    <div
+      className="min-w-0 transition-[margin,opacity] duration-200 ease-out motion-reduce:transition-none"
+      style={{
+        marginTop: shifted ? 4 : 0,
+        opacity: shifted ? 0.9 : 1,
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        disabled={recent.length === 0}
+        className="group flex w-full items-center gap-1.5 py-1.5 text-left disabled:cursor-default disabled:opacity-50"
+      >
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">
+          Recently viewed
+          {recent.length > 0 && (
+            <span className="ml-1.5 font-normal text-zinc-400 dark:text-zinc-500">
+              {recent.length}
+              {!expanded && recent[0] ? ` · ${recent[0].ticker}` : ""}
             </span>
-          </Link>
-        ))}
+          )}
+        </span>
+        <CaretDown
+          size={14}
+          weight="bold"
+          aria-hidden
+          className={`shrink-0 text-zinc-400 transition-transform duration-200 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300 ${
+            expanded ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      <div
+        className="grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none"
+        style={{
+          gridTemplateRows: expanded ? "1fr" : "0fr",
+          opacity: expanded ? 1 : 0,
+        }}
+        aria-hidden={!expanded}
+      >
+        <div className="min-h-0 overflow-hidden">
+          {recent.length === 0 ? (
+            <p className="pb-1 text-xs text-zinc-400 dark:text-zinc-500">No recent companies</p>
+          ) : (
+            <ul className="space-y-0.5 pb-1">
+              {recent.map((e) => (
+                <li key={e.ticker}>
+                  <Link
+                    href={`/members/research/${e.ticker.toLowerCase()}`}
+                    tabIndex={expanded ? 0 : -1}
+                    className="flex min-w-0 items-baseline gap-2 py-1 text-sm hover:text-zinc-900 dark:hover:text-zinc-50"
+                  >
+                    <span className="shrink-0 font-mono text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                      {e.ticker}
+                    </span>
+                    <span className="truncate text-zinc-500 dark:text-zinc-400">{e.name}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );

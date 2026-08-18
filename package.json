@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
+    "@phosphor-icons/react": "^2.1.10",
     "@vercel/functions": "^3.7.6",
     "exceljs": "^4.4.0",
     "lucide-react": "^0.408.0",

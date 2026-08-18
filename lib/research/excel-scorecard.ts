@@ -1,5 +1,5 @@
 // A rules-based quality scorecard, computed entirely from the normalized
-// statements: no market data, no model, no judgement call that isn't a printed
+// statements — no market data, no model, no judgement call that isn't a printed
 // threshold. It scores five dimensions an analyst eyeballs first (growth,
 // returns, cash conversion, leverage, coverage) on transparent bands, averages
 // the ones the filing supports, and grades the result.
@@ -10,6 +10,7 @@
 
 import type ExcelJS from "exceljs";
 import type { CompanyFinancials, StatementSet } from "./edgar";
+import { periodCagr } from "./cagr";
 import {
   sheetHeader,
   sizeColumns,
@@ -24,6 +25,11 @@ import {
   PCT_FMT,
   MULT_FMT,
 } from "./excel-format";
+import {
+  type SectorMode,
+  revenueGrowthLabel,
+  revenueGrowthMetricNote,
+} from "./sector-mode";
 
 /** Latest annual value for a line, `back` years before the latest. */
 function val(set: StatementSet, key: string, back = 0): number | null {
@@ -32,6 +38,14 @@ function val(set: StatementSet, key: string, back = 0): number | null {
   for (const st of set.statements) {
     const l = st.lines.find((x) => x.key === key);
     if (l) return l.values[p.key] ?? null;
+  }
+  return null;
+}
+
+function lineValues(set: StatementSet, key: string): Record<string, number | null> | null {
+  for (const st of set.statements) {
+    const l = st.lines.find((x) => x.key === key);
+    if (l) return l.values;
   }
   return null;
 }
@@ -71,20 +85,33 @@ function scoreBands(
   return out;
 }
 
-export function buildScorecard(fin: CompanyFinancials): Scorecard {
+/**
+ * Rules-based quality scorecard. For banks/insurers, industrial ROIC, net-debt
+ * / EBITDA, and interest coverage are replaced with ROE, ROA, and debt/equity —
+ * metrics that exist on the normalized statements and are meaningful for those
+ * models. Pass `mode` from detectSectorMode(profile); default is standard.
+ */
+export function buildScorecard(
+  fin: CompanyFinancials,
+  mode: SectorMode = "standard"
+): Scorecard {
   const a = fin.annual;
   const factors: ScoreFactor[] = [];
+  const financial = mode === "bank" || mode === "insurer";
 
-  // 1. Revenue growth, trailing 3-year CAGR (fall back to 1-year).
+  // 1. Revenue growth — trailing 3-year CAGR (fall back to 1-year).
+  // Uses the shared periodCagr helper so scorecard and statement tables agree,
+  // and so a scale break in the series (unit/currency discontinuity) yields
+  // null rather than a fantasy growth rate.
   const rev0 = val(a, "revenue");
-  const rev3 = val(a, "revenue", 3);
   const rev1 = val(a, "revenue", 1);
-  let cagr: number | null = null;
-  if (rev0 && rev3 && rev3 > 0) cagr = Math.pow(rev0 / rev3, 1 / 3) - 1;
-  else if (rev0 && rev1 && rev1 > 0) cagr = rev0 / rev1 - 1;
+  const revValues = lineValues(a, "revenue");
+  let cagr: number | null =
+    revValues != null ? periodCagr(revValues, a.periods, 3) : null;
+  if (cagr == null && rev0 && rev1 && rev1 > 0) cagr = rev0 / rev1 - 1;
   factors.push({
-    label: "Revenue growth",
-    metric: "3-year revenue CAGR",
+    label: revenueGrowthLabel(mode),
+    metric: revenueGrowthMetricNote(mode),
     value: cagr,
     fmt: PCT_FMT,
     score:
@@ -100,7 +127,6 @@ export function buildScorecard(fin: CompanyFinancials): Scorecard {
     band: "<0% → 20 · 0% → 40 · 5% → 60 · 10% → 80 · ≥20% → 100",
   });
 
-  // 2. Returns on capital, NOPAT / (debt + equity).
   const ebit = val(a, "operatingIncome");
   const pretax = val(a, "pretaxIncome");
   const taxes = val(a, "taxes");
@@ -110,28 +136,73 @@ export function buildScorecard(fin: CompanyFinancials): Scorecard {
       : 0.21;
   const debt = num(val(a, "ltDebt")) + num(val(a, "stDebt"));
   const equity = val(a, "equity");
-  const capital = debt + num(equity);
-  const roic = ebit != null && capital > 0 ? (ebit * (1 - taxRate)) / capital : null;
-  factors.push({
-    label: "Return on capital",
-    metric: "ROIC = NOPAT / (debt + equity)",
-    value: roic,
-    fmt: PCT_FMT,
-    score:
-      roic == null
-        ? null
-        : scoreBands(roic, [
-            [-1, 20],
-            [0.05, 45],
-            [0.1, 65],
-            [0.15, 85],
-            [0.25, 100],
-          ]),
-    band: "<5% → 45 · 10% → 65 · 15% → 85 · ≥25% → 100",
-  });
-
-  // 3. Cash conversion, free cash flow / net income.
   const ni = val(a, "netIncome");
+  const assets = val(a, "totalAssets");
+
+  if (financial) {
+    // 2. ROE — primary return measure for banks and insurers.
+    const roe = ni != null && equity != null && equity > 0 ? ni / equity : null;
+    factors.push({
+      label: "Return on equity",
+      metric: "Net income / shareholders' equity",
+      value: roe,
+      fmt: PCT_FMT,
+      score:
+        roe == null
+          ? null
+          : scoreBands(roe, [
+              [-1, 20],
+              [0.05, 45],
+              [0.1, 65],
+              [0.15, 85],
+              [0.2, 100],
+            ]),
+      band: "<5% → 45 · 10% → 65 · 15% → 85 · ≥20% → 100",
+    });
+
+    // 3. ROA — capital/asset efficiency proxy (no CET1 without new tags).
+    const roa = ni != null && assets != null && assets > 0 ? ni / assets : null;
+    factors.push({
+      label: "Return on assets",
+      metric: "Net income / total assets",
+      value: roa,
+      fmt: PCT_FMT,
+      score:
+        roa == null
+          ? null
+          : scoreBands(roa, [
+              [-1, 20],
+              [0.005, 45],
+              [0.01, 65],
+              [0.015, 85],
+              [0.025, 100],
+            ]),
+      band: "<0.5% → 45 · 1% → 65 · 1.5% → 85 · ≥2.5% → 100",
+    });
+  } else {
+    // 2. Returns on capital — NOPAT / (debt + equity).
+    const capital = debt + num(equity);
+    const roic = ebit != null && capital > 0 ? (ebit * (1 - taxRate)) / capital : null;
+    factors.push({
+      label: "Return on capital",
+      metric: "ROIC = NOPAT / (debt + equity)",
+      value: roic,
+      fmt: PCT_FMT,
+      score:
+        roic == null
+          ? null
+          : scoreBands(roic, [
+              [-1, 20],
+              [0.05, 45],
+              [0.1, 65],
+              [0.15, 85],
+              [0.25, 100],
+            ]),
+      band: "<5% → 45 · 10% → 65 · 15% → 85 · ≥25% → 100",
+    });
+  }
+
+  // Cash conversion — free cash flow / net income (often sparse for banks).
   let fcf = val(a, "fcf");
   if (fcf == null) {
     const ocf = val(a, "ocf");
@@ -156,63 +227,102 @@ export function buildScorecard(fin: CompanyFinancials): Scorecard {
     band: "<0.4× → 50 · 0.7× → 75 · ≥0.9× → 100 (profit years only)",
   });
 
-  // 4. Leverage, net debt / EBITDA (lower is better; net cash scores full).
-  const da = num(val(a, "da"));
-  const ebitda = ebit != null ? ebit + da : null;
-  const cash = num(val(a, "cash"));
-  const netDebt = debt - cash;
-  const leverage = ebitda != null && ebitda > 0 ? netDebt / ebitda : null;
-  factors.push({
-    label: "Leverage",
-    metric: "Net debt / EBITDA",
-    value: leverage,
-    fmt: MULT_FMT,
-    score:
-      leverage == null
-        ? null
-        : scoreBands(
-            leverage,
-            [
-              [0, 100],
-              [1, 90],
-              [2, 75],
-              [3, 55],
-              [4, 35],
-              [Infinity, 15],
-            ],
-            true
-          ),
-    band: "net cash → 100 · ≤1× → 90 · ≤2× → 75 · ≤3× → 55 · >4× → 15",
-  });
+  if (financial) {
+    // Leverage — debt / equity (EBITDA-based leverage is not meaningful).
+    // Lower is better; missing debt scores as unlevered (full).
+    const de =
+      equity != null && equity > 0
+        ? debt > 0
+          ? debt / equity
+          : 0
+        : null;
+    factors.push({
+      label: "Leverage (D/E)",
+      metric: "Total debt / shareholders' equity",
+      value: de,
+      fmt: MULT_FMT,
+      score:
+        de == null
+          ? null
+          : scoreBands(
+              de,
+              [
+                [0.25, 100],
+                [0.5, 85],
+                [1, 70],
+                [2, 50],
+                [3, 30],
+                [Infinity, 15],
+              ],
+              true
+            ),
+      band: "≤0.25× → 100 · ≤0.5× → 85 · ≤1× → 70 · ≤2× → 50 · >3× → 15",
+    });
+  } else {
+    // Leverage — net debt / EBITDA (lower is better; net cash scores full).
+    const da = num(val(a, "da"));
+    const ebitda = ebit != null ? ebit + da : null;
+    const cash = num(val(a, "cash"));
+    const netDebt = debt - cash;
+    const leverage = ebitda != null && ebitda > 0 ? netDebt / ebitda : null;
+    factors.push({
+      label: "Leverage",
+      metric: "Net debt / EBITDA",
+      value: leverage,
+      fmt: MULT_FMT,
+      score:
+        leverage == null
+          ? null
+          : scoreBands(
+              leverage,
+              [
+                [0, 100],
+                [1, 90],
+                [2, 75],
+                [3, 55],
+                [4, 35],
+                [Infinity, 15],
+              ],
+              true
+            ),
+      band: "net cash → 100 · ≤1× → 90 · ≤2× → 75 · ≤3× → 55 · >4× → 15",
+    });
 
-  // 5. Interest coverage, EBIT / interest (no interest scores full).
-  const interest = Math.abs(num(val(a, "interestExpense")));
-  const coverage = ebit != null && interest > 0 ? ebit / interest : ebit != null ? Infinity : null;
-  factors.push({
-    label: "Interest coverage",
-    metric: "EBIT / interest expense",
-    value: coverage != null && Number.isFinite(coverage) ? coverage : coverage == null ? null : 99,
-    fmt: MULT_FMT,
-    score:
-      coverage == null
-        ? null
-        : !Number.isFinite(coverage)
-          ? 100
-          : scoreBands(coverage, [
-              [0, 15],
-              [2, 45],
-              [4, 70],
-              [8, 90],
-              [15, 100],
-            ]),
-    band: "no debt → 100 · <2× → 15 · 4× → 70 · 8× → 90 · ≥15× → 100",
-  });
+    // Interest coverage — EBIT / interest (no interest scores full).
+    const interest = Math.abs(num(val(a, "interestExpense")));
+    const coverage =
+      ebit != null && interest > 0 ? ebit / interest : ebit != null ? Infinity : null;
+    factors.push({
+      label: "Interest coverage",
+      metric: "EBIT / interest expense",
+      value:
+        coverage != null && Number.isFinite(coverage)
+          ? coverage
+          : coverage == null
+            ? null
+            : 99,
+      fmt: MULT_FMT,
+      score:
+        coverage == null
+          ? null
+          : !Number.isFinite(coverage)
+            ? 100
+            : scoreBands(coverage, [
+                [0, 15],
+                [2, 45],
+                [4, 70],
+                [8, 90],
+                [15, 100],
+              ]),
+      band: "no debt → 100 · <2× → 15 · 4× → 70 · 8× → 90 · ≥15× → 100",
+    });
+  }
 
   const scored = factors.map((f) => f.score).filter((s): s is number => s != null);
   const composite = scored.length ? scored.reduce((x, y) => x + y, 0) / scored.length : null;
   const grade =
     composite == null
-      ? "n/a"
+      ? "—"
       : composite >= 85
         ? "A"
         : composite >= 70
@@ -235,7 +345,7 @@ export function fillScorecardSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials
     ws,
     "Quality Scorecard",
     "Five dimensions an analyst reads first, scored on printed thresholds and averaged.",
-    "A rules-based heuristic computed only from the statements. Every band is shown. Not a rating and not investment advice.",
+    "A rules-based heuristic computed only from the statements — every band is shown. Not a rating and not investment advice.",
     ["Metric", "Value", "Score", "Bands"],
     NAVY,
     "Dimension"
@@ -266,7 +376,7 @@ export function fillScorecardSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials
     }
     const scCell = r.getCell(4);
     if (f.score == null) {
-      scCell.value = "n/a";
+      scCell.value = "—";
       scCell.font = { size: 10, color: { argb: MUTED } };
     } else {
       scCell.value = f.score;
@@ -308,7 +418,7 @@ export function fillScorecardSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials
     cc.numFmt = "0";
     cc.font = { size: 12, bold: true, color: { argb: scoreColor(sc.composite) } };
   } else {
-    cc.value = "n/a";
+    cc.value = "—";
   }
   row++;
   const gr = ws.getRow(row);

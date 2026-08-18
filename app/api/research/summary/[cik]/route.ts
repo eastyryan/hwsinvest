@@ -1,7 +1,7 @@
 // AI narrative summary, on its own endpoint.
 //
-// Split out of /api/financials so the model call, seconds of latency, and the
-// one operation here that costs money per request, can't block the statements
+// Split out of /api/financials so the model call — seconds of latency, and the
+// one operation here that costs money per request — can't block the statements
 // from rendering.
 
 import {
@@ -19,9 +19,9 @@ export const maxDuration = 60;
 
 export async function GET(
   req: Request,
-  { params }: { params: { cik: string } }
+  { params }: { params: {  cik: string  } }
 ) {
-  const { cik } = params;
+  const { cik  } = params;
   const rawTicker = new URL(req.url).searchParams.get("ticker") ?? "";
 
   if (!isValidCik(cik)) {
@@ -54,7 +54,7 @@ export async function GET(
       return Response.json({ summary: null });
     }
     console.error(`[summary] failed for cik=${cik}:`, e);
-    // A missing summary is not a page failure: the rule-based insights stand
+    // A missing summary is not a page failure — the rule-based insights stand
     // on their own, so degrade quietly rather than surfacing an error.
     return Response.json({ summary: null });
   }

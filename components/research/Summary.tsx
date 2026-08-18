@@ -19,45 +19,21 @@ function Group({
   accent: string;
 }) {
   return (
-    <div
-      style={{
-        background: "var(--card2)",
-        border: "1px solid var(--line)",
-        borderRadius: 14,
-        padding: 20,
-      }}
-    >
-      <h3
-        style={{
-          margin: 0,
-          fontSize: 13,
-          fontWeight: 700,
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          color: accent,
-        }}
-      >
+    <div className="rounded-lg border border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/30">
+      <h3 className={`text-xs font-semibold uppercase tracking-wide ${accent}`}>
         {title}
       </h3>
       {items.length === 0 ? (
-        <p style={{ marginTop: 12, fontSize: 14, color: "var(--faint)" }}>
+        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
           Nothing notable in recent quarters.
         </p>
       ) : (
-        <ul style={{ listStyle: "none", margin: "14px 0 0", padding: 0 }}>
+        <ul className="mt-2 space-y-2.5">
           {items.map((ins, i) => (
-            <li key={i} style={{ marginTop: i === 0 ? 0 : 13 }}>
-              <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.5 }}>{ins.text}</p>
+            <li key={i}>
+              <p className="text-sm leading-snug">{ins.text}</p>
               {ins.detail && (
-                <p
-                  className="mono"
-                  style={{
-                    margin: "3px 0 0",
-                    fontSize: 12,
-                    lineHeight: 1.45,
-                    color: "var(--faint)",
-                  }}
-                >
+                <p className="mt-0.5 text-xs leading-snug text-zinc-500 dark:text-zinc-400">
                   {ins.detail}
                 </p>
               )}
@@ -74,93 +50,128 @@ export default function Summary({
   narrative,
   summary,
   loading = false,
+  /** Which blocks to show — overview accordion splits these. */
+  parts = "both",
+  /** Hide internal h2 when parent accordion already titles the section. */
+  hideChrome = false,
 }: {
   insights: Insights;
-  /** Deterministic read, computed from the filings. Always present. */
   narrative?: Narrative | null;
-  /** Optional Claude version; supersedes the deterministic one when present. */
   summary?: AiSummary | null;
   loading?: boolean;
+  parts?: "analyst" | "numbers" | "both";
+  hideChrome?: boolean;
 }) {
-  // The deterministic narrative renders immediately and needs no API key. The
-  // model-written one replaces it only once it actually arrives, so there is no
-  // empty state and no waiting on a network call for the default experience.
   const shown = summary ?? narrative ?? null;
   const isAi = summary != null;
+  const showAnalyst = parts === "analyst" || parts === "both";
+  const showNumbers = parts === "numbers" || parts === "both";
 
   return (
-    <section>
-      {shown && (
-        <div style={{ marginBottom: 40 }}>
-          <div
-            style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 12 }}
-          >
-            <h2 className="h-sub" style={{ fontSize: 22 }}>
-              Analyst read
-            </h2>
-            {loading && !isAi && (
-              <span
-                role="status"
-                aria-live="polite"
-                style={{ fontSize: 12.5, color: "var(--faint)" }}
-              >
-                Refining with Claude&hellip;
-              </span>
-            )}
-          </div>
-          <p className="rsch-note" style={{ marginTop: 5 }}>
-            {isAi
-              ? "Written by Claude from the filed numbers below. Not investment advice."
-              : "Computed directly from the filed numbers below. Not investment advice."}
-          </p>
-          <div
-            className="card"
-            style={{
-              marginTop: 14,
-              maxWidth: "76ch",
-              padding: 22,
-              background: "var(--card2)",
-            }}
-          >
-            {[shown.business, shown.momentum, shown.catalysts].map((para, i) => (
-              <p
-                key={i}
-                style={{
-                  margin: i === 0 ? 0 : "14px 0 0",
-                  fontSize: 15.5,
-                  lineHeight: 1.65,
-                }}
-              >
-                {para}
+    <div className="space-y-6">
+      {showAnalyst && shown && (
+        <div>
+          {!hideChrome && (
+            <>
+              <div className="flex flex-wrap items-baseline gap-x-3">
+                <h2 className="text-lg font-semibold tracking-tight">
+                  Analyst read
+                </h2>
+                {loading && !isAi && (
+                  <span
+                    role="status"
+                    aria-live="polite"
+                    className="text-xs text-zinc-500 dark:text-zinc-400"
+                  >
+                    Refining with Claude&hellip;
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                {isAi
+                  ? "Written by Claude from the filed numbers. Not investment advice."
+                  : "Computed directly from the filed numbers. Not investment advice."}
               </p>
-            ))}
+            </>
+          )}
+          {hideChrome && loading && !isAi && (
+            <p
+              role="status"
+              aria-live="polite"
+              className="mb-2 text-xs text-zinc-500 dark:text-zinc-400"
+            >
+              Refining with Claude&hellip;
+            </p>
+          )}
+          <div
+            className={`w-full space-y-3 ${
+              hideChrome
+                ? ""
+                : "mt-3 rounded-xl border border-zinc-200 bg-zinc-50/60 p-5 dark:border-zinc-800 dark:bg-zinc-900/40"
+            }`}
+          >
+            <p className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
+              {shown.business}
+            </p>
+            <p className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
+              {shown.momentum}
+            </p>
+            <p className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
+              {shown.catalysts}
+            </p>
+            {hideChrome && (
+              <p className="pt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                {isAi
+                  ? "Written by Claude from the filed numbers. Not investment advice."
+                  : "Computed from filings. Not investment advice."}
+              </p>
+            )}
           </div>
         </div>
       )}
-      <div>
-        <h2 className="h-sub" style={{ fontSize: 22 }}>
-          What the numbers say
-        </h2>
-        <p className="rsch-note" style={{ marginTop: 5 }}>
-          Computed from the last few quarters of filings. Not investment advice.
+
+      {showAnalyst && !shown && (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          {loading
+            ? "Preparing analyst read…"
+            : "Analyst read unavailable for this filer."}
         </p>
-        <div
-          style={{
-            marginTop: 18,
-            display: "grid",
-            gap: 16,
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          }}
-        >
-          <Group title="Growing" items={insights.growing} accent="var(--up)" />
-          <Group title="Slowing" items={insights.slowing} accent="var(--down)" />
-          <Group
-            title="Catalysts to watch"
-            items={insights.catalysts}
-            accent="var(--brand)"
-          />
+      )}
+
+      {showNumbers && (
+        <div>
+          {!hideChrome && (
+            <>
+              <h2 className="text-lg font-semibold tracking-tight">
+                What the numbers say
+              </h2>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                Computed from the last few quarters of filings. Not investment
+                advice.
+              </p>
+            </>
+          )}
+          <div
+            className={`grid gap-3 md:grid-cols-3 ${hideChrome ? "" : "mt-4"}`}
+          >
+            <Group
+              title="Growing"
+              items={insights.growing}
+              accent="text-emerald-700 dark:text-emerald-400"
+            />
+            <Group
+              title="Slowing"
+              items={insights.slowing}
+              accent="text-red-700 dark:text-red-400"
+            />
+            <Group
+              title="Catalysts to watch"
+              items={insights.catalysts}
+              accent="text-sky-700 dark:text-sky-400"
+            />
+          </div>
         </div>
-      </div>
-    </section>
+      )}
+    </div>
   );
 }

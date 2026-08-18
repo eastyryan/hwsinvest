@@ -1,6 +1,6 @@
 // Sources & provenance sheet: where every figure in the workbook comes from.
 //
-// The external audit noted the workbook stated no provenance, a reader could
+// The external audit noted the workbook stated no provenance — a reader could
 // not tell which SEC concept any given line was built from. This sheet is the
 // answer. For every line on the three statements it names the exact US-GAAP
 // concept tag(s) it maps to, the rule used to resolve them when a filer reports
@@ -66,9 +66,9 @@ export function fillSourcesSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, 
   const meta: [string, string][] = [
     ["Entity", fin.name],
     ["CIK", padCik(fin.cik)],
-    ["Ticker", fin.ticker || "n/a"],
+    ["Ticker", fin.ticker || "—"],
     ["Reporting currency", fin.currency],
-    ["Source", "SEC EDGAR: XBRL company facts API"],
+    ["Source", "SEC EDGAR — XBRL company facts API"],
     ["Endpoint", `https://data.sec.gov/api/xbrl/companyfacts/CIK${padCik(fin.cik)}.json`],
     ["Retrieved", retrieved],
   ];
@@ -97,7 +97,7 @@ export function fillSourcesSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, 
       def.tags.length === 1
         ? "Direct"
         : def.preferOrder
-          ? "Ranked: first present wins"
+          ? "Ranked — first present wins"
           : "Merged by recency";
     if (def.flipSign) rule += " · sign normalized (outflow)";
     else if (def.expectPositive) rule += " · sign normalized (positive)";
@@ -120,7 +120,7 @@ export function fillSourcesSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, 
       r.getCell(3).font = { size: 9, color: { argb: GREY } };
       const rep = r.getCell(4);
       const has = reported.has(def.key);
-      rep.value = has ? "Yes" : "n/a";
+      rep.value = has ? "Yes" : "—";
       rep.font = { size: 10, color: { argb: has ? GREEN : MUTED } };
       rep.alignment = { horizontal: "center" };
       row++;
@@ -133,13 +133,13 @@ export function fillSourcesSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, 
     "same idea under different tags across years, or under an industry-specific tag, so most lines list several.",
     "",
     "Merged by recency: the tags are equivalents; the freshest reported value wins where they overlap, and an",
-    "older tag supplies the earlier history it alone covers. Ranked: the tags are NOT equivalents: the first",
+    "older tag supplies the earlier history it alone covers. Ranked: the tags are NOT equivalents — the first",
     "one present is preferred, because a later tag would measure a different thing (a component, or a total that",
     "double-counts). Sign normalized: the magnitude is trusted and the sign is imposed, because filers disagree",
     "on the sign of some outflow and expense tags (a documented XBRL data-quality error).",
     "",
     "Reported = Yes means this filer carried a value for the line in at least one period. A dash means the",
-    "concept was not found in this filer's facts, so the line is blank throughout, not an error, just not filed.",
+    "concept was not found in this filer's facts, so the line is blank throughout — not an error, just not filed.",
     "",
     "This sheet documents the mapping and the source. For the authoritative figure and its exact filing, consult",
     "the company's 10-K or 10-Q on EDGAR; the endpoint above is the machine-readable feed those filings populate.",

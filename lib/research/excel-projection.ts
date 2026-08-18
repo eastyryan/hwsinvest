@@ -26,12 +26,12 @@
 //    year to balance (minority interest, deferred taxes). Both are held
 //    constant across the projection. Because the cash flow statement is built
 //    from the same drivers as the balance sheet, the projected balance sheet
-//    then balances by construction: the check row proves it rather than
+//    then balances by construction — the check row proves it rather than
 //    assuming it.
 //
 // 3. Operating expenses are driven *including* depreciation, so EBIT is gross
 //    profit less operating expenses and therefore reproduces reported operating
-//    income at the base year. EBITDA is then EBIT + D&A, the same definition
+//    income at the base year. EBITDA is then EBIT + D&A — the same definition
 //    the historical statements and the Model Checks sheet use.
 //
 //    An earlier version derived the opex ratio the same way but then subtracted
@@ -47,7 +47,7 @@
 // 4. A revolver funds any cash shortfall. Without one, an aggressive assumption
 //    (or a company that is simply burning cash) drove closing cash negative and
 //    the balance sheet then presented a negative number as an asset while the
-//    balance check still read zero: the model looked fine and was nonsense.
+//    balance check still read zero — the model looked fine and was nonsense.
 //    The revolver draws whatever is needed to hold cash at the minimum-cash
 //    input and sweeps surplus cash back against the balance. Interest accrues
 //    on its *opening* balance too, so the model stays acyclic.
@@ -191,14 +191,106 @@ function fill(v: number, years: number) {
   return Array.from({ length: years }, () => v);
 }
 
-/** A mature long-run growth rate high growers are faded toward. */
-const LONG_RUN_GROWTH = 0.03;
+/** A mature long-run growth rate high growers are faded toward (not a hard floor). */
+export const LONG_RUN_GROWTH = 0.03;
+
+/**
+ * Share of (year-1 − long-run) retained in the last *explicit* forecast year.
+ * A 10% grower lands near 5.1% in year 5, not 3% — slamming the explicit
+ * window to the mature rate over-matures high growers. Gordon terminal
+ * growth on the DCF (`tg`) is a separate model input, not this fade.
+ */
+export const FADE_RESIDUAL = 0.4;
 
 /** Linear fade from `start` (first year) to `end` (final year); flat if 1 year. */
-function fade(start: number, end: number, years: number) {
+export function fade(start: number, end: number, years: number) {
   return Array.from({ length: years }, (_, i) =>
     years <= 1 ? start : start + (end - start) * (i / (years - 1))
   );
+}
+
+/**
+ * Last explicit-year growth after fading toward LONG_RUN_GROWTH.
+ * Never faded *up* — a company already below the long-run rate stays there.
+ * This is the forecast-window fade, not Gordon `tg`.
+ */
+export function fadedExplicitGrowth(
+  start: number,
+  residual: number = FADE_RESIDUAL
+): number {
+  return start > LONG_RUN_GROWTH
+    ? LONG_RUN_GROWTH + (start - LONG_RUN_GROWTH) * residual
+    : start;
+}
+
+export type GrowthPathSource = "street-path" | "street-y1" | "history" | "default";
+
+/**
+ * Company-specific revenue growth path for the forward model.
+ *
+ * Priority: multi-year street EPS growth hops → street year-1 → historical
+ * revenue CAGR/YoY → 3% default. When street multi-year is available, later
+ * years hold the last hop rather than forcing every filer to 3% by year 5.
+ *
+ * Street-y1 and history fade toward LONG_RUN_GROWTH but keep FADE_RESIDUAL of
+ * the gap in the last explicit year. That landing rate is *not* the DCF
+ * terminal growth (`tg` / Gordon g) — the explicit window and the terminal
+ * model are separate assumptions.
+ */
+export function buildRevenueGrowthPath(opts: {
+  years: number;
+  /** Trailing revenue growth from filings (null if unknown). */
+  historical: number | null;
+  /** Consecutive YoY hops from forward yearly EPS consensus (preferred). */
+  streetPath?: number[] | null;
+  /** First street EPS growth hop when a full path is unavailable. */
+  streetYear1?: number | null;
+}): { path: number[]; source: GrowthPathSource } {
+  const years = Math.max(1, opts.years);
+  const clampG = (g: number) => clamp(g, -0.2, 0.35, LONG_RUN_GROWTH);
+
+  const pathFrom = (hops: number[]): number[] => {
+    const path: number[] = [];
+    for (let i = 0; i < years; i++) {
+      if (i < hops.length) path.push(clampG(hops[i]!));
+      else path.push(path[path.length - 1]!);
+    }
+    return path;
+  };
+
+  if (opts.streetPath && opts.streetPath.length > 0) {
+    return { path: pathFrom(opts.streetPath), source: "street-path" };
+  }
+
+  if (opts.streetYear1 != null && Number.isFinite(opts.streetYear1)) {
+    const y1 = clampG(opts.streetYear1);
+    // Mild reversion only — keep the last explicit year nearer street than a hard 3%.
+    return { path: fade(y1, fadedExplicitGrowth(y1), years), source: "street-y1" };
+  }
+
+  if (opts.historical != null && Number.isFinite(opts.historical)) {
+    const g = clampG(opts.historical);
+    return { path: fade(g, fadedExplicitGrowth(g), years), source: "history" };
+  }
+
+  return {
+    path: Array.from({ length: years }, () => LONG_RUN_GROWTH),
+    source: "default",
+  };
+}
+
+/** Historical trailing revenue growth from the annual statement set. */
+export function historicalRevenueGrowth(set: StatementSet): number | null {
+  const rev0 = actual(set, "revenue");
+  const rev1 = actual(set, "revenue", 1);
+  const rev3 = actual(set, "revenue", 3);
+  if (rev3 != null && rev3 > 0 && rev0 != null && rev0 > 0) {
+    return Math.pow(rev0 / rev3, 1 / 3) - 1;
+  }
+  if (rev1 != null && rev1 > 0 && rev0 != null && rev0 > 0) {
+    return rev0 / rev1 - 1;
+  }
+  return null;
 }
 
 /**
@@ -211,7 +303,7 @@ function fade(start: number, end: number, years: number) {
  * A driver whose input is *missing* falls back to the stated default rather
  * than to zero. That distinction is load-bearing: Apple stopped tagging
  * interest expense, and coercing the missing value to zero before clamping into
- * [0, 0.2] produced a 0% interest rate on $99bn of debt, a plausible-looking
+ * [0, 0.2] produced a 0% interest rate on $99bn of debt — a plausible-looking
  * number that was pure artefact. Same for capex.
  */
 function deriveAssumptions(
@@ -220,27 +312,14 @@ function deriveAssumptions(
   years: number
 ): { assumptions: Assumptions; actuals: AssumptionActuals } {
   const rev0 = base.revenue;
-  const rev1 = actual(set, "revenue", 1);
-  const rev3 = actual(set, "revenue", 3);
-  // Trailing 3-year revenue CAGR where available, else the last year-over-year
-  // change, else flat. Capped well inside what a person would type by hand.
-  let growth = 0.03;
-  let growthActual: number | null = null;
-  if (rev3 != null && rev3 > 0 && rev0 > 0) {
-    growth = Math.pow(rev0 / rev3, 1 / 3) - 1;
-    growthActual = growth;
-  } else if (rev1 != null && rev1 > 0 && rev0 > 0) {
-    growth = rev0 / rev1 - 1;
-    growthActual = growth;
-  }
-  growth = clamp(growth, -0.2, 0.35, 0.03);
-  // Fade growth toward a mature long-run rate across the horizon rather than
-  // holding the last reading flat for five years. A high grower reverting to
-  // ~3% is the defensible default (NVIDIA at 35% forever is not), and the model
-  // already accepts a per-year growth vector, so this only moves the starting
-  // numbers, not the mechanics. We only ever fade DOWN: a company already at or
-  // below the long-run rate is held flat rather than assumed to accelerate.
-  const revenueGrowthPath = fade(growth, Math.min(growth, LONG_RUN_GROWTH), years);
+  // History only here — street / multi-year consensus is applied by the caller
+  // (Valuation panel, Excel export) via revenueGrowth overrides so every
+  // company can get filer-specific estimates instead of a universal 3% tail.
+  const growthActual = historicalRevenueGrowth(set);
+  const { path: revenueGrowthPath } = buildRevenueGrowthPath({
+    years,
+    historical: growthActual,
+  });
 
   const pretax = actual(set, "pretaxIncome");
   const taxes = actual(set, "taxes");
@@ -283,7 +362,7 @@ function deriveAssumptions(
   // Stock-based compensation is already inside operating expenses (it lowers
   // operating income), so it never touches EBIT here. It is carried as its own
   // driver only so the cash-flow add-back and the paid-in-capital credit can be
-  // sized: the two entries that a model without it silently omits, understating
+  // sized — the two entries that a model without it silently omits, understating
   // both operating cash flow and equity by the SBC each year. Defaults to zero:
   // a filer that reports no SBC should show none, not an invented charge.
   const sbcRaw = actual(set, "sbc");
@@ -336,8 +415,8 @@ function deriveAssumptions(
  * Project forward, mirroring exactly what the Excel formulas will compute.
  *
  * `overrides` replaces derived drivers before the recursion runs. The workbook
- * itself never passes them: the Assumptions sheet is where a user changes an
- * input: but they are how the model gets exercised at the extremes a user can
+ * itself never passes them — the Assumptions sheet is where a user changes an
+ * input — but they are how the model gets exercised at the extremes a user can
  * reach by typing, which is exactly where a three-statement model stops
  * articulating if anything is wired wrong.
  */
@@ -362,8 +441,8 @@ export function buildProjection(
   const operatingIncomeRaw = actual(set, "operatingIncome");
 
   // A gross-profit / operating-income structure is what this model is built on.
-  // Banks, insurers and trusts report neither, JPMorgan has no cost of revenue
-  // and no gross profit at all: and forcing a margin-driven model onto them
+  // Banks, insurers and trusts report neither — JPMorgan has no cost of revenue
+  // and no gross profit at all — and forcing a margin-driven model onto them
   // produces a sheet that balances but means nothing. Omitting the projection is
   // the honest outcome.
   if (grossProfitRaw == null || grossProfitRaw <= 0 || operatingIncomeRaw == null) {
@@ -380,7 +459,7 @@ export function buildProjection(
   // The reported `opex` line cannot be trusted for this: it resolves to either
   // `OperatingExpenses` or `CostsAndExpenses`, and the latter is *total* costs
   // including cost of revenue. Alphabet tags it that way, so using the line
-  // directly subtracted cost of revenue twice: a 59.7% gross margin against a
+  // directly subtracted cost of revenue twice — a 59.7% gross margin against a
   // 68% "opex" ratio, projecting a multi-billion loss for a highly profitable
   // company. The identity below gives 27.6%, which is the real figure.
   //
@@ -544,7 +623,8 @@ const PROJECTIONS_SHEET = "Projections";
 const M = 1e6;
 
 /** Assumption row positions, so the schedules and projections can point at them. */
-const A_ROW = {
+/** Assumptions sheet row numbers — DCF Valuation links into these. */
+export const A_ROW = {
   revenueGrowth: 6,
   grossMargin: 7,
   opexPctRevenue: 8,
@@ -603,7 +683,7 @@ export function fillAssumptionsSheet(
     ws,
     "Assumptions",
     "Every blue cell is an input. Change one and the schedules, projections and checks all follow.",
-    "Column B is what the company actually did, unclamped. The blue columns start from it. They are a place to begin, not a forecast. Replace them with your own view.",
+    "Column B is what the company actually did, unclamped. The blue columns start from it — they are a place to begin, not a forecast. Replace them with your own view.",
     cols,
     TEAL,
     "Driver"
@@ -663,7 +743,7 @@ export function fillAssumptionsSheet(
     "EBIT is gross profit less operating expenses, so it reproduces reported operating income in the",
     "base year. Operating expenses are inclusive of depreciation; the D&A line is a memo that drives the",
     "PP&E roll-forward and the cash flow add-back. Raising it therefore shifts cost between cash and",
-    "non-cash rather than reducing EBIT. The driver above already fixes total operating cost.",
+    "non-cash rather than reducing EBIT — the driver above already fixes total operating cost.",
     "",
     "Interest is charged on the opening debt balance, not the average. Charging it on the average",
     "makes the model circular (interest → net income → cash → debt → interest), which Excel can only",
@@ -675,7 +755,7 @@ export function fillAssumptionsSheet(
     "",
     "Taxes are only charged on positive pre-tax income; loss years carry no benefit and no loss is",
     "carried forward. Dividends are only paid out of positive net income, and a payout above 100% is",
-    "accepted as typed, and it will drain equity.",
+    "accepted as typed — it will drain equity.",
     "",
     "This is a modelling tool, not a forecast and not investment advice.",
   ];
@@ -715,7 +795,7 @@ export function fillSchedulesSheet(
    * It used to sit on the opening row, which read as "FY2025 opening PP&E" in a
    * column headed FY2025 (A) while actually holding FY2025's closing figure.
    * Anchoring the closing row instead lets every opening row be the same
-   * formula (the cell to its left) and says what it means.
+   * formula — the cell to its left — and says what it means.
    */
   const anchor = (row: number, value: number) => {
     const c = ws.getRow(row).getCell(2);
@@ -1024,7 +1104,7 @@ export function fillProjectionsSheet(
 
   // --- the check
   label(P_ROW.bsCheck, "Balance check (must be zero)", true);
-  // The base year ties too (that is what the two plug lines are for), so the
+  // The base year ties too — that is what the two plug lines are for — so the
   // anchor column carries its own residual rather than leaving the reader to
   // take the construction on trust.
   const baseCheck =

@@ -49,7 +49,7 @@ class Lru<T> {
 // recently-viewed companies without meaningful memory pressure.
 const memory = new Lru<unknown>(24);
 
-/** Runtime Cache is unavailable outside Vercel (local dev, tests). */
+/** Runtime Cache is unavailable outside Vercel (local dev, tests, browser stub). */
 function runtimeCache(): ReturnType<typeof getCache> | null {
   try {
     return getCache();
@@ -76,8 +76,8 @@ export interface CachedOptions {
  * cache miss.
  *
  * Storing the bare value made `null` unreadable: three call sites return null on
- * their normal path: the AI summary on a refusal, the Yahoo profile whenever
- * its crumb handshake fails, the SEC profile on a 404, and each re-ran on every
+ * their normal path — the AI summary on a refusal, the Yahoo profile whenever
+ * its crumb handshake fails, the SEC profile on a 404 — and each re-ran on every
  * single request forever. Yahoo's handshake is blocked from datacenter IPs, so
  * in production that meant two uncached upstream fetches per page view that
  * could never succeed, and a null AI summary meant a fresh Opus call per
@@ -87,21 +87,24 @@ interface Boxed<T> {
   v: T;
 }
 
+/** Where a read-through lookup resolved. */
+export type CacheSource = "memory" | "runtime" | "miss";
+
 /**
- * Read-through cache. On miss, runs `fn`, stores the result in both tiers, and
- * returns it. Concurrent misses for the same key are collapsed by the caller
- * via singleFlight().
+ * Read-through cache with hit metadata. On miss, runs `fn`, stores the result
+ * in both tiers, and returns it. Concurrent misses for the same key are
+ * collapsed by the caller via singleFlight().
  *
- * Cache failures are never fatal: a broken cache degrades to a slow request,
+ * Cache failures are never fatal — a broken cache degrades to a slow request,
  * not an error.
  */
-export async function cached<T>(
+export async function cachedWithMeta<T>(
   key: string,
   opts: CachedOptions,
   fn: () => Promise<T>
-): Promise<T> {
+): Promise<{ value: T; source: CacheSource }> {
   const hit = memory.get(key) as Boxed<T> | null;
-  if (hit !== null) return hit.v;
+  if (hit !== null) return { value: hit.v, source: "memory" };
 
   const remote = runtimeCache();
   if (remote) {
@@ -110,7 +113,7 @@ export async function cached<T>(
       // `undefined` is the miss sentinel; a stored box carrying null is a hit.
       if (boxed !== null && boxed !== undefined && typeof boxed === "object" && "v" in boxed) {
         memory.set(key, boxed, opts.ttl);
-        return boxed.v;
+        return { value: boxed.v, source: "runtime" };
       }
     } catch (e) {
       console.warn(`[cache] runtime cache read failed for ${key}:`, e);
@@ -126,11 +129,25 @@ export async function cached<T>(
     try {
       await remote.set(key, boxed, { ttl, tags: opts.tags });
     } catch (e) {
-      // Most likely the 2MB item limit. Worth surfacing, it means this key is
+      // Most likely the 2MB item limit. Worth surfacing — it means this key is
       // effectively memory-only and will miss across instances.
       console.warn(`[cache] runtime cache write failed for ${key}:`, e);
     }
   }
 
+  return { value, source: "miss" };
+}
+
+/**
+ * Read-through cache. On miss, runs `fn`, stores the result in both tiers, and
+ * returns it. Concurrent misses for the same key are collapsed by the caller
+ * via singleFlight().
+ */
+export async function cached<T>(
+  key: string,
+  opts: CachedOptions,
+  fn: () => Promise<T>
+): Promise<T> {
+  const { value } = await cachedWithMeta(key, opts, fn);
   return value;
 }

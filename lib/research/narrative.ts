@@ -18,6 +18,7 @@
 
 import type { CompanyFinancials, StatementSet } from "./edgar";
 import type { Insights } from "./insights";
+import { type SectorMode, isGrossMarginMeaningful } from "./sector-mode";
 
 export interface Narrative {
   business: string;
@@ -28,6 +29,8 @@ export interface Narrative {
 export interface MarketContext {
   marketCap?: number | null;
   currency?: string;
+  /** Presentation mode — banks/insurers skip gross-margin framing. */
+  sectorMode?: SectorMode;
 }
 
 // --- data access ------------------------------------------------------------
@@ -148,6 +151,8 @@ function businessParagraph(fin: CompanyFinancials, ctx: MarketContext): string {
   const a = fin.annual;
   const cur = fin.currency;
   const out: string[] = [];
+  const mode = ctx.sectorMode ?? "standard";
+  const useGross = isGrossMarginMeaningful(mode);
 
   // Prefer TTM; fall back to the latest fiscal year for filers whose quarterly
   // data is too sparse to form a trailing window.
@@ -160,9 +165,14 @@ function businessParagraph(fin: CompanyFinancials, ctx: MarketContext): string {
   const capex = ttm(q, "capex") ?? at(a, "capex");
   const rd = ttm(q, "rd") ?? at(a, "rd");
   const ocf = ttm(q, "ocf") ?? at(a, "ocf");
+  const equity = at(a, "equity");
+  const assets = at(a, "totalAssets");
 
-  const gm = ratio(gross, revenue);
+  const gm = useGross ? ratio(gross, revenue) : null;
   const om = ratio(op, revenue);
+  const nm = ratio(net, revenue);
+  const roe = ratio(net, equity != null && equity > 0 ? equity : null);
+  const roa = ratio(net, assets != null && assets > 0 ? assets : null);
   const capexPct = capex != null && revenue ? Math.abs(capex) / revenue : null;
   const rdPct = ratio(rd, revenue);
 
@@ -171,12 +181,26 @@ function businessParagraph(fin: CompanyFinancials, ctx: MarketContext): string {
     const margins: string[] = [];
     if (gm != null) margins.push(`a ${pct(gm)} gross margin`);
     if (om != null) margins.push(`${pct(om)} operating margin`);
+    if (!useGross && nm != null) margins.push(`${pct(nm)} net margin`);
     if (margins.length) {
       out.push(
         `Over the ${basis} this is a ${money(revenue, cur)} revenue business running ${sentence(margins)}`
       );
     } else {
       out.push(`Over the ${basis} this is a ${money(revenue, cur)} revenue business`);
+    }
+  }
+
+  if (!useGross && (roe != null || roa != null)) {
+    const ret: string[] = [];
+    if (roe != null) ret.push(`${pct(roe)} ROE`);
+    if (roa != null) ret.push(`${pct(roa)} ROA`);
+    if (ret.length) {
+      out.push(
+        `On the latest balance sheet that implies ${sentence(ret)} — more useful than gross margin for ${
+          mode === "bank" ? "banks" : "insurers"
+        }`
+      );
     }
   }
 
@@ -192,7 +216,7 @@ function businessParagraph(fin: CompanyFinancials, ctx: MarketContext): string {
   // note would be pure filler.
   //
   // No industry is named here. The filings don't contain one, and guessing from
-  // margin alone was wrong in practice: it labeled a car manufacturer as
+  // margin alone was wrong in practice — it labeled a car manufacturer as
   // "typical of retail and distribution".
   if (gm != null) {
     if (gm >= 0.7) out.push("That gross margin is software-like");
@@ -278,7 +302,7 @@ function businessParagraph(fin: CompanyFinancials, ctx: MarketContext): string {
 
 // --- paragraph 2: momentum --------------------------------------------------
 
-function momentumParagraph(fin: CompanyFinancials): string {
+function momentumParagraph(fin: CompanyFinancials, mode: SectorMode = "standard"): string {
   const q = fin.quarterly;
   const cur = fin.currency;
   const out: string[] = [];
@@ -308,7 +332,7 @@ function momentumParagraph(fin: CompanyFinancials): string {
   if (revYoy != null && opYoy != null && revYoy > 0) {
     // Explicitly scoped to the quarter. This sits next to a trailing-twelve-
     // month margin move below, and the two can point in opposite directions
-    // legitimately: an unlabeled pair reads as a contradiction.
+    // legitimately — an unlabeled pair reads as a contradiction.
     if (opYoy > revYoy + 0.03) {
       out.push(
         `In that quarter operating income grew faster than revenue (${delta(opYoy)} against ${delta(revYoy)}), the signature of operating leverage rather than growth bought with spending`
@@ -321,10 +345,14 @@ function momentumParagraph(fin: CompanyFinancials): string {
   }
 
   // Margin direction, stated as levels rather than adjectives.
-  const gmNow = ratio(ttm(q, "grossProfit"), ttm(q, "revenue"));
-  const gmYear = ratio(ttm(q, "grossProfit", 4), ttm(q, "revenue", 4));
+  // Banks/insurers skip gross margin (industrial COGS framing).
+  const useGross = isGrossMarginMeaningful(mode);
+  const gmNow = useGross ? ratio(ttm(q, "grossProfit"), ttm(q, "revenue")) : null;
+  const gmYear = useGross ? ratio(ttm(q, "grossProfit", 4), ttm(q, "revenue", 4)) : null;
   const omNow = ratio(ttm(q, "operatingIncome"), ttm(q, "revenue"));
   const omYear = ratio(ttm(q, "operatingIncome", 4), ttm(q, "revenue", 4));
+  const nmNow = !useGross ? ratio(ttm(q, "netIncome"), ttm(q, "revenue")) : null;
+  const nmYear = !useGross ? ratio(ttm(q, "netIncome", 4), ttm(q, "revenue", 4)) : null;
   const moves: string[] = [];
   if (gmNow != null && gmYear != null && Math.abs(gmNow - gmYear) >= 0.005) {
     moves.push(
@@ -334,6 +362,11 @@ function momentumParagraph(fin: CompanyFinancials): string {
   if (omNow != null && omYear != null && Math.abs(omNow - omYear) >= 0.005) {
     moves.push(
       `operating margin ${omNow > omYear ? "widened" : "narrowed"} to ${pct(omNow)} from ${pct(omYear)}`
+    );
+  }
+  if (nmNow != null && nmYear != null && Math.abs(nmNow - nmYear) >= 0.005) {
+    moves.push(
+      `net margin ${nmNow > nmYear ? "widened" : "narrowed"} to ${pct(nmNow)} from ${pct(nmYear)}`
     );
   }
   if (moves.length) out.push(`On a trailing-twelve-month basis ${sentence(moves)}`);
@@ -385,7 +418,7 @@ function catalystsParagraph(fin: CompanyFinancials, insights: Insights): string 
   // Both phrasings name the inputs explicitly. "Net debt" against cash and
   // short-term investments alone overstates leverage for filers that park large
   // sums in long-term marketable securities, which this line set doesn't
-  // capture: Apple being the obvious case.
+  // capture — Apple being the obvious case.
   if (hasBalance) {
     const netCash = cash - debt;
     const ocf = ttm(q, "ocf");
@@ -459,16 +492,17 @@ function catalystsParagraph(fin: CompanyFinancials, insights: Insights): string 
 }
 
 /**
- * Build the narrative. Pure, synchronous, and free, no network, no API key.
+ * Build the narrative. Pure, synchronous, and free — no network, no API key.
  */
 export function buildNarrative(
   fin: CompanyFinancials,
   insights: Insights,
   ctx: MarketContext = {}
 ): Narrative {
+  const mode = ctx.sectorMode ?? "standard";
   return {
     business: businessParagraph(fin, ctx),
-    momentum: momentumParagraph(fin),
+    momentum: momentumParagraph(fin, mode),
     catalysts: catalystsParagraph(fin, insights),
   };
 }

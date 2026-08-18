@@ -20,7 +20,7 @@ export const GREY = "FF6B7280";
 
 export const MONEY_FMT = "#,##0;(#,##0)";
 /**
- * Money for a row that is pinned to a target by construction, a balance-sheet
+ * Money for a row that is pinned to a target by construction — a balance-sheet
  * residual, or a cash balance a revolver holds at its floor.
  *
  * Those rows carry IEEE-754 dust: a residual of -3e-11 is arithmetically zero
@@ -50,7 +50,7 @@ export const quoteSheet = (name: string) => `'${name.replace(/'/g, "''")}'`;
  * Hand out legal, unique worksheet names.
  *
  * ExcelJS *throws* on a name containing `: \ / ? * [ ]`, on a leading or
- * trailing apostrophe, on the reserved name "History", and on a duplicate,
+ * trailing apostrophe, on the reserved name "History", and on a duplicate —
  * every one of which would surface as a failed export rather than a cosmetic
  * problem. Truncation to Excel's 31-character cap is the sneakier one: two
  * titles that differ only past the 31st character collide, and the collision

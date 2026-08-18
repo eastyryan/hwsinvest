@@ -1,9 +1,10 @@
 // Rule-based analysis of what's growing, slowing, and potential catalysts.
-// Pure functions over the normalized statements, an AI-written narrative can
+// Pure functions over the normalized statements — an AI-written narrative can
 // replace the output of buildInsights() later without touching callers.
 
 import type { CompanyFinancials, StatementSet, LineValues } from "./edgar";
 import { fmtPct } from "./format";
+import { type SectorMode, isGrossMarginMeaningful } from "./sector-mode";
 
 export interface Insight {
   text: string;
@@ -41,7 +42,7 @@ function arrows(vals: number[]): string {
   return [...vals].reverse().map((v) => fmtPct(v)).join(" → ");
 }
 
-const WATCHED: { key: string; label: string }[] = [
+const WATCHED_STANDARD: { key: string; label: string }[] = [
   { key: "revenue", label: "Revenue" },
   { key: "grossProfit", label: "Gross profit" },
   { key: "operatingIncome", label: "Operating income" },
@@ -49,6 +50,18 @@ const WATCHED: { key: string; label: string }[] = [
   { key: "ocf", label: "Operating cash flow" },
   { key: "fcf", label: "Free cash flow" },
   { key: "rd", label: "R&D spend" },
+];
+
+/** Bank/insurer watch list: skip gross profit; prefer opex and interest when present. */
+const WATCHED_FINANCIAL: { key: string; label: string }[] = [
+  { key: "revenue", label: "Revenue" },
+  { key: "cogs", label: "Cost of revenue / benefits" },
+  { key: "opex", label: "Operating expenses" },
+  { key: "operatingIncome", label: "Operating income" },
+  { key: "netIncome", label: "Net income" },
+  { key: "interestExpense", label: "Interest expense" },
+  { key: "ocf", label: "Operating cash flow" },
+  { key: "fcf", label: "Free cash flow" },
 ];
 
 function marginSeries(
@@ -76,13 +89,18 @@ function marginSeries(
 
 const pt = (x: number) => (x * 100).toFixed(1);
 
-export function buildInsights(fin: CompanyFinancials): Insights {
+export function buildInsights(
+  fin: CompanyFinancials,
+  mode: SectorMode = "standard"
+): Insights {
   const q = fin.quarterly;
   const growing: Insight[] = [];
   const slowing: Insight[] = [];
   const catalysts: Insight[] = [];
+  const watched =
+    mode === "bank" || mode === "insurer" ? WATCHED_FINANCIAL : WATCHED_STANDARD;
 
-  for (const { key, label } of WATCHED) {
+  for (const { key, label } of watched) {
     const line = findLine(q, key);
     if (!line) continue;
     const yoy = recentYoy(q, line, 3);
@@ -118,12 +136,18 @@ export function buildInsights(fin: CompanyFinancials): Insights {
     }
   }
 
-  // Margins
-  for (const [key, name] of [
-    ["grossProfit", "Gross margin"],
-    ["operatingIncome", "Operating margin"],
-    ["netIncome", "Net margin"],
-  ] as const) {
+  // Margins — skip gross for banks/insurers (industrial COGS framing).
+  const marginKeys: [string, string][] = isGrossMarginMeaningful(mode)
+    ? [
+        ["grossProfit", "Gross margin"],
+        ["operatingIncome", "Operating margin"],
+        ["netIncome", "Net margin"],
+      ]
+    : [
+        ["operatingIncome", "Operating margin"],
+        ["netIncome", "Net margin"],
+      ];
+  for (const [key, name] of marginKeys) {
     const m = marginSeries(q, key);
     if (!m) continue;
     const delta = m.latest - m.yearAgo;

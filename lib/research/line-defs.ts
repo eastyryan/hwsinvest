@@ -2,7 +2,7 @@
 // arrive under.
 //
 // This is the hard part of consuming SEC data. There is no single tag for
-// "revenue": filers choose from dozens depending on industry, era, and their
+// "revenue" — filers choose from dozens depending on industry, era, and their
 // accountant's preference, and they migrate between them over the years. A
 // concept resolves by trying every tag listed here and stitching the resulting
 // series together (see buildStatementSet in edgar.ts), so order within a list
@@ -31,7 +31,7 @@ interface LineDef {
    * is wrong when the alternatives measure genuinely different things: Disney
    * reports NetIncomeLoss of 12.40B (attributable to Disney) and ProfitLoss of
    * 13.43B (consolidated, including minority interests), and recency handed us
-   * the second: contradicting the EPS on the same statement.
+   * the second — contradicting the EPS on the same statement.
    */
   preferOrder?: boolean;
   /**
@@ -71,7 +71,7 @@ const INCOME: LineDef[] = [
       "RegulatedAndUnregulatedOperatingRevenue",
       // Insurers: premiums are the dominant revenue line when a filer tags no
       // consolidated total. Investment income (InterestAndDividendIncomeOperating)
-      // is deliberately absent: it is a component worth a few percent of an
+      // is deliberately absent — it is a component worth a few percent of an
       // insurer's revenue, and letting it stand in for the total understated
       // Progressive by 24x in years where the total was not tagged.
       "PremiumsEarnedNet",
@@ -162,7 +162,7 @@ const INCOME: LineDef[] = [
     expectPositive: true,
     // `CostsAndExpenses` is deliberately NOT listed. It is *total* costs
     // including cost of revenue, so presenting it as operating expenses
-    // double-counts COGS: Alphabet tags it that way, which made its operating
+    // double-counts COGS — Alphabet tags it that way, which made its operating
     // expenses read as 68% of revenue instead of 27.6%. The derivation below
     // gives the correct figure for every filer that reports the two subtotals.
     tags: ["OperatingExpenses", "OperatingCostsAndExpenses", "NoninterestExpense"],
@@ -176,8 +176,44 @@ const INCOME: LineDef[] = [
     tags: ["OperatingIncomeLoss"],
   },
   {
+    key: "impairment",
+    label: "Impairment Charges",
+    kind: "flow",
+    expectPositive: true,
+    tags: [
+      "GoodwillImpairmentLoss",
+      "ImpairmentOfLongLivedAssetsHeldForUse",
+      "ImpairmentOfIntangibleAssetsExcludingGoodwill",
+      "AssetImpairmentCharges",
+      "ImpairmentOfInvestments",
+    ],
+  },
+  {
+    key: "restructuring",
+    label: "Restructuring Charges",
+    kind: "flow",
+    expectPositive: true,
+    tags: [
+      "RestructuringCharges",
+      "RestructuringCostsAndAssetImpairmentCharges",
+      "BusinessExitCosts",
+      "SeveranceCosts",
+    ],
+  },
+  {
+    key: "gainOnSale",
+    label: "Gain on Sale",
+    kind: "flow",
+    tags: [
+      "GainLossOnSaleOfBusiness",
+      "GainLossOnSaleOfPropertyPlantEquipment",
+      "GainLossOnInvestments",
+      "DisposalGroupNotDiscontinuedOperationGainLossOnDisposal",
+    ],
+  },
+  {
     // EBIT + D&A. Companies don't tag EBITDA (it isn't a GAAP measure), so it
-    // is always derived: and the D&A it adds back comes off the cash flow
+    // is always derived — and the D&A it adds back comes off the cash flow
     // statement, making this the first genuinely cross-statement line.
     key: "ebitda",
     label: "EBITDA",
@@ -196,6 +232,32 @@ const INCOME: LineDef[] = [
       "InterestAndDebtExpense",
       "InterestExpenseDebt",
       "InterestExpenseBorrowings",
+    ],
+  },
+  {
+    key: "netInterestIncome",
+    label: "Net Interest Income",
+    kind: "flow",
+    // RevenuesNetOfInterestExpense already feeds `revenue` for banks — do not
+    // claim it here or both lines get the same number.
+    tags: ["InterestIncomeExpenseNet"],
+  },
+  {
+    key: "premiumsEarned",
+    label: "Premiums Earned",
+    kind: "flow",
+    // PremiumsEarnedNet already feeds `revenue` for insurers.
+    tags: ["PremiumsEarnedNetOfReinsurance"],
+  },
+  {
+    key: "policyBenefits",
+    label: "Policyholder Benefits",
+    kind: "flow",
+    expectPositive: true,
+    // PolicyholderBenefitsAndClaimsIncurredNet already feeds `cogs`.
+    tags: [
+      "PolicyholderBenefitsAndClaimsIncurred",
+      "BenefitsLossesAndExpenses",
     ],
   },
   {
@@ -250,13 +312,23 @@ const INCOME: LineDef[] = [
     kind: "flow",
     shares: true,
     // Diluted only. Basic weighted-average shares were a fallback here, but
-    // basic is a different concept, not an era-synonym, it is always fewer
-    // shares: so the recency merge let it stand in for diluted and every
+    // basic is a different concept, not an era-synonym — it is always fewer
+    // shares — so the recency merge let it stand in for diluted and every
     // per-share figure came out slightly high. NVIDIA showed 24,359M basic
     // where diluted was 24,514M, an implied EPS ~0.6% above the reported
     // diluted figure. A filer that reports only basic now shows no diluted
     // line, which is more honest than mislabelling basic as diluted.
     tags: ["WeightedAverageNumberOfDilutedSharesOutstanding"],
+  },
+  {
+    key: "sharesBasic",
+    label: "Basic Shares Outstanding",
+    kind: "flow",
+    shares: true,
+    // Weighted-average basic shares. Kept off the diluted line on purpose —
+    // basic is a smaller count, not an era-synonym. A filer that only reports
+    // basic now has a basic line instead of a mislabelled diluted one.
+    tags: ["WeightedAverageNumberOfSharesOutstandingBasic"],
   },
 ];
 
@@ -344,14 +416,14 @@ const BALANCE: LineDef[] = [
     key: "ltInvestments",
     label: "Long-Term Investments",
     kind: "instant",
-    // Noncurrent investment securities: the marketable holdings a company
+    // Noncurrent investment securities — the marketable holdings a company
     // parks beyond a year, which for cash-rich filers dwarf most other asset
     // lines (NVIDIA carries tens of billions here that no line surfaced before).
     // Ranked (preferOrder) so a reported total wins over its components: where a
     // filer tags both a LongTermInvestments total and a piece such as
     // EquitySecuritiesFVNINoncurrent, the total must stand, not the part. A
     // filer that only tags the pieces separately surfaces the largest clean
-    // piece rather than a guessed sum: NVIDIA tags noncurrent equity securities
+    // piece rather than a guessed sum — NVIDIA tags noncurrent equity securities
     // but folds the noncurrent debt piece into a combined current+noncurrent
     // total with no clean noncurrent tag, so that portion stays uncaptured
     // rather than double-counted. Purely a display line: Total Assets is the
@@ -416,6 +488,17 @@ const BALANCE: LineDef[] = [
     ],
   },
   {
+    key: "deposits",
+    label: "Deposits",
+    kind: "instant",
+    tags: [
+      "Deposits",
+      "InterestBearingDeposits",
+      "NoninterestBearingDeposits",
+      "DepositsLiabilities",
+    ],
+  },
+  {
     key: "totalLiabilities",
     label: "Total Liabilities",
     kind: "instant",
@@ -448,6 +531,70 @@ const BALANCE: LineDef[] = [
       "MembersEquity",
       "PartnersCapital",
       "CommonStockholdersEquity",
+    ],
+  },
+  {
+    key: "leaseLiability",
+    label: "Lease Liabilities",
+    kind: "instant",
+    // Operating + finance lease liabilities when tagged separately from
+    // interest-bearing debt. Totals and noncurrent pieces are both listed
+    // because filers pick one; they are not summed.
+    tags: [
+      "OperatingLeaseLiability",
+      "OperatingLeaseLiabilityNoncurrent",
+      "FinanceLeaseLiability",
+      "OperatingLeaseAndFinanceLeaseLiability",
+    ],
+  },
+  {
+    key: "nci",
+    label: "Noncontrolling Interest",
+    kind: "instant",
+    tags: ["MinorityInterest", "NoncontrollingInterest"],
+  },
+  {
+    key: "preferredEquity",
+    label: "Preferred Equity",
+    kind: "instant",
+    // Redeemable / mezzanine preferred is included — it is capital that sits
+    // above common in an EV bridge, whether or not the filer parks it in
+    // temporary equity.
+    tags: [
+      "PreferredStockValue",
+      "PreferredStockIncludingAdditionalPaidInCapital",
+      "TemporaryEquityCarryingAmountIncludingPortionAttributableToNoncontrollingInterests",
+    ],
+  },
+  {
+    key: "pensionLiab",
+    label: "Pension Liabilities",
+    kind: "instant",
+    tags: [
+      "PensionAndOtherPostretirementDefinedBenefitPlansLiabilitiesNoncurrent",
+      "DefinedBenefitPlanLiabilitiesNoncurrent",
+      "PensionAndOtherPostretirementDefinedBenefitPlansCurrentLiabilities",
+    ],
+  },
+  {
+    key: "pensionAssets",
+    label: "Pension Plan Assets",
+    kind: "instant",
+    tags: [
+      "DefinedBenefitPlanFairValueOfPlanAssets",
+      "DefinedBenefitPlanAssetsForPlanBenefitsNoncurrent",
+    ],
+  },
+  {
+    key: "restrictedCash",
+    label: "Restricted Cash",
+    kind: "instant",
+    // Additive to `cash`, which still includes the combined cash+restricted
+    // tag for coverage. The EV bridge carves this out when both are finite.
+    tags: [
+      "RestrictedCashAndCashEquivalentsAtCarryingValue",
+      "RestrictedCashAndCashEquivalents",
+      "RestrictedCashAndCashEquivalentsNoncurrent",
     ],
   },
 ];

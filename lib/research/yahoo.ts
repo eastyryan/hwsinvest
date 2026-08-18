@@ -1,5 +1,5 @@
 // Optional decoration from Yahoo Finance (the same unofficial endpoints the
-// yfinance Python library wraps). Everything here degrades gracefully, the
+// yfinance Python library wraps). Everything here degrades gracefully — the
 // app must render fully without it.
 
 import { fetchJson, singleFlight } from "./http";

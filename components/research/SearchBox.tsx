@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Search } from "lucide-react";
 
 interface Result {
   cik: string;
@@ -13,11 +12,14 @@ interface Result {
 export default function SearchBox({
   large = false,
   onSelect,
+  onPanelOpenChange,
   placeholder = "Search a company name or ticker",
   disabled = false,
 }: {
   large?: boolean;
   onSelect?: (r: Result) => void; // when set, selection calls back instead of navigating
+  /** Fires when the results/error panel opens or closes (home page layout uses this). */
+  onPanelOpenChange?: (open: boolean) => void;
   placeholder?: string;
   disabled?: boolean;
 }) {
@@ -28,7 +30,7 @@ export default function SearchBox({
   const [active, setActive] = useState(0);
   // The pathname we were on when a navigation started, or null. Deriving
   // `navigating` from it means the input re-enables on any route change instead
-  // of relying on an effect that never ran: the old bug left it disabled and
+  // of relying on an effect that never ran — the old bug left it disabled and
   // out of the tab order forever.
   const [navFrom, setNavFrom] = useState<string | null>(null);
   const router = useRouter();
@@ -36,7 +38,7 @@ export default function SearchBox({
   const boxRef = useRef<HTMLDivElement>(null);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Query value we wrote ourselves after a selection, searching it again would
+  // Query value we wrote ourselves after a selection — searching it again would
   // be a wasted round trip for a company the user already picked.
   const suppressedQuery = useRef<string | null>(null);
   const listboxId = useId();
@@ -88,7 +90,8 @@ export default function SearchBox({
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
-      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+      if (boxRef.current && !boxRef.current.contains(e.target as Node))
+        setOpen(false);
     }
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
@@ -100,7 +103,7 @@ export default function SearchBox({
     () => () => {
       if (navTimeout.current) clearTimeout(navTimeout.current);
     },
-    []
+    [],
   );
 
   const go = useCallback(
@@ -124,7 +127,7 @@ export default function SearchBox({
       if (navTimeout.current) clearTimeout(navTimeout.current);
       navTimeout.current = setTimeout(() => setNavFrom(null), 8000);
     },
-    [router, onSelect, pathname]
+    [router, onSelect, pathname],
   );
 
   function onChange(value: string) {
@@ -178,21 +181,61 @@ export default function SearchBox({
   // API now reports separately.
   const panelOpen = open && queryActive;
 
+  useEffect(() => {
+    onPanelOpenChange?.(panelOpen);
+  }, [panelOpen, onPanelOpenChange]);
+
+  const panelInner = (
+    <>
+      {searchError ? (
+        <p
+          role="status"
+          className="px-4 py-3 text-sm text-red-600 dark:text-red-400"
+        >
+          {searchError}
+        </p>
+      ) : (
+        !hasResults && (
+          <p role="status" className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+            No companies match &ldquo;{query.trim()}&rdquo;.
+          </p>
+        )
+      )}
+      <ul
+        id={listboxId}
+        role="listbox"
+        aria-label="Company search results"
+        hidden={!listOpen}
+      >
+        {/* Option children must be presentational — no nested focusable controls.
+            Keyboard interaction is driven from the input via aria-activedescendant. */}
+        {results.map((r, i) => (
+          <li
+            key={r.cik + r.ticker}
+            id={optionId(i)}
+            role="option"
+            aria-selected={i === active}
+            onMouseEnter={() => setActive(i)}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => go(r)}
+            className={`flex w-full cursor-pointer items-center gap-3 border-b border-zinc-100 px-4 py-3 text-left last:border-b-0 dark:border-zinc-800 ${
+              i === active ? "bg-zinc-100 dark:bg-zinc-800" : ""
+            }`}
+          >
+            <span className="flex h-8 w-16 shrink-0 items-center justify-center rounded-md bg-zinc-900 font-mono text-xs font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
+              {r.ticker}
+            </span>
+            <span className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">
+              {r.name}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+
   return (
-    <div ref={boxRef} className="rsch-search">
-      <Search
-        size={large ? 19 : 16}
-        strokeWidth={2}
-        aria-hidden
-        style={{
-          position: "absolute",
-          left: large ? 18 : 14,
-          top: "50%",
-          transform: "translateY(-50%)",
-          color: "var(--faint)",
-          pointerEvents: "none",
-        }}
-      />
+    <div ref={boxRef} className="relative w-full">
       <input
         type="text"
         value={query}
@@ -203,7 +246,7 @@ export default function SearchBox({
         autoFocus={large}
         disabled={isDisabled}
         aria-label="Search a company name or ticker"
-        // Reflects the listbox specifically: that is the popup `aria-controls`
+        // Reflects the listbox specifically — that is the popup `aria-controls`
         // points at. It was previously true whenever the panel showed a "no
         // matches" or error message, which announces "expanded" and then hands
         // a screen reader nothing to navigate into.
@@ -213,80 +256,46 @@ export default function SearchBox({
         aria-autocomplete="list"
         aria-activedescendant={listOpen ? optionId(active) : undefined}
         autoComplete="off"
-        className={`rsch-input${large ? " rsch-input-lg" : ""}`}
-        style={{ paddingLeft: large ? 46 : 38 }}
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        name="company-search"
+        className={
+          large
+            ? "w-full rounded-xl border-2 border-zinc-900 bg-white px-5 py-4 text-lg text-zinc-900 placeholder-zinc-500 outline-none transition-shadow focus:shadow-[0_0_0_3px_rgba(24,24,27,0.12)] disabled:opacity-60 dark:border-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:shadow-[0_0_0_3px_rgba(244,244,245,0.15)]"
+            : // Match primary toolbar chrome (h-9, border-2 zinc-900) used by Watch / Excel.
+              "h-9 w-full rounded-lg border-2 border-zinc-900 bg-white px-3.5 text-sm text-zinc-900 placeholder-zinc-500 outline-none transition-shadow focus:shadow-[0_0_0_3px_rgba(24,24,27,0.12)] disabled:opacity-60 dark:border-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:shadow-[0_0_0_3px_rgba(244,244,245,0.15)]"
+        }
       />
       {navigating && (
-        <span
-          aria-hidden
-          style={{
-            position: "absolute",
-            right: large ? 18 : 14,
-            top: "50%",
-            marginTop: -8,
-            height: 16,
-            width: 16,
-            borderRadius: "50%",
-            border: "2px solid var(--line)",
-            borderTopColor: "var(--brandSolid)",
-            animation: "rsch-spin 0.7s linear infinite",
-          }}
-        />
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full border-2 border-zinc-300 border-t-zinc-900 animate-spin dark:border-zinc-600 dark:border-t-zinc-100" />
       )}
-      <div hidden={!panelOpen} className="rsch-menu">
-        {searchError ? (
-          <p
-            role="status"
-            style={{ margin: 0, padding: "12px 14px", fontSize: 14, color: "var(--down)" }}
-          >
-            {searchError}
-          </p>
-        ) : (
-          !hasResults && (
-            <p
-              role="status"
-              style={{ margin: 0, padding: "12px 14px", fontSize: 14, color: "var(--muted)" }}
-            >
-              No companies match &ldquo;{query.trim()}&rdquo;.
-            </p>
-          )
-        )}
-        <ul
-          id={listboxId}
-          role="listbox"
-          aria-label="Company search results"
-          hidden={!listOpen}
-          style={{ listStyle: "none", margin: 0, padding: 0 }}
+      {large ? (
+        // Home page: in-flow panel so content below (Recently viewed) animates
+        // down instead of sitting under an absolute overlay.
+        <div
+          className="grid transition-[grid-template-rows,opacity,margin] duration-200 ease-out motion-reduce:transition-none"
+          style={{
+            gridTemplateRows: panelOpen ? "1fr" : "0fr",
+            opacity: panelOpen ? 1 : 0,
+            marginTop: panelOpen ? 8 : 0,
+          }}
+          aria-hidden={!panelOpen}
         >
-          {/* Option children must be presentational, no nested focusable controls.
-              Keyboard interaction is driven from the input via aria-activedescendant. */}
-          {results.map((r, i) => (
-            <li
-              key={r.cik + r.ticker}
-              id={optionId(i)}
-              role="option"
-              aria-selected={i === active}
-              onMouseEnter={() => setActive(i)}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => go(r)}
-              className={`rsch-opt${i === active ? " is-active" : ""}`}
-            >
-              <span className="rsch-tag">{r.ticker}</span>
-              <span
-                style={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  fontSize: 14.5,
-                  fontWeight: 500,
-                }}
-              >
-                {r.name}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
+          <div className="min-h-0 overflow-hidden">
+            <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-900/15 dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-black/50">
+              {panelInner}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          hidden={!panelOpen}
+          className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-900/15 dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-black/50"
+        >
+          {panelInner}
+        </div>
+      )}
       {/* Results appear without focus moving, so nothing would otherwise tell a
           screen-reader user that the list changed under them. Kept outside the
           `hidden` panel so it is always in the accessibility tree. */}

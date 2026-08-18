@@ -3,6 +3,11 @@
 // sums for flow items so the ratios stay comparable quarter to quarter.
 
 import type { CompanyFinancials, StatementSet, LineValues, PeriodCol } from "./edgar";
+import {
+  type SectorMode,
+  isGrossMarginMeaningful,
+  preferredRatioKeys,
+} from "./sector-mode";
 
 export type RatioFormat = "pct" | "x";
 
@@ -12,6 +17,8 @@ export interface RatioLine {
   format: RatioFormat;
   values: Record<string, number | null>;
   note?: string;
+  /** Soft-de-emphasized (e.g. gross margin for banks) — UI may style muted. */
+  deemphasized?: boolean;
 }
 
 export interface RatioSet {
@@ -71,7 +78,7 @@ const div = (a: number | null, b: number | null): number | null =>
  * Divide, but only where a positive denominator makes the result meaningful.
  *
  * Companies that have bought back stock for decades carry genuinely negative
- * shareholders' equity: McDonald's, Boeing and Home Depot all do, and the
+ * shareholders' equity — McDonald's, Boeing and Home Depot all do, and the
  * balance sheets tie. Dividing by it is arithmetically fine and financially
  * meaningless: Home Depot's return on equity came out at 1450% and McDonald's
  * debt-to-equity at -22.8x, which reads as negative leverage when the truth is
@@ -86,11 +93,14 @@ const divPositive = (a: number | null, b: number | null): number | null =>
 
 export function buildRatios(
   fin: CompanyFinancials,
-  freq: "annual" | "quarterly"
+  freq: "annual" | "quarterly",
+  mode: SectorMode = "standard"
 ): RatioSet {
   const set = freq === "annual" ? fin.annual : fin.quarterly;
   const ttm = freq === "quarterly";
   const ppy = ttm ? 4 : 1;
+  const showGross = isGrossMarginMeaningful(mode);
+  const financial = mode === "bank" || mode === "insurer";
 
   const revenue = flowGetter(set, "revenue", ttm);
   const grossProfit = flowGetter(set, "grossProfit", ttm);
@@ -139,8 +149,31 @@ export function buildRatios(
     return eq + debt;
   };
 
-  const defs: { key: string; label: string; format: RatioFormat; calc: Getter; note?: string }[] = [
-    { key: "grossMargin", label: "Gross Margin", format: "pct", calc: (i) => div(grossProfit(i), revenue(i)) },
+  const financialNote =
+    mode === "bank"
+      ? "Primary capital/return proxy for banks; industrial gross margin is omitted."
+      : mode === "insurer"
+        ? "Primary capital/return proxy for insurers; industrial gross margin is omitted."
+        : undefined;
+
+  const defs: {
+    key: string;
+    label: string;
+    format: RatioFormat;
+    calc: Getter;
+    note?: string;
+    deemphasized?: boolean;
+  }[] = [
+    ...(showGross
+      ? [
+          {
+            key: "grossMargin",
+            label: "Gross Margin",
+            format: "pct" as const,
+            calc: (i: number) => div(grossProfit(i), revenue(i)),
+          },
+        ]
+      : []),
     { key: "opMargin", label: "Operating Margin", format: "pct", calc: (i) => div(opIncome(i), revenue(i)) },
     { key: "netMargin", label: "Net Margin", format: "pct", calc: (i) => div(netIncome(i), revenue(i)) },
     { key: "fcfMargin", label: "FCF Margin", format: "pct", calc: (i) => div(fcf(i), revenue(i)) },
@@ -149,20 +182,26 @@ export function buildRatios(
       label: "Return on Equity",
       format: "pct",
       calc: (i) => divPositive(netIncome(i), avgEquity(i)),
-      note: "Net income / average shareholders' equity. Not meaningful when equity is negative.",
+      note:
+        financialNote ??
+        "Net income / average shareholders' equity. Not meaningful when equity is negative.",
     },
     {
       key: "roa",
       label: "Return on Assets",
       format: "pct",
       calc: (i) => divPositive(netIncome(i), avgAssets(i)),
+      note: financialNote,
     },
     {
       key: "roic",
       label: "Return on Invested Capital",
       format: "pct",
       calc: (i) => divPositive(nopat(i), investedCapital(i)),
-      note: "After-tax operating profit / (equity + total debt). Not meaningful when invested capital is negative.",
+      note: financial
+        ? "Industrial ROIC; less meaningful for deposit- or float-funded balance sheets."
+        : "After-tax operating profit / (equity + total debt). Not meaningful when invested capital is negative.",
+      deemphasized: financial,
     },
     {
       key: "rdPct",
@@ -175,17 +214,30 @@ export function buildRatios(
       label: "Current Ratio",
       format: "x",
       calc: (i) => div(currentAssets(i), currentLiabilities(i)),
+      note: financial
+        ? "Often unavailable or less meaningful when the balance sheet is not classified current/noncurrent."
+        : undefined,
+      deemphasized: financial,
     },
     {
       key: "debtToEquity",
       label: "Debt / Equity",
       format: "x",
       calc: (i) => divPositive(totalDebt(i), equity(i)),
+      note: financial
+        ? "Simple leverage proxy from reported debt tags — not a regulatory capital ratio."
+        : undefined,
     },
   ];
 
   // In quarterly (TTM) mode the oldest 3 quarters can't form a TTM window.
   const periods = ttm ? set.periods.slice(0, Math.max(0, set.periods.length - 3)) : set.periods;
+
+  const order = preferredRatioKeys(mode);
+  const orderIndex = (key: string) => {
+    const i = order.indexOf(key);
+    return i === -1 ? order.length + 1 : i;
+  };
 
   const lines: RatioLine[] = defs
     .map((d) => {
@@ -199,9 +251,11 @@ export function buildRatios(
       if (!any) return null;
       const line: RatioLine = { key: d.key, label: d.label, format: d.format, values };
       if (d.note) line.note = d.note;
+      if (d.deemphasized) line.deemphasized = true;
       return line;
     })
-    .filter((l): l is RatioLine => l !== null);
+    .filter((l): l is RatioLine => l !== null)
+    .sort((a, b) => orderIndex(a.key) - orderIndex(b.key));
 
   return { periods, lines };
 }

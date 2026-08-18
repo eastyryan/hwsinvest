@@ -15,13 +15,24 @@ import { reconcilesExactly } from "@/lib/research/reconcile";
 import { createGate } from "@/lib/research/concurrency";
 import {
   buildProjection,
+  buildRevenueGrowthPath,
   fillAssumptionsSheet,
   fillSchedulesSheet,
   fillProjectionsSheet,
+  historicalRevenueGrowth,
+  PROJECTION_YEARS,
+  type Assumptions,
 } from "@/lib/research/excel-projection";
-import { buildDcf, fillDcfSheet } from "@/lib/research/excel-dcf";
+import { buildDcf, fillDcfSheet, type DcfInputs } from "@/lib/research/excel-dcf";
+import { getStreetEstimates } from "@/lib/research/street-estimates";
 import { fillSourcesSheet } from "@/lib/research/excel-sources";
 import { buildScorecard, fillScorecardSheet } from "@/lib/research/excel-scorecard";
+import { detectSectorMode, type SectorMode } from "@/lib/research/sector-mode";
+import { getPriceSeries } from "@/lib/research/prices";
+import {
+  fillValuationSuite,
+  valuationSheetBlurb,
+} from "@/lib/research/excel-models/suite";
 import {
   colLetter,
   lineScale,
@@ -53,7 +64,7 @@ export const maxDuration = 60;
  * Workbook builds are the heaviest thing this app does: ~17 MB of heap and
  * ~21 MB of RSS each, held for the duration of the build, and Fluid Compute
  * runs concurrent invocations on one shared heap. Unbounded, that reaches an
- * OOM kill at roughly 37 simultaneous builds on a 1 GB function, and an OOM
+ * OOM kill at roughly 37 simultaneous builds on a 1 GB function — and an OOM
  * takes down every request the instance is serving, not just the excess.
  *
  * Six keeps peak well inside the smallest plausible instance while still
@@ -102,7 +113,7 @@ function limitPeriods(set: StatementSet, n: number): StatementSet {
 // The workbook used to be a screenshot: every cell a literal number, so nothing
 // recalculated and nothing could be audited. Anything that is *derived* rather
 // than *reported* is now a real Excel formula pointing at the cells it comes
-// from: change a revenue figure and the margins, YoY rows, and ratio sheet all
+// from — change a revenue figure and the margins, YoY rows, and ratio sheet all
 // follow.
 //
 // Reported line items stay literal. They are what the company filed; inventing
@@ -135,7 +146,7 @@ function lookup(
  *
  * These are accounting identities, but a filing's reported subtotal only equals
  * the sum of the lines *we capture*. Real statements carry components this line
- * set doesn't model: other current assets, prepaid expenses, non-operating
+ * set doesn't model — other current assets, prepaid expenses, non-operating
  * income, deferred taxes, minority interest. Each cell is therefore reconciled
  * against the filed figure before becoming a formula (see the caller); where it
  * doesn't tie, the filed number stays and the Model Checks sheet reports the
@@ -198,8 +209,8 @@ const rowsPerLine = (quarterly: boolean) => (quarterly ? 3 : 2);
 
 /**
  * Row positions are deterministic, so they can be computed before a sheet is
- * written. That lets every worksheet be created up front in reading order,
- * calculations first, source data behind them, while still being populated in
+ * written. That lets every worksheet be created up front in reading order —
+ * calculations first, source data behind them — while still being populated in
  * dependency order.
  */
 function statementRowMap(statement: Statement, quarterly: boolean): Map<string, number> {
@@ -224,7 +235,7 @@ const sizePeriodColumns = (ws: ExcelJS.Worksheet, periods: PeriodCol[], firstWid
 
 /**
  * A statement with no captured lines, or a filer with no periods of that
- * frequency, still gets its sheet (the workbook's shape is fixed), so say why
+ * frequency, still gets its sheet — the workbook's shape is fixed — so say why
  * it is empty instead of leaving a bare header.
  */
 function noteIfEmpty(ws: ExcelJS.Worksheet, statement: Statement, periods: PeriodCol[]) {
@@ -252,7 +263,7 @@ function fillDataSheet(
   const periods = set.periods;
   writeHeader(
     ws,
-    `${statement.title}: source data`,
+    `${statement.title} — source data`,
     quarterly ? "Quarterly · as filed" : "Annual · as filed",
     `${currency} and share counts in millions, except per-share amounts. Every figure on this sheet is hard-coded from SEC filings.`,
     periods,
@@ -309,7 +320,7 @@ function fillDataSheet(
 /**
  * The calculation layer: every cell a formula, nothing typed in.
  *
- * Reported lines link straight to the data sheet, there is nothing to compute
+ * Reported lines link straight to the data sheet — there is nothing to compute
  * for a figure the company stated. Subtotals compute from the lines above them
  * where they reconcile exactly; where they don't, they link to the data sheet
  * instead so the workbook still shows what was filed. Change rows are real
@@ -408,7 +419,7 @@ function fillFormulaSheet(
     /**
      * Change rows reference this sheet's own value row, so the arithmetic is
      * visible. The comparison column is a fixed offset back and is only used
-     * when that column really is one period earlier, the app matches the
+     * when that column really is one period earlier — the app matches the
      * nearest period within a tolerance, which can pick a different base where
      * a filer's history has gaps. In that case the cell links to the data
      * sheet's stored percentage rather than baking in a misleading reference.
@@ -483,9 +494,10 @@ function fillFormulaSheet(
 function fillRatiosSheet(
   ws: ExcelJS.Worksheet,
   fin: CompanyFinancials,
-  registry: Registry
+  registry: Registry,
+  mode: SectorMode = "standard"
 ) {
-  const ratios = buildRatios(fin, "annual");
+  const ratios = buildRatios(fin, "annual", mode);
 
   ws.mergeCells(1, 1, 1, Math.max(2, ratios.periods.length + 1));
   ws.getCell(1, 1).value = "Ratios & Returns";
@@ -528,8 +540,8 @@ function fillRatiosSheet(
   /**
    * Only the debt classes this period actually reports.
    *
-   * A missing side is a genuine zero: filers omit the line when they carry
-   * none of that class: and a reference to the resulting blank cell would
+   * A missing side is a genuine zero — filers omit the line when they carry
+   * none of that class — and a reference to the resulting blank cell would
    * evaluate to zero too, so the arithmetic was never wrong. It sent anyone
    * tracing the precedents to an empty cell, though, which is the sort of thing
    * that makes a reader doubt the rest of the sheet.
@@ -549,7 +561,7 @@ function fillRatiosSheet(
    * the *current* period has no value the average is null (and the caller
    * treats the term as zero), even if the prior period does have one. Excel's
    * AVERAGE ignores blanks, so `AVERAGE(blank, prior)` would instead return the
-   * prior value: a divergence that showed up as a wrong ROIC for filers with a
+   * prior value — a divergence that showed up as a wrong ROIC for filers with a
    * gap in their debt lines.
    */
   const avg = (key: string, i: number): string | null => {
@@ -649,12 +661,12 @@ function bin(num: string | null, den: string | null): string | null {
 }
 
 /**
- * Model Checks: the articulation tests that make this a linked model rather
+ * Model Checks — the articulation tests that make this a linked model rather
  * than three separate tables.
  *
  * Each row is a residual: the accounting identity rearranged to equal zero. A
  * residual of zero means the statements tie. A non-zero residual is not
- * necessarily an error: it is the part of the identity that the line items we
+ * necessarily an error — it is the part of the identity that the line items we
  * capture don't explain, and naming that gap is more useful than hiding it.
  *
  * Two distinct causes produce a residual, and they are worth telling apart:
@@ -670,7 +682,7 @@ function bin(num: string | null, den: string | null): string | null {
  *   covers amortization of intangibles that never touched PP&E.
  *
  * Note these are historical identities. The same formulas are also the
- * mechanics of a forecast model, but there they are *drivers*, you assume a
+ * mechanics of a forecast model, but there they are *drivers* — you assume a
  * capex figure and the roll-forward produces the next PP&E balance. Here the
  * balances are all reported, so the roll-forward is a test, not a projection.
  */
@@ -683,7 +695,7 @@ function fillChecksSheet(
   const periods = set.periods;
 
   ws.mergeCells(1, 1, 1, Math.max(2, periods.length + 1));
-  ws.getCell(1, 1).value = "Model Checks: statement articulation";
+  ws.getCell(1, 1).value = "Model Checks — statement articulation";
   ws.getCell(1, 1).font = { bold: true, size: 14, color: { argb: NAVY } };
   ws.getCell(2, 1).value =
     `Annual. Each row restates an accounting identity as a residual, in ${fin.currency} millions. Zero means the statements tie.`;
@@ -891,7 +903,9 @@ function writeCover(
   cover: ExcelJS.Worksheet,
   fin: CompanyFinancials,
   ticker: string,
-  hasProjection: boolean
+  hasProjection: boolean,
+  webPreset: string | null = null,
+  hasWebOverrides = false
 ) {
   cover.getCell("B2").value = fin.name;
   cover.getCell("B2").font = { bold: true, size: 20, color: { argb: NAVY } };
@@ -900,6 +914,16 @@ function writeCover(
   cover.getCell("B5").value = "Source: SEC EDGAR company filings (10-K, 10-Q)";
   cover.getCell("B6").value = `Generated: ${new Date().toISOString().slice(0, 10)}`;
   cover.getCell("B7").value = `Reporting currency: ${fin.currency}`;
+  if (hasWebOverrides || webPreset) {
+    const label =
+      webPreset === "street"
+        ? "Web valuation preset: street consensus (EPS growth seed)"
+        : webPreset === "history"
+          ? "Web valuation preset: company history"
+          : "Web valuation: custom assumption overrides from the site";
+    cover.getCell("B8").value = label;
+    cover.getCell("B8").font = { size: 10, italic: true, color: { argb: INPUT_BLUE } };
+  }
 
   cover.getCell("B9").value = "How to read this workbook";
   cover.getCell("B9").font = { bold: true, size: 12 };
@@ -938,16 +962,18 @@ function writeCover(
   // is an internal hyperlink that jumps to the sheet's top-left cell.
   const blurb = (name: string): string => {
     if (/Data \((A|Q)\)$/.test(name)) return "Source data, exactly as filed";
-    if (/\(A\)$/.test(name)) return "Calculated (annual)";
-    if (/\(Q\)$/.test(name)) return "Calculated (quarterly)";
+    if (/\(A\)$/.test(name)) return "Calculated — annual";
+    if (/\(Q\)$/.test(name)) return "Calculated — quarterly";
     if (name === "Ratios") return "Every ratio, a formula into the annual sheets";
     if (name === "Model Checks") return "Accounting identities as residuals";
     if (name === "Sources") return "Each line traced to its SEC concept";
     if (name === "Scorecard") return "Rules-based quality score across five dimensions";
-    if (name === "Assumptions") return "Forward model: the drivers you edit";
-    if (name === "Schedules") return "Forward model: supporting schedules";
-    if (name === "Projections") return "Forward model: three projected statements";
-    if (name === "DCF Valuation") return "DCF off the model: a calculator, not advice";
+    if (name === "Assumptions") return "Forward model — the drivers you edit";
+    if (name === "Schedules") return "Forward model — supporting schedules";
+    if (name === "Projections") return "Forward model — three projected statements";
+    if (name === "DCF Valuation") return "DCF off the model — a calculator, not advice";
+    const valuation = valuationSheetBlurb(name);
+    if (valuation) return valuation;
     return "";
   };
   for (const ws of cover.workbook.worksheets) {
@@ -977,12 +1003,78 @@ function writeCover(
   cover.getColumn(3).width = 56;
 }
 
+/** Parse optional web-DCF assumption overrides from the query string. */
+function parseWebAssumptions(url: URL): {
+  projection?: Partial<Assumptions>;
+  dcf?: Partial<DcfInputs>;
+  preset: string | null;
+} {
+  const num = (k: string): number | null => {
+    const raw = url.searchParams.get(k);
+    if (raw == null || raw === "") return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  };
+  // Percent fields arrive as decimals (0.12) from the valuation panel.
+  const y1g = num("g");
+  const gm = num("gm");
+  const opex = num("opex");
+  const beta = num("beta");
+  const rf = num("rf");
+  const erp = num("erp");
+  const tg = num("tg");
+  const preset = url.searchParams.get("preset");
+  // Optional multi-year growth path: g0,g1,g2… as comma-separated decimals.
+  const gPathRaw = url.searchParams.get("gpath");
+  const gPath =
+    gPathRaw && gPathRaw.trim()
+      ? gPathRaw
+          .split(",")
+          .map((s) => Number(s.trim()))
+          .filter((n) => Number.isFinite(n))
+      : null;
+
+  const years = PROJECTION_YEARS;
+  const fill = (v: number) => Array.from({ length: years }, () => v);
+
+  const projection: Partial<Assumptions> = {};
+  if (gPath && gPath.length > 0) {
+    const path: number[] = [];
+    for (let i = 0; i < years; i++) {
+      path.push(i < gPath.length ? gPath[i]! : path[path.length - 1]!);
+    }
+    projection.revenueGrowth = path;
+  } else if (y1g != null) {
+    // Mild reversion — do not slam every filer to a hard 3% by year 5.
+    const end = y1g > 0.03 ? 0.03 + (y1g - 0.03) * 0.4 : y1g;
+    projection.revenueGrowth = Array.from({ length: years }, (_, i) =>
+      years <= 1 ? y1g : y1g + (end - y1g) * (i / (years - 1))
+    );
+  }
+  if (gm != null) projection.grossMargin = fill(gm);
+  if (opex != null) projection.opexPctRevenue = fill(opex);
+
+  const dcf: Partial<DcfInputs> = {};
+  if (beta != null) dcf.beta = beta;
+  if (rf != null) dcf.riskFree = rf;
+  if (erp != null) dcf.equityRiskPremium = erp;
+  if (tg != null) dcf.terminalGrowth = tg;
+
+  return {
+    projection: Object.keys(projection).length ? projection : undefined,
+    dcf: Object.keys(dcf).length ? dcf : undefined,
+    preset,
+  };
+}
+
 export async function GET(
   req: Request,
-  { params }: { params: { cik: string } }
+  { params }: { params: {  cik: string  } }
 ) {
-  const { cik } = params;
-  const ticker = (new URL(req.url).searchParams.get("ticker") ?? "").toUpperCase();
+  const { cik  } = params;
+  const reqUrl = new URL(req.url);
+  const ticker = (reqUrl.searchParams.get("ticker") ?? "").toUpperCase();
+  const webAssumptions = parseWebAssumptions(reqUrl);
 
   if (!isValidCik(cik)) {
     return Response.json({ error: "Invalid company id." }, { status: 400 });
@@ -1003,7 +1095,7 @@ export async function GET(
     const full = await getCompanyFinancials(cik, ticker);
     // Trimmed before anything is written, so the cap bounds the whole build
     // rather than just the output.
-    const wantsAll = new URL(req.url).searchParams.get("all") === "1";
+    const wantsAll = reqUrl.searchParams.get("all") === "1";
     const fin: CompanyFinancials = wantsAll
       ? full
       : {
@@ -1035,8 +1127,8 @@ export async function GET(
       data: ExcelJS.Worksheet;
     }
 
-    // Worksheets are created up front in the order a reader wants them,
-    // calculations first, source data behind, but populated in dependency
+    // Worksheets are created up front in the order a reader wants them —
+    // calculations first, source data behind — but populated in dependency
     // order, since a calculation sheet's formulas reference rows on its data
     // sheet. Row positions are computed rather than observed, so the two orders
     // don't have to agree.
@@ -1070,15 +1162,39 @@ export async function GET(
     // each statement line comes from.
     const sourcesWs = wb.addWorksheet(sheetName("Sources"), frozen);
     // The scorecard is computed from the statements, so it too exists for every
-    // filer: a bank still has leverage and coverage even without a projection.
+    // filer — a bank still has leverage and coverage even without a projection.
     const scorecardWs = wb.addWorksheet(sheetName("Scorecard"), frozen);
 
     // The forward model. Skipped entirely for filers without a revenue base and
-    // a balancing balance sheet: banks and trusts commonly land there, and a
+    // a balancing balance sheet — banks and trusts commonly land there, and a
     // projection built on missing anchors would be fiction. The three sheet
     // names are fixed because lib/excel-projection.ts writes formulas against
     // them; nothing else can claim them because the namer saw them first.
-    const projection = buildProjection(fin);
+    // Optional overrides from the web Valuation tab so Excel matches what the
+    // user was looking at (growth, margins, WACC inputs, preset label).
+    // When the UI did not send a growth path, seed from free street consensus
+    // (EPS growth hops as the best free proxy for rev growth) so every filer
+    // is not forced onto a 3% tail.
+    let projectionOverrides = webAssumptions.projection
+      ? { ...webAssumptions.projection }
+      : ({} as Partial<Assumptions>);
+    if (!projectionOverrides.revenueGrowth && ticker) {
+      const street = await getStreetEstimates(ticker).catch(() => null);
+      if (street) {
+        const { path } = buildRevenueGrowthPath({
+          years: PROJECTION_YEARS,
+          historical: historicalRevenueGrowth(fin.annual),
+          streetPath: street.epsGrowthPath,
+          streetYear1: street.year1EpsGrowth,
+        });
+        projectionOverrides = { ...projectionOverrides, revenueGrowth: path };
+      }
+    }
+    const projection = buildProjection(
+      fin,
+      PROJECTION_YEARS,
+      Object.keys(projectionOverrides).length ? projectionOverrides : undefined
+    );
     const projectionNames = ["Assumptions", "Schedules", "Projections"].map(sheetName);
     const assumptionsWs = projection ? wb.addWorksheet(projectionNames[0], frozen) : null;
     const schedulesWs = projection ? wb.addWorksheet(projectionNames[1], frozen) : null;
@@ -1090,19 +1206,28 @@ export async function GET(
     // decorative, so a miss just falls back to the neutral default.
     // The current price drives the reverse DCF; both it and the profile are
     // cached, decorative fetches, so a miss just drops the feature it feeds.
-    const [profile, quote] = projection
-      ? await Promise.all([
-          getSecProfile(cik).catch(() => null),
-          ticker ? getLatestQuote(ticker).catch(() => null) : Promise.resolve(null),
-        ])
-      : [null, null];
-    const dcf = buildDcf(fin, projection, sectorBeta(profile?.sic), quote?.price ?? null);
+    // SIC for DCF beta and bank/insurer scorecard/ratio modes — always useful,
+    // not only when a projection is built.
+    const [profile, quote, priceSeries] = await Promise.all([
+      getSecProfile(cik).catch(() => null),
+      ticker ? getLatestQuote(ticker).catch(() => null) : Promise.resolve(null),
+      ticker ? getPriceSeries(ticker, "1y").catch(() => null) : Promise.resolve(null),
+    ]);
+    const sectorMode = detectSectorMode({
+      sic: profile?.sic,
+      sicDescription: profile?.sicDescription,
+    });
+    const dcf = buildDcf(
+      fin,
+      projection,
+      sectorBeta(profile?.sic),
+      quote?.price ?? null,
+      webAssumptions.dcf
+    );
     const dcfWs = dcf ? wb.addWorksheet(sheetName("DCF Valuation"), frozen) : null;
     for (const plan of plans) {
       plan.data = wb.addWorksheet(plan.dataName, frozen);
     }
-
-    writeCover(cover, fin, ticker, projection != null);
 
     // Annual and quarterly keep separate registries so a ratio can never
     // accidentally mix a quarterly balance with an annual flow.
@@ -1125,10 +1250,10 @@ export async function GET(
       );
     }
 
-    fillRatiosSheet(ratiosWs, fin, annualRegistry);
+    fillRatiosSheet(ratiosWs, fin, annualRegistry, sectorMode);
     fillChecksSheet(checksWs, fin, annualRegistry);
     fillSourcesSheet(sourcesWs, fin, new Date().toISOString().slice(0, 10));
-    fillScorecardSheet(scorecardWs, fin, buildScorecard(fin));
+    fillScorecardSheet(scorecardWs, fin, buildScorecard(fin, sectorMode));
     if (projection && assumptionsWs && schedulesWs && projectionsWs) {
       fillAssumptionsSheet(assumptionsWs, fin, projection);
       fillSchedulesSheet(schedulesWs, fin, projection);
@@ -1137,6 +1262,22 @@ export async function GET(
     if (dcf && dcfWs) {
       fillDcfSheet(dcfWs, fin, dcf);
     }
+
+    fillValuationSuite(wb, {
+      fin,
+      price: quote?.price ?? null,
+      dcf,
+      pricePoints: priceSeries?.points,
+    });
+
+    writeCover(
+      cover,
+      fin,
+      ticker,
+      projection != null,
+      webAssumptions.preset,
+      !!(webAssumptions.projection || webAssumptions.dcf)
+    );
 
     // Print-ready: fit each sheet to one page wide, repeat the four-row header
     // band on every printed page, and footer each page with the file name, the
@@ -1173,7 +1314,11 @@ export async function GET(
     }
     if (e instanceof NoFactsError) {
       return Response.json(
-        { error: "This company doesn't file US-GAAP financial data with the SEC." },
+        {
+          error:
+            "No structured XBRL financials (US-GAAP or IFRS companyfacts) for this company.",
+          code: "NO_FACTS",
+        },
         { status: 404 }
       );
     }
