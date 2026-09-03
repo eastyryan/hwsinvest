@@ -8,7 +8,7 @@ const missionBullets: [string, string][] = [
 ];
 
 const joinBullets: [string, string][] = [
-  ["Drop in", "come to any weekly meeting, and bring a friend."],
+  ["Drop in", "Tuesdays at 7:30 PM in Stern 301 — bring a friend."],
   ["Get on the list", "recaps, events, and recruiting deadlines."],
   ["Pick a team", "join a sector group and start covering names."],
 ];

@@ -104,7 +104,7 @@ export default function Home() {
           </div>
           <div>
             <div style={statValue}>Tuesdays</div>
-            <div style={statSub}>7:00 – 8:00 PM</div>
+            <div style={statSub}>7:30 PM · Stern 301</div>
             <p style={statPara}>
               Open to every HWS student. Come to a single meeting, bring a friend,
               and see if it&rsquo;s for you. No experience needed.
