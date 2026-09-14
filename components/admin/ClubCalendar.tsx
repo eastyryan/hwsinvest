@@ -3,10 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Download, Plus, Trash2 } from "lucide-react";
 import {
-  FIXED_EVENTS,
   KIND_LABEL,
   WEEKLY,
-  baseSchedule,
   dayLabel,
   parseDay,
   sortEvents,
@@ -15,6 +13,7 @@ import {
   type ClubEvent,
   type EventKind,
 } from "@/data/calendar";
+import { FIXED_EVENTS, baseSchedule } from "@/data/calendar-board";
 import { buildIcs } from "@/lib/ics";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

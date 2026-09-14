@@ -51,7 +51,8 @@ Both are read **only on the server** (no `NEXT_PUBLIC_` prefix), so they never r
 | Sectors / holdings | `data/sectors.ts` |
 | Colors / branding | `tailwind.config.ts` (`hws.purple`, `hws.orange`, `hws.yellow`) |
 | Economic series | `SERIES` in `app/economy/page.tsx` |
-| Weekly meeting time, term dates, required trainings | `data/calendar.ts` |
+| Weekly meeting time and term dates | `data/calendar.ts` |
+| Required trainings and other board-only dates | `data/calendar-board.ts` |
 | Newsletter issues | `data/newsletters.ts` + the HTML in `public/newsletters/` |
 
 ## The admin console
@@ -61,8 +62,12 @@ Both are read **only on the server** (no `NEXT_PUBLIC_` prefix), so they never r
 - **Calendar**: the standing Tuesday 7:30 PM meeting, the college's required
   Club Training and Title IX Training sessions, and anything else the board
   adds. Exports to `.ics` for Google/Apple/Outlook. The schedule that ships in
-  code lives in `data/calendar.ts`: edit `TERMS` each semester, `WEEKLY` if the
-  meeting moves, and `FIXED_EVENTS` for dates the college hands down.
+  code is split in two: `data/calendar.ts` holds the standing meeting (edit
+  `TERMS` each semester, `WEEKLY` if the meeting moves), and
+  `data/calendar-board.ts` holds `FIXED_EVENTS`, the dates the college hands
+  down. The split is deliberate: members only ever see the standing meeting, so
+  only `/admin` imports the board module and the training dates never reach a
+  member's JavaScript bundle. Keep board-only dates in the board file.
 - **Email list**: names and school emails, with copy buttons for pasting into a
   mail client (use Bcc for anything club-wide) and a bulk paste importer.
 - **Newsletter**: every published issue.

@@ -7,7 +7,7 @@ import { TRACKS } from "@/data/learn";
 import { TRACK_ICON } from "./icons";
 import { loadProgress, trackCompletion, type Progress } from "@/lib/progress";
 import { latestIssue } from "@/data/newsletters";
-import { baseSchedule, dayLabel, timeLabel, toDay } from "@/data/calendar";
+import { dayLabel, timeLabel, toDay, weeklyMeetings } from "@/data/calendar";
 
 export default function Dashboard({ admin }: { admin: boolean }) {
   const [p, setP] = useState<Progress | null>(null);
@@ -16,11 +16,13 @@ export default function Dashboard({ admin }: { admin: boolean }) {
 
   useEffect(() => {
     setP(loadProgress());
+    // Members see the standing meeting only. Board business (the required
+    // college trainings, anything added in the console) stays in /admin.
     const today = toDay(new Date());
-    const upcoming = baseSchedule().find((e) => e.date >= today);
+    const upcoming = weeklyMeetings().find((e) => e.date >= today);
     setNext(
       upcoming
-        ? `${upcoming.title} · ${dayLabel(upcoming.date)}, ${timeLabel(upcoming.start)}${upcoming.location ? ` · ${upcoming.location}` : ""}`
+        ? `${dayLabel(upcoming.date)}, ${timeLabel(upcoming.start)}${upcoming.location ? ` · ${upcoming.location}` : ""}`
         : null
     );
   }, []);
@@ -44,7 +46,7 @@ export default function Dashboard({ admin }: { admin: boolean }) {
         </div>
       </div>
 
-      {/* Next on the calendar */}
+      {/* The next standing meeting */}
       {next && (
         <p
           className="mono"
@@ -59,7 +61,7 @@ export default function Dashboard({ admin }: { admin: boolean }) {
             borderRadius: 10,
           }}
         >
-          <span style={{ color: "var(--orangeText)", fontWeight: 700 }}>Next up</span> · {next}
+          <span style={{ color: "var(--orangeText)", fontWeight: 700 }}>Next meeting</span> · {next}
         </p>
       )}
 
@@ -88,23 +90,23 @@ export default function Dashboard({ admin }: { admin: boolean }) {
           </Link>
         )}
 
-        <Link href="/members/files" data-reveal className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
-          <span style={iconBadge}><Folder size={20} strokeWidth={1.9} /></span>
-          <div style={{ flex: 1 }}>
-            <div className="h-sub" style={{ fontSize: 18 }}>Club Files</div>
-            <p style={{ fontSize: 14, color: "var(--muted)", margin: "4px 0 0", lineHeight: 1.5 }}>
-              Browse, preview, and download every document: models, decks, guides, and recaps.
-            </p>
-          </div>
-          <ArrowRight size={20} color="var(--brand)" />
-        </Link>
-
         <Link href="/members/research" data-reveal className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
           <span style={iconBadge}><LineChart size={20} strokeWidth={1.9} /></span>
           <div style={{ flex: 1 }}>
             <div className="h-sub" style={{ fontSize: 18 }}>Company Research</div>
             <p style={{ fontSize: 14, color: "var(--muted)", margin: "4px 0 0", lineHeight: 1.5 }}>
               Pull any US-listed company&apos;s full financials from SEC filings: statements, ratios, ownership, valuation models, screener, and Excel export.
+            </p>
+          </div>
+          <ArrowRight size={20} color="var(--brand)" />
+        </Link>
+
+        <Link href="/members/files" data-reveal className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
+          <span style={iconBadge}><Folder size={20} strokeWidth={1.9} /></span>
+          <div style={{ flex: 1 }}>
+            <div className="h-sub" style={{ fontSize: 18 }}>Club Files</div>
+            <p style={{ fontSize: 14, color: "var(--muted)", margin: "4px 0 0", lineHeight: 1.5 }}>
+              Browse, preview, and download every document: models, decks, guides, and recaps.
             </p>
           </div>
           <ArrowRight size={20} color="var(--brand)" />

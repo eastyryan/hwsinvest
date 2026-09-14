@@ -5,6 +5,11 @@
 // objects, because `new Date("2026-09-15")` parses as UTC and would slide the
 // weekly meeting onto the wrong day for anyone west of Geneva. Use the
 // parseDay() helper below whenever a real Date is needed.
+//
+// This module is what the MEMBERS dashboard reads, so it holds the standing
+// meeting and nothing else. Board-only dates (the college's required
+// trainings) live in data/calendar-board.ts, which only /admin imports, so
+// they never reach a member's JavaScript bundle.
 
 export const CLUB_TZ = "America/New_York";
 
@@ -57,58 +62,6 @@ export const WEEKLY_SKIP: string[] = [
   // "2026-11-24", // Thanksgiving break
 ];
 
-// ── Fixed dates ─────────────────────────────────────────────
-// Required college trainings. At least one exec board member must attend one
-// session from each group; any club member is welcome to go. Missing these
-// costs the club its active status.
-
-export const FIXED_EVENTS: ClubEvent[] = [
-  {
-    id: "club-training-a",
-    title: "Club Training (option A)",
-    date: "2026-09-15",
-    start: "17:30",
-    end: "18:30",
-    location: "Geneva Room, Library",
-    kind: "required",
-    group: "Club Training",
-    note: "Choose this session or the September 16th one. One exec board member must attend.",
-  },
-  {
-    id: "club-training-b",
-    title: "Club Training (option B)",
-    date: "2026-09-16",
-    start: "15:00",
-    end: "16:00",
-    location: "AIC Stine Room",
-    kind: "required",
-    group: "Club Training",
-    note: "Choose this session or the September 15th one. One exec board member must attend.",
-  },
-  {
-    id: "title-ix-a",
-    title: "Title IX Training (option A)",
-    date: "2026-09-29",
-    start: "16:00",
-    end: "17:00",
-    location: "AIC Stine Room",
-    kind: "required",
-    group: "Title IX Training",
-    note: "Choose this session or the October 5th one. One exec board member must attend.",
-  },
-  {
-    id: "title-ix-b",
-    title: "Title IX Training (option B)",
-    date: "2026-10-05",
-    start: "18:00",
-    end: "19:00",
-    location: "Geneva Room, Library",
-    kind: "required",
-    group: "Title IX Training",
-    note: "Choose this session or the September 29th one. One exec board member must attend.",
-  },
-];
-
 // ── Helpers ─────────────────────────────────────────────────
 
 /** Parse "YYYY-MM-DD" into a Date at local midnight (never UTC). */
@@ -153,11 +106,6 @@ export function weeklyMeetings(): ClubEvent[] {
     }
   }
   return out;
-}
-
-/** The full built-in schedule: weekly meetings plus the fixed dates. */
-export function baseSchedule(): ClubEvent[] {
-  return sortEvents([...weeklyMeetings(), ...FIXED_EVENTS]);
 }
 
 export function sortEvents(events: ClubEvent[]): ClubEvent[] {
