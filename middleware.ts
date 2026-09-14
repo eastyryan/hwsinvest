@@ -67,5 +67,15 @@ export const config = {
   // Protect the members area, the admin uploader, and the research API the
   // members-only company pages read from (those routes live outside /members,
   // so they need to be listed explicitly or they'd be publicly callable).
-  matcher: ["/members/:path*", "/admin/:path*", "/api/research/:path*"],
+  //
+  // /newsletters/* is the raw HTML of each issue, served straight out of
+  // /public. Middleware runs ahead of the static handler, so listing it here
+  // is what keeps an issue URL from being readable while signed out.
+  matcher: [
+    "/members/:path*",
+    "/admin/:path*",
+    "/api/research/:path*",
+    "/api/club/:path*",
+    "/newsletters/:path*",
+  ],
 };

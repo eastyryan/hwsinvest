@@ -2,14 +2,30 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Folder, ArrowRight, LineChart } from "lucide-react";
+import { Folder, ArrowRight, LineChart, Newspaper } from "lucide-react";
 import { TRACKS } from "@/data/learn";
 import { TRACK_ICON } from "./icons";
 import { loadProgress, trackCompletion, type Progress } from "@/lib/progress";
+import { latestIssue } from "@/data/newsletters";
+import { baseSchedule, dayLabel, timeLabel, toDay } from "@/data/calendar";
 
 export default function Dashboard({ admin }: { admin: boolean }) {
   const [p, setP] = useState<Progress | null>(null);
-  useEffect(() => setP(loadProgress()), []);
+  // Resolved on the client so the server render doesn't bake in a UTC "today".
+  const [next, setNext] = useState<string | null>(null);
+
+  useEffect(() => {
+    setP(loadProgress());
+    const today = toDay(new Date());
+    const upcoming = baseSchedule().find((e) => e.date >= today);
+    setNext(
+      upcoming
+        ? `${upcoming.title} · ${dayLabel(upcoming.date)}, ${timeLabel(upcoming.start)}${upcoming.location ? ` · ${upcoming.location}` : ""}`
+        : null
+    );
+  }, []);
+
+  const issue = latestIssue();
 
   return (
     <main className="container-x" style={{ padding: "clamp(32px,5vh,56px) 0 80px", maxWidth: 960, margin: "0 auto" }}>
@@ -23,13 +39,55 @@ export default function Dashboard({ admin }: { admin: boolean }) {
           </p>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
-          {admin && <Link href="/admin" className="ctl">Manage files</Link>}
+          {admin && <Link href="/admin" className="ctl">Club console</Link>}
           <LogoutButton />
         </div>
       </div>
 
+      {/* Next on the calendar */}
+      {next && (
+        <p
+          className="mono"
+          style={{
+            fontSize: 12.5,
+            letterSpacing: "0.04em",
+            color: "var(--muted)",
+            margin: "clamp(24px,3vh,32px) 0 0",
+            padding: "10px 14px",
+            background: "var(--card2)",
+            border: "1px solid var(--line)",
+            borderRadius: 10,
+          }}
+        >
+          <span style={{ color: "var(--orangeText)", fontWeight: 700 }}>Next up</span> · {next}
+        </p>
+      )}
+
       {/* Tools */}
-      <div style={{ display: "grid", gap: 14, margin: "clamp(28px,4vh,40px) 0 36px" }}>
+      <div style={{ display: "grid", gap: 14, margin: "clamp(20px,3vh,28px) 0 36px" }}>
+        {issue && (
+          <Link
+            href={`/members/newsletter/${issue.slug}`}
+            data-reveal
+            className="card lift card-hover-brand"
+            style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}
+          >
+            <span style={iconBadge}><Newspaper size={20} strokeWidth={1.9} /></span>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                <div className="h-sub" style={{ fontSize: 18 }}>The Newsletter</div>
+                <span className="mono" style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--orangeText)", fontWeight: 700 }}>
+                  Issue {String(issue.no).padStart(2, "0")} · {issue.publishedLabel}
+                </span>
+              </div>
+              <p style={{ fontSize: 14, color: "var(--muted)", margin: "4px 0 0", lineHeight: 1.5 }}>
+                {issue.title}. The week&apos;s tape, the curve, three stories worth your time, and a glossary you can click into.
+              </p>
+            </div>
+            <ArrowRight size={20} color="var(--brand)" />
+          </Link>
+        )}
+
         <Link href="/members/files" data-reveal className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
           <span style={iconBadge}><Folder size={20} strokeWidth={1.9} /></span>
           <div style={{ flex: 1 }}>

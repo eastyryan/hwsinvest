@@ -1,0 +1,114 @@
+// The admin console's own data: the email roster and any calendar events an
+// officer adds on top of the built-in schedule.
+//
+// There's no database in this project, so the store rides on the Dropbox app
+// folder that already backs the members file area. One JSON document,
+// overwritten on every save. When Dropbox isn't configured the API says so and
+// the console falls back to the browser's own storage, which keeps the page
+// usable for a local dev run without any credentials.
+
+import { isDropboxConfigured, readJson, writeJson } from "@/lib/dropbox";
+import type { ClubEvent, EventKind } from "@/data/calendar";
+
+const FILE = "club.json";
+
+export type RosterEntry = {
+  id: string;
+  name: string;
+  email: string;
+  /** Class year, e.g. "'28". Free text, shown as a column. */
+  year?: string;
+  /** Board position or committee. Free text. */
+  role?: string;
+};
+
+export type ClubData = {
+  roster: RosterEntry[];
+  /** Events added from the console. The built-in schedule lives in code. */
+  events: ClubEvent[];
+  /** ISO timestamp of the last successful save. */
+  updated: string;
+};
+
+export const EMPTY: ClubData = { roster: [], events: [], updated: "" };
+
+export type Storage = "dropbox" | "none";
+
+export function storageKind(): Storage {
+  return isDropboxConfigured() ? "dropbox" : "none";
+}
+
+// ── Sanitizing ──────────────────────────────────────────────
+// Everything below is written by an admin through a form, but it round-trips
+// through JSON on disk, so it gets shape-checked on the way back in rather
+// than trusted.
+
+const str = (v: unknown, max: number): string =>
+  typeof v === "string" ? v.trim().slice(0, max) : "";
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+const TIME = /^\d{2}:\d{2}$/;
+const KINDS: EventKind[] = ["weekly", "required", "club", "custom"];
+
+function cleanEntry(raw: unknown, i: number): RosterEntry | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const name = str(r.name, 120);
+  const email = str(r.email, 160).toLowerCase();
+  if (!name && !email) return null;
+  return {
+    id: str(r.id, 64) || `r${i}-${email || name}`,
+    name,
+    email,
+    year: str(r.year, 24) || undefined,
+    role: str(r.role, 80) || undefined,
+  };
+}
+
+function cleanEvent(raw: unknown, i: number): ClubEvent | null {
+  if (!raw || typeof raw !== "object") return null;
+  const e = raw as Record<string, unknown>;
+  const date = str(e.date, 10);
+  const title = str(e.title, 160);
+  if (!DAY.test(date) || !title) return null;
+
+  const start = str(e.start, 5);
+  const end = str(e.end, 5);
+  const kind = KINDS.includes(e.kind as EventKind) ? (e.kind as EventKind) : "custom";
+
+  return {
+    id: str(e.id, 64) || `c${i}-${date}`,
+    title,
+    date,
+    start: TIME.test(start) ? start : undefined,
+    end: TIME.test(end) ? end : undefined,
+    location: str(e.location, 160) || undefined,
+    kind,
+    note: str(e.note, 500) || undefined,
+  };
+}
+
+export function sanitize(raw: unknown): ClubData {
+  const d = (raw ?? {}) as Record<string, unknown>;
+  const roster = Array.isArray(d.roster)
+    ? d.roster.map(cleanEntry).filter((x): x is RosterEntry => x !== null).slice(0, 1000)
+    : [];
+  const events = Array.isArray(d.events)
+    ? d.events.map(cleanEvent).filter((x): x is ClubEvent => x !== null).slice(0, 500)
+    : [];
+  return { roster, events, updated: str(d.updated, 40) };
+}
+
+// ── Read / write ────────────────────────────────────────────
+
+export async function loadClubData(): Promise<ClubData> {
+  if (!isDropboxConfigured()) return EMPTY;
+  const raw = await readJson<unknown>(FILE);
+  return raw === null ? EMPTY : sanitize(raw);
+}
+
+export async function saveClubData(raw: unknown): Promise<ClubData> {
+  const clean = { ...sanitize(raw), updated: new Date().toISOString() };
+  await writeJson(FILE, clean);
+  return clean;
+}

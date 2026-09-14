@@ -10,8 +10,10 @@ A professional markets dashboard for the Hobart and William Smith Colleges Inves
 - `/economy`: Treasury yields, Fed funds, CPI, unemployment + 10Y yield chart
 - `/careers`: Finance career paths and how the club prepares you
 - `/about`: Mission and board showcase
-- `/members`: Password-gated dashboard (learn tracks, files, research)
+- `/members`: Password-gated dashboard (learn tracks, files, research, newsletter)
+- `/members/newsletter`: The club newsletter, every issue, newest first
 - `/members/research`: Company research tool (synced from the finance app): SEC statements, ratios, ownership, segments, valuation suite, screener, watchlist, Excel export
+- `/admin`: Admin-only club console: calendar, email list, newsletter, file uploads
 
 ## Local setup
 
@@ -49,6 +51,36 @@ Both are read **only on the server** (no `NEXT_PUBLIC_` prefix), so they never r
 | Sectors / holdings | `data/sectors.ts` |
 | Colors / branding | `tailwind.config.ts` (`hws.purple`, `hws.orange`, `hws.yellow`) |
 | Economic series | `SERIES` in `app/economy/page.tsx` |
+| Weekly meeting time, term dates, required trainings | `data/calendar.ts` |
+| Newsletter issues | `data/newsletters.ts` + the HTML in `public/newsletters/` |
+
+## The admin console
+
+`/admin` needs the `ADMIN_PASSWORD` login and holds four sections:
+
+- **Calendar**: the standing Tuesday 7:30 PM meeting, the college's required
+  Club Training and Title IX Training sessions, and anything else the board
+  adds. Exports to `.ics` for Google/Apple/Outlook. The schedule that ships in
+  code lives in `data/calendar.ts`: edit `TERMS` each semester, `WEEKLY` if the
+  meeting moves, and `FIXED_EVENTS` for dates the college hands down.
+- **Email list**: names and school emails, with copy buttons for pasting into a
+  mail client (use Bcc for anything club-wide) and a bulk paste importer.
+- **Newsletter**: every published issue.
+- **Files**: the Dropbox uploader that feeds `/members/files`.
+
+The email list and any events added from the console are stored as one JSON
+document in the same Dropbox app folder the file area uses, under
+`_club-data/club.json`. That folder is filtered out of the members file
+browser. Without Dropbox configured the console still works, but the data only
+lives in that one browser and the header says so.
+
+### Publishing a newsletter issue
+
+1. Drop the issue's HTML into `public/newsletters/` (date-first filename).
+2. Add a row at the top of `ISSUES` in `data/newsletters.ts`.
+
+`/newsletters/*` is listed in the middleware matcher, so issue URLs are behind
+the members login rather than public.
 
 ## Notes
 

@@ -20,6 +20,11 @@ export type DropboxEntry = {
 // Base folder, normalized to "" or "/Something" (no trailing slash).
 export const BASE_FOLDER = (process.env.DROPBOX_FOLDER ?? "").replace(/\/+$/, "");
 
+// Where the admin console keeps its JSON (roster, calendar). It lives inside
+// the same Dropbox app folder but is filtered out of listEntries, so it never
+// shows up in the members file browser.
+export const DATA_FOLDER = `${BASE_FOLDER}/_club-data`;
+
 export function isDropboxConfigured(): boolean {
   return Boolean(
     process.env.DROPBOX_APP_KEY &&
@@ -111,6 +116,8 @@ export async function listEntries(dir: string): Promise<DropboxEntry[]> {
   };
   const entries: DropboxEntry[] = json.entries
     .filter((e) => e[".tag"] === "file" || e[".tag"] === "folder")
+    // Keep the admin console's private JSON out of the members file browser.
+    .filter((e) => e.path_lower !== DATA_FOLDER.toLowerCase())
     .map((e) => ({
       type: e[".tag"] === "folder" ? "folder" : "file",
       name: e.name,
@@ -199,5 +206,52 @@ export async function uploadFile(
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Dropbox upload failed (${res.status}): ${text}`);
+  }
+}
+
+// ── JSON documents (roster, calendar) ───────────────────────
+// Small config blobs the admin console owns. Stored as plain JSON files under
+// DATA_FOLDER with overwrite semantics, so each save replaces the last one
+// instead of piling up autorenamed copies the way uploadFile() does.
+
+export async function readJson<T>(name: string): Promise<T | null> {
+  const token = await accessToken();
+  const res = await fetch("https://content.dropboxapi.com/2/files/download", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Dropbox-API-Arg": JSON.stringify({ path: `${DATA_FOLDER}/${name}` }),
+    },
+    cache: "no-store",
+  });
+  if (res.status === 409) return null; // not written yet
+  if (!res.ok) throw new Error(`Dropbox read failed (${res.status})`);
+  const text = await res.text();
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(`${name} is not valid JSON`);
+  }
+}
+
+export async function writeJson(name: string, data: unknown): Promise<void> {
+  const token = await accessToken();
+  const res = await fetch("https://content.dropboxapi.com/2/files/upload", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/octet-stream",
+      "Dropbox-API-Arg": JSON.stringify({
+        path: `${DATA_FOLDER}/${name}`,
+        mode: "overwrite",
+        autorename: false,
+        mute: true,
+      }),
+    },
+    body: JSON.stringify(data, null, 2),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`Dropbox write failed (${res.status}): ${await res.text()}`);
   }
 }
