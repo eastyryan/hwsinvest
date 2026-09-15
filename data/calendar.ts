@@ -45,7 +45,7 @@ export type ClubEvent = {
 export const WEEKLY = {
   weekday: 2, // 0 = Sunday, so 2 = Tuesday
   start: "19:30",
-  end: "20:30",
+  end: "21:00",
   location: "Stern 301",
   title: "Weekly club meeting",
 };
@@ -53,14 +53,95 @@ export const WEEKLY = {
 export type Term = { label: string; start: string; end: string };
 
 export const TERMS: Term[] = [
-  { label: "Fall 2026", start: "2026-09-01", end: "2026-12-08" },
+  // Fall 2026: intro on Sep 8, last meeting Dec 8 (from the term schedule).
+  { label: "Fall 2026", start: "2026-09-08", end: "2026-12-08" },
   // { label: "Spring 2027", start: "2027-01-19", end: "2027-04-27" },
 ];
 
 // Tuesdays we skip: breaks, reading days, finals. Add "YYYY-MM-DD" rows.
 export const WEEKLY_SKIP: string[] = [
-  // "2026-11-24", // Thanksgiving break
+  "2026-11-24", // Thanksgiving week — no meeting
 ];
+
+/**
+ * Per-date overrides for the standing Tuesday meeting. When a night has a
+ * published agenda (title, end time, note), put it here so the admin calendar
+ * and the members "next meeting" strip show the real session instead of the
+ * generic WEEKLY defaults. Missing dates still fall back to WEEKLY.
+ */
+export type SessionOverride = {
+  title: string;
+  end?: string;
+  note?: string;
+};
+
+export const SESSION_OVERRIDES: Record<string, SessionOverride> = {
+  "2026-09-08": {
+    title: "Intro Meeting",
+    end: "20:30",
+    note: "Term kickoff. September 8 introduction is complete.",
+  },
+  "2026-09-15": {
+    title: "Operating night",
+    end: "20:45",
+    note: "How the club runs. Recap method. Club book opens. Sample pitch.",
+  },
+  "2026-09-22": {
+    title: "Equities, all sectors",
+    end: "21:00",
+    note: "How to cover the equity universe in one framework. First club-book names.",
+  },
+  "2026-09-29": {
+    title: "Fixed income",
+    end: "20:45",
+    note: "Rates, credit, and how bonds sit next to the equity book.",
+  },
+  "2026-10-06": {
+    title: "Guest speaker",
+    end: "20:45",
+    note: "First Tuesday of October. Career path / recruiting alum.",
+  },
+  "2026-10-13": {
+    title: "Pitching and valuation basics",
+    end: "20:45",
+    note: "What a club pitch must include before the terminal arrives.",
+  },
+  "2026-10-20": {
+    title: "Bloomberg workshop",
+    end: "21:00",
+    note: "First hands-on session after mid-October access.",
+  },
+  "2026-10-27": {
+    title: "Financial modeling I",
+    end: "21:00",
+    note: "Three statements and how they link.",
+  },
+  "2026-11-03": {
+    title: "Guest speaker",
+    end: "20:45",
+    note: "First Tuesday of November. Wealth management / insurance.",
+  },
+  "2026-11-10": {
+    title: "Financial modeling II",
+    end: "21:00",
+    note: "DCF. Midpoint review of the club book.",
+  },
+  "2026-11-17": {
+    title: "Club book work night",
+    end: "20:45",
+    note: "Revisit every position. Prepare the Thanksgiving hold.",
+  },
+  "2026-12-01": {
+    title: "Guest speaker",
+    end: "20:45",
+    note: "First Tuesday of December. IB or long-horizon investor.",
+  },
+  "2026-12-08": {
+    title: "Final meeting",
+    end: "21:00",
+    note: "Year-end recap. Full review of the club book. Close for winter break.",
+  },
+};
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -91,15 +172,16 @@ export function weeklyMeetings(): ClubEvent[] {
     while (cursor <= last) {
       const day = toDay(cursor);
       if (!skip.has(day)) {
+        const session = SESSION_OVERRIDES[day];
         out.push({
           id: `weekly-${day}`,
-          title: WEEKLY.title,
+          title: session?.title ?? WEEKLY.title,
           date: day,
           start: WEEKLY.start,
-          end: WEEKLY.end,
+          end: session?.end ?? WEEKLY.end,
           location: WEEKLY.location,
           kind: "weekly",
-          note: `${term.label} planning session.`,
+          note: session?.note ?? `${term.label} planning session.`,
         });
       }
       cursor.setDate(cursor.getDate() + 7);

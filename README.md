@@ -63,7 +63,8 @@ Both are read **only on the server** (no `NEXT_PUBLIC_` prefix), so they never r
   Club Training and Title IX Training sessions, and anything else the board
   adds. Exports to `.ics` for Google/Apple/Outlook. The schedule that ships in
   code is split in two: `data/calendar.ts` holds the standing meeting (edit
-  `TERMS` each semester, `WEEKLY` if the meeting moves), and
+  `TERMS` each semester, `WEEKLY` if the meeting moves, `SESSION_OVERRIDES`
+  for per-night titles and agendas, `WEEKLY_SKIP` for breaks), and
   `data/calendar-board.ts` holds `FIXED_EVENTS`, the dates the college hands
   down. The split is deliberate: members only ever see the standing meeting, so
   only `/admin` imports the board module and the training dates never reach a
