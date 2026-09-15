@@ -16,12 +16,23 @@ type Entry = {
 
 type Preview = { name: string; path: string; kind: PreviewKind; url: string | null };
 
+type FileScope = "members" | "board";
+
 // Shared file browser for the members page and the admin page.
 // When `admin` is true it also shows the uploader, "New folder", and delete.
-export default function MemberFiles({ admin = false }: { admin?: boolean }) {
+// `scope: "board"` roots the browser in the admin-only Dropbox folder.
+export default function MemberFiles({
+  admin = false,
+  scope = "members",
+  showLogout = true,
+}: {
+  admin?: boolean;
+  scope?: FileScope;
+  showLogout?: boolean;
+}) {
   const router = useRouter();
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [path, setPath] = useState(""); // current folder ("" = root)
+  const [path, setPath] = useState(""); // current folder ("" = scope root)
   const [base, setBase] = useState("");
   const [configured, setConfigured] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -30,14 +41,14 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
   const [dragOver, setDragOver] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const rootLabel = scope === "board" ? "Board files" : "Files";
 
   const load = useCallback(async (dir: string) => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/files?path=${encodeURIComponent(dir)}`, {
-        cache: "no-store",
-      });
+      const qs = new URLSearchParams({ path: dir, scope });
+      const res = await fetch(`/api/files?${qs}`, { cache: "no-store" });
       if (!res.ok) throw new Error((await res.json()).error || "Failed to load");
       const j = await res.json();
       setEntries(j.entries || []);
@@ -49,7 +60,7 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     load("");
@@ -66,6 +77,7 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
         const form = new FormData();
         form.append("file", file);
         form.append("path", dest);
+        form.append("scope", scope);
         const res = await fetch("/api/files", { method: "POST", body: form });
         if (!res.ok) {
           throw new Error((await res.json()).error || `Failed to upload ${file.name}`);
@@ -96,7 +108,7 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
       const res = await fetch("/api/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "mkdir", path, name: name.trim() }),
+        body: JSON.stringify({ action: "mkdir", path, name: name.trim(), scope }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Failed");
       await load(path);
@@ -112,7 +124,7 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
       const res = await fetch("/api/files", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: e.path }),
+        body: JSON.stringify({ path: e.path, scope }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Delete failed");
       await load(path);
@@ -141,7 +153,7 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
     ? path.slice(base.length)
     : path;
   const segments = rel.split("/").filter(Boolean);
-  const crumbs = [{ label: "Files", path: base }];
+  const crumbs = [{ label: rootLabel, path: base }];
   let acc = base;
   for (const seg of segments) {
     acc = `${acc}/${seg}`;
@@ -241,21 +253,23 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
             ? "Loading…"
             : `${folderCount} folder${folderCount === 1 ? "" : "s"} · ${fileCount} file${fileCount === 1 ? "" : "s"}`}
         </span>
-        <button
-          onClick={logout}
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: "var(--muted)",
-            background: "transparent",
-            border: "1px solid var(--line)",
-            borderRadius: 8,
-            padding: "6px 12px",
-            cursor: "pointer",
-          }}
-        >
-          Sign out
-        </button>
+        {showLogout && (
+          <button
+            onClick={logout}
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--muted)",
+              background: "transparent",
+              border: "1px solid var(--line)",
+              borderRadius: 8,
+              padding: "6px 12px",
+              cursor: "pointer",
+            }}
+          >
+            Sign out
+          </button>
+        )}
       </div>
 
       {error && <p style={{ color: "var(--down)", fontSize: 14, marginBottom: 14 }}>{error}</p>}
@@ -346,13 +360,21 @@ export default function MemberFiles({ admin = false }: { admin?: boolean }) {
         })}
       </div>
 
-      {preview && <PreviewModal preview={preview} onClose={() => setPreview(null)} />}
+      {preview && <PreviewModal preview={preview} onClose={() => setPreview(null)} scope={scope} />}
     </div>
   );
 }
 
-function PreviewModal({ preview, onClose }: { preview: Preview; onClose: () => void }) {
-  const viewSrc = `/api/files/view?path=${encodeURIComponent(preview.path)}`;
+function PreviewModal({
+  preview,
+  onClose,
+  scope = "members",
+}: {
+  preview: Preview;
+  onClose: () => void;
+  scope?: FileScope;
+}) {
+  const viewSrc = `/api/files/view?path=${encodeURIComponent(preview.path)}&scope=${scope}`;
   const officeSrc =
     preview.kind === "office" && preview.url
       ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(preview.url)}`

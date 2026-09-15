@@ -57,7 +57,7 @@ Both are read **only on the server** (no `NEXT_PUBLIC_` prefix), so they never r
 
 ## The admin console
 
-`/admin` needs the `ADMIN_PASSWORD` login and holds four sections:
+`/admin` needs the `ADMIN_PASSWORD` login and holds five sections:
 
 - **Calendar**: the standing Tuesday 7:30 PM meeting, the college's required
   Club Training and Title IX Training sessions, and anything else the board
@@ -73,11 +73,15 @@ Both are read **only on the server** (no `NEXT_PUBLIC_` prefix), so they never r
   mail client (use Bcc for anything club-wide) and a bulk paste importer.
 - **Newsletter**: every published issue.
 - **Files**: the Dropbox uploader that feeds `/members/files`.
+- **Board files**: a private `_board/` Dropbox folder only visible with the
+  admin password — budgets, officer notes, anything members should not see.
 
 The email list and any events added from the console are stored as one JSON
 document in the same Dropbox app folder the file area uses, under
-`_club-data/club.json`. That folder is filtered out of the members file
-browser. Without Dropbox configured the console still works, but the data only
+`_club-data/club.json`. Board-only documents live under `_board/` and are only
+reachable from the admin **Board files** tab (members get a 403 if they craft
+a path into it). Both folders are filtered out of the members file browser.
+Without Dropbox configured the console still works, but the data only
 lives in that one browser and the header says so.
 
 ### Publishing a newsletter issue

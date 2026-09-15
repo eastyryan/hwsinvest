@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { AlertCircle, CalendarDays, Cloud, Folder, HardDrive, Loader2, Newspaper, Users } from "lucide-react";
+import { AlertCircle, CalendarDays, Cloud, Folder, HardDrive, Loader2, Lock, Newspaper, Users } from "lucide-react";
 import MemberFiles from "@/components/MemberFiles";
 import IssueList from "@/components/club/IssueList";
 import type { Newsletter } from "@/data/newsletters";
@@ -15,6 +15,7 @@ const TABS = [
   { id: "roster", label: "Email list", icon: Users },
   { id: "newsletter", label: "Newsletter", icon: Newspaper },
   { id: "files", label: "Files", icon: Folder },
+  { id: "board", label: "Board files", icon: Lock },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -30,7 +31,7 @@ export default function AdminConsole({ issues }: { issues: Newsletter[] }) {
           <p className="kicker">Admin</p>
           <h1 className="h-page" style={{ fontSize: "clamp(30px,4vw,44px)" }}>Club console</h1>
           <p className="lede" style={{ maxWidth: "50ch" }}>
-            The schedule, the email list, the newsletter, and everything the members area serves up.
+            The schedule, the email list, the newsletter, member files, and a private board folder.
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -91,7 +92,16 @@ export default function AdminConsole({ issues }: { issues: Newsletter[] }) {
             title="Member files"
             blurb="Upload or remove files. Everything here shows up in the members file browser."
           >
-            <MemberFiles admin />
+            <MemberFiles admin showLogout={false} />
+          </Section>
+        )}
+
+        {tab === "board" && (
+          <Section
+            title="Board files"
+            blurb="Private to anyone with the admin password. Members never see this folder — use it for budgets, officer notes, and anything that should stay with the board."
+          >
+            <MemberFiles admin scope="board" showLogout={false} />
           </Section>
         )}
       </div>

@@ -25,6 +25,16 @@ export const BASE_FOLDER = (process.env.DROPBOX_FOLDER ?? "").replace(/\/+$/, ""
 // shows up in the members file browser.
 export const DATA_FOLDER = `${BASE_FOLDER}/_club-data`;
 
+// Board-only docs (budgets, officer notes, etc.). Same Dropbox app folder, but
+// only the admin role can list, upload, download, or delete under it. Members
+// never see the folder name and get 403 if they craft a path into it.
+export const BOARD_FOLDER = `${BASE_FOLDER}/_board`;
+
+/** Folders that must never appear in the members file browser. */
+export const HIDDEN_FOLDERS = [DATA_FOLDER, BOARD_FOLDER] as const;
+
+export type FileScope = "members" | "board";
+
 export function isDropboxConfigured(): boolean {
   return Boolean(
     process.env.DROPBOX_APP_KEY &&
@@ -33,17 +43,43 @@ export function isDropboxConfigured(): boolean {
   );
 }
 
-// Keep a requested path inside BASE_FOLDER so a crafted ?path= can't escape
-// the members area. Returns a clean absolute Dropbox path ("" = root).
-export function safePath(input: string | null | undefined): string {
+/** True when `path` is the board folder or something inside it. */
+export function isBoardPath(path: string): boolean {
+  const p = path.toLowerCase();
+  const board = BOARD_FOLDER.toLowerCase();
+  if (!board) return p === "/_board" || p.startsWith("/_board/");
+  return p === board || p.startsWith(board + "/");
+}
+
+/** True when `path` is a hidden system folder (or inside one). */
+export function isHiddenPath(path: string): boolean {
+  const p = path.toLowerCase();
+  return HIDDEN_FOLDERS.some((folder) => {
+    const f = folder.toLowerCase();
+    return p === f || p.startsWith(f + "/");
+  });
+}
+
+/**
+ * Keep a requested path inside a sandbox so a crafted ?path= can't escape.
+ * `scope: "board"` sandboxes under BOARD_FOLDER; otherwise under BASE_FOLDER.
+ * Returns a clean absolute Dropbox path ("" = app-folder root when BASE is "").
+ */
+export function safePath(
+  input: string | null | undefined,
+  scope: FileScope = "members"
+): string {
+  const root = scope === "board" ? BOARD_FOLDER : BASE_FOLDER;
   let p = (input ?? "").trim();
-  if (!p || p === "/") return BASE_FOLDER;
+  if (!p || p === "/") return root;
   if (!p.startsWith("/")) p = "/" + p;
   p = p.replace(/\/+$/, "").replace(/\.\.+/g, ""); // strip trailing slash + ".."
-  const base = BASE_FOLDER.toLowerCase();
+  const base = root.toLowerCase();
   if (base && !(p.toLowerCase() === base || p.toLowerCase().startsWith(base + "/"))) {
-    return BASE_FOLDER; // outside the sandbox → snap back to root
+    return root; // outside the sandbox → snap back to root
   }
+  // Members scope must never resolve into a hidden folder via path tricks.
+  if (scope === "members" && isHiddenPath(p)) return BASE_FOLDER;
   return p;
 }
 
@@ -114,10 +150,11 @@ export async function listEntries(dir: string): Promise<DropboxEntry[]> {
       server_modified?: string;
     }>;
   };
+  const hidden = new Set(HIDDEN_FOLDERS.map((f) => f.toLowerCase()));
   const entries: DropboxEntry[] = json.entries
     .filter((e) => e[".tag"] === "file" || e[".tag"] === "folder")
-    // Keep the admin console's private JSON out of the members file browser.
-    .filter((e) => e.path_lower !== DATA_FOLDER.toLowerCase())
+    // Keep _club-data and _board out of the members file browser root.
+    .filter((e) => !hidden.has(e.path_lower))
     .map((e) => ({
       type: e[".tag"] === "folder" ? "folder" : "file",
       name: e.name,
@@ -176,6 +213,15 @@ export async function createFolder(dir: string, name: string): Promise<void> {
   const res = await rpc("files/create_folder_v2", { path: `${dir}/${clean}` });
   if (!res.ok && res.status !== 409) {
     throw new Error(`Dropbox create folder failed (${res.status})`);
+  }
+}
+
+/** Create a folder at an absolute path if it isn't there yet (409 = ok). */
+export async function ensureFolder(path: string): Promise<void> {
+  if (!path) return;
+  const res = await rpc("files/create_folder_v2", { path });
+  if (!res.ok && res.status !== 409) {
+    throw new Error(`Dropbox ensure folder failed (${res.status})`);
   }
 }
 
