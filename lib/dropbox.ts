@@ -281,6 +281,8 @@ export async function readJson<T>(name: string): Promise<T | null> {
 }
 
 export async function writeJson(name: string, data: unknown): Promise<void> {
+  // First save can race the folder existing; create it if needed.
+  await ensureFolder(DATA_FOLDER);
   const token = await accessToken();
   const res = await fetch("https://content.dropboxapi.com/2/files/upload", {
     method: "POST",

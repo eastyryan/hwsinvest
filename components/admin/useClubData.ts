@@ -40,6 +40,12 @@ export function useClubData() {
   const [state, setState] = useState<SaveState>({ kind: "loading" });
   // Whether this browser is the only place the data lives.
   const localOnly = useRef(false);
+  // Always read the latest snapshot inside setters so rapid edits don't
+  // clobber each other with a stale `data` closure.
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  // Ignore out-of-order Dropbox responses when two saves overlap.
+  const saveGen = useRef(0);
 
   useEffect(() => {
     let live = true;
@@ -82,6 +88,7 @@ export function useClubData() {
       setState({ kind: "idle", local: true, updated: new Date().toISOString() });
       return;
     }
+    const gen = ++saveGen.current;
     setState({ kind: "saving" });
     try {
       const res = await fetch("/api/club", {
@@ -91,9 +98,12 @@ export function useClubData() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error ?? `Save failed (${res.status})`);
+      // A newer save already left; don't roll the UI back to this response.
+      if (gen !== saveGen.current) return;
       setData(json.data as ClubData);
       setState({ kind: "idle", local: false, updated: (json.data as ClubData).updated });
     } catch (e) {
+      if (gen !== saveGen.current) return;
       setState({
         kind: "error",
         message: e instanceof Error ? e.message : "Save failed",
@@ -102,12 +112,12 @@ export function useClubData() {
   }, []);
 
   const setRoster = useCallback(
-    (roster: RosterEntry[]) => save({ ...data, roster }),
-    [data, save]
+    (roster: RosterEntry[]) => save({ ...dataRef.current, roster }),
+    [save]
   );
   const setEvents = useCallback(
-    (events: ClubEvent[]) => save({ ...data, events }),
-    [data, save]
+    (events: ClubEvent[]) => save({ ...dataRef.current, events }),
+    [save]
   );
 
   return { data, state, setRoster, setEvents };

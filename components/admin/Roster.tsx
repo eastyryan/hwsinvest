@@ -17,8 +17,12 @@ export default function Roster({
   onChange: (roster: RosterEntry[]) => void;
 }) {
   // Edits live here while someone types; they're pushed up (and saved) on
-  // blur, so a name doesn't fire one write per keystroke.
+  // blur, so a name doesn't fire one write per keystroke. Empty draft rows
+  // stay local until they have a name or email — the server drops blank
+  // entries, and saving them immediately made "Add member" look broken.
   const [rows, setRows] = useState<RosterEntry[]>(roster);
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
   const pushed = useRef(JSON.stringify(roster));
   const [query, setQuery] = useState("");
   const [importing, setImporting] = useState(false);
@@ -27,14 +31,20 @@ export default function Roster({
     const incoming = JSON.stringify(roster);
     if (incoming !== pushed.current) {
       pushed.current = incoming;
-      setRows(roster);
+      // Keep unsaved blank drafts the server never persisted.
+      const drafts = rowsRef.current.filter(
+        (r) => !r.name.trim() && !r.email.trim() && !roster.some((s) => s.id === r.id)
+      );
+      setRows(drafts.length ? [...roster, ...drafts] : roster);
     }
   }, [roster]);
 
   function commit(next: RosterEntry[]) {
     setRows(next);
-    pushed.current = JSON.stringify(next);
-    onChange(next);
+    // Only persist rows that have something to save; blank drafts stay local.
+    const persistable = next.filter((r) => r.name.trim() || r.email.trim());
+    pushed.current = JSON.stringify(persistable);
+    onChange(persistable);
   }
 
   const visible = useMemo(() => {
@@ -131,7 +141,7 @@ export default function Roster({
         <button
           className="ctl"
           onClick={() =>
-            commit([...rows, { id: `m-${Date.now().toString(36)}`, name: "", email: "" }])
+            setRows([...rowsRef.current, { id: `m-${Date.now().toString(36)}`, name: "", email: "" }])
           }
         >
           <Plus size={15} />
@@ -269,10 +279,16 @@ function Cell({
       placeholder={placeholder}
       title={title}
       aria-label={`${String(field)} for ${row.name || "new member"}`}
-      onChange={(e) =>
-        setRows(rows.map((r) => (r.id === row.id ? { ...r, [field]: e.target.value } : r)))
-      }
-      onBlur={() => commit(rows)}
+      onChange={(e) => {
+        const value = e.target.value;
+        setRows(rows.map((r) => (r.id === row.id ? { ...r, [field]: value } : r)));
+      }}
+      onBlur={(e) => {
+        // Read the input directly so the last keystroke is never lost to a
+        // stale `rows` closure when blur races the last onChange render.
+        const value = e.currentTarget.value;
+        commit(rows.map((r) => (r.id === row.id ? { ...r, [field]: value } : r)));
+      }}
       style={
         tone
           ? { color: tone === "bad" ? "var(--down)" : "var(--orangeText)" }
