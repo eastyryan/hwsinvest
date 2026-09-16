@@ -1,5 +1,5 @@
-// The admin console's own data: the email roster and any calendar events an
-// officer adds on top of the built-in schedule.
+// The admin console's own data: the email roster, calendar events an officer
+// adds on top of the built-in schedule, and weekly attendance meetings.
 //
 // There's no database in this project, so the store rides on the Dropbox app
 // folder that already backs the members file area. One JSON document,
@@ -22,15 +22,32 @@ export type RosterEntry = {
   role?: string;
 };
 
+/** One club meeting with who signed in (matched to roster emails). */
+export type AttendanceMeeting = {
+  id: string;
+  /** YYYY-MM-DD of the meeting. */
+  date: string;
+  /** e.g. "Week 2". */
+  label: string;
+  /** Roster emails marked present (stable if roster row ids change). */
+  presentEmails: string[];
+  /** Sign-in names that did not match anyone on the roster. */
+  unmatchedNames: string[];
+  /** ISO timestamp when this meeting was saved. */
+  recordedAt: string;
+};
+
 export type ClubData = {
   roster: RosterEntry[];
   /** Events added from the console. The built-in schedule lives in code. */
   events: ClubEvent[];
+  /** Weekly meetings with attendance. Admin-only. */
+  attendance: AttendanceMeeting[];
   /** ISO timestamp of the last successful save. */
   updated: string;
 };
 
-export const EMPTY: ClubData = { roster: [], events: [], updated: "" };
+export const EMPTY: ClubData = { roster: [], events: [], attendance: [], updated: "" };
 
 export type Storage = "dropbox" | "none";
 
@@ -88,6 +105,37 @@ function cleanEvent(raw: unknown, i: number): ClubEvent | null {
   };
 }
 
+function cleanMeeting(raw: unknown, i: number): AttendanceMeeting | null {
+  if (!raw || typeof raw !== "object") return null;
+  const m = raw as Record<string, unknown>;
+  const date = str(m.date, 10);
+  const label = str(m.label, 80);
+  if (!DAY.test(date) || !label) return null;
+
+  const presentRaw = Array.isArray(m.presentEmails) ? m.presentEmails : [];
+  const presentEmails = [
+    ...new Set(
+      presentRaw
+        .map((e) => str(e, 160).toLowerCase())
+        .filter((e) => e.includes("@"))
+    ),
+  ].slice(0, 1000);
+
+  const unmatchedRaw = Array.isArray(m.unmatchedNames) ? m.unmatchedNames : [];
+  const unmatchedNames = [
+    ...new Set(unmatchedRaw.map((n) => str(n, 120)).filter(Boolean)),
+  ].slice(0, 500);
+
+  return {
+    id: str(m.id, 64) || `a${i}-${date}`,
+    date,
+    label,
+    presentEmails,
+    unmatchedNames,
+    recordedAt: str(m.recordedAt, 40) || new Date().toISOString(),
+  };
+}
+
 export function sanitize(raw: unknown): ClubData {
   const d = (raw ?? {}) as Record<string, unknown>;
   const roster = Array.isArray(d.roster)
@@ -96,7 +144,14 @@ export function sanitize(raw: unknown): ClubData {
   const events = Array.isArray(d.events)
     ? d.events.map(cleanEvent).filter((x): x is ClubEvent => x !== null).slice(0, 500)
     : [];
-  return { roster, events, updated: str(d.updated, 40) };
+  const attendance = Array.isArray(d.attendance)
+    ? d.attendance
+        .map(cleanMeeting)
+        .filter((x): x is AttendanceMeeting => x !== null)
+        .slice(0, 200)
+        .sort((a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label))
+    : [];
+  return { roster, events, attendance, updated: str(d.updated, 40) };
 }
 
 // ── Read / write ────────────────────────────────────────────

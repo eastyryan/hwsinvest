@@ -26,7 +26,7 @@ export async function GET() {
   }
 }
 
-// PUT /api/club  { roster, events } → saved snapshot
+// PUT /api/club  { roster, events, attendance } → saved snapshot
 export async function PUT(request: Request) {
   if ((await getSession()) !== "admin") {
     return NextResponse.json({ error: "Admin only" }, { status: 403 });

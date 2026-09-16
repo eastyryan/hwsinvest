@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { AlertCircle, CalendarDays, Cloud, Folder, HardDrive, Loader2, Lock, Newspaper, Users } from "lucide-react";
+import { AlertCircle, CalendarDays, ClipboardCheck, Cloud, Folder, HardDrive, Loader2, Lock, Newspaper, Users } from "lucide-react";
 import MemberFiles from "@/components/MemberFiles";
 import IssueList from "@/components/club/IssueList";
 import type { Newsletter } from "@/data/newsletters";
+import Attendance from "./Attendance";
 import ClubCalendar from "./ClubCalendar";
 import Roster from "./Roster";
 import { useClubData } from "./useClubData";
@@ -13,6 +14,7 @@ import { useClubData } from "./useClubData";
 const TABS = [
   { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "roster", label: "Email list", icon: Users },
+  { id: "attendance", label: "Attendance", icon: ClipboardCheck },
   { id: "newsletter", label: "Newsletter", icon: Newspaper },
   { id: "files", label: "Files", icon: Folder },
   { id: "board", label: "Board files", icon: Lock },
@@ -22,7 +24,7 @@ type TabId = (typeof TABS)[number]["id"];
 
 export default function AdminConsole({ issues }: { issues: Newsletter[] }) {
   const [tab, setTab] = useState<TabId>("calendar");
-  const { data, state, setRoster, setEvents } = useClubData();
+  const { data, state, setRoster, setEvents, setAttendance } = useClubData();
 
   return (
     <main className="container-x" style={{ padding: "clamp(32px,5vh,56px) 0 80px", maxWidth: 1100, margin: "0 auto" }}>
@@ -31,7 +33,7 @@ export default function AdminConsole({ issues }: { issues: Newsletter[] }) {
           <p className="kicker">Admin</p>
           <h1 className="h-page" style={{ fontSize: "clamp(30px,4vw,44px)" }}>Club console</h1>
           <p className="lede" style={{ maxWidth: "50ch" }}>
-            The schedule, the email list, the newsletter, member files, and a private board folder.
+            The schedule, the email list, attendance, the newsletter, member files, and a private board folder.
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -75,6 +77,19 @@ export default function AdminConsole({ issues }: { issues: Newsletter[] }) {
             blurb="Names and school emails in one place, ready to copy into an email. Edits save when you click out of a field."
           >
             <Roster roster={data.roster} onChange={setRoster} />
+          </Section>
+        )}
+
+        {tab === "attendance" && (
+          <Section
+            title="Attendance"
+            blurb="Paste each week's sign-in CSV. Names are matched to the email list (nicknames included), you confirm, and everyone gets a running attendance percentage (meetings attended ÷ meetings tracked). Board-only — members never see this."
+          >
+            <Attendance
+              roster={data.roster}
+              meetings={data.attendance ?? []}
+              onChange={setAttendance}
+            />
           </Section>
         )}
 

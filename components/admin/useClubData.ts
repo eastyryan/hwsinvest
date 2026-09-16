@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ClubData, RosterEntry } from "@/lib/club-store";
+import type { AttendanceMeeting, ClubData, RosterEntry } from "@/lib/club-store";
 import type { ClubEvent } from "@/data/calendar";
 
 const LOCAL_KEY = "hws_club_data_v1";
-const EMPTY: ClubData = { roster: [], events: [], updated: "" };
+const EMPTY: ClubData = { roster: [], events: [], attendance: [], updated: "" };
 
 export type SaveState =
   | { kind: "loading" }
@@ -61,8 +61,13 @@ export function useClubData() {
         const server = (json.data ?? EMPTY) as ClubData;
         // A local draft survives an unconfigured deploy; once the server copy
         // is empty but the browser has one, carry the browser's forward.
-        const serverEmpty = server.roster.length === 0 && server.events.length === 0;
+        const serverEmpty =
+          server.roster.length === 0 &&
+          server.events.length === 0 &&
+          (server.attendance?.length ?? 0) === 0;
         const next = localOnly.current || (serverEmpty && cached) ? cached ?? server : server;
+        // Older local caches may lack attendance; always keep an array.
+        if (!next.attendance) next.attendance = [];
 
         setData(next);
         setState({ kind: "idle", local: localOnly.current, updated: next.updated });
@@ -94,14 +99,20 @@ export function useClubData() {
       const res = await fetch("/api/club", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roster: next.roster, events: next.events }),
+        body: JSON.stringify({
+          roster: next.roster,
+          events: next.events,
+          attendance: next.attendance ?? [],
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error ?? `Save failed (${res.status})`);
       // A newer save already left; don't roll the UI back to this response.
       if (gen !== saveGen.current) return;
-      setData(json.data as ClubData);
-      setState({ kind: "idle", local: false, updated: (json.data as ClubData).updated });
+      const saved = json.data as ClubData;
+      if (!saved.attendance) saved.attendance = [];
+      setData(saved);
+      setState({ kind: "idle", local: false, updated: saved.updated });
     } catch (e) {
       if (gen !== saveGen.current) return;
       setState({
@@ -119,6 +130,10 @@ export function useClubData() {
     (events: ClubEvent[]) => save({ ...dataRef.current, events }),
     [save]
   );
+  const setAttendance = useCallback(
+    (attendance: AttendanceMeeting[]) => save({ ...dataRef.current, attendance }),
+    [save]
+  );
 
-  return { data, state, setRoster, setEvents };
+  return { data, state, setRoster, setEvents, setAttendance };
 }
