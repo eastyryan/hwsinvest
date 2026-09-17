@@ -53,8 +53,8 @@ export const WEEKLY = {
 export type Term = { label: string; start: string; end: string };
 
 export const TERMS: Term[] = [
-  // Fall 2026: intro on Sep 8, last meeting Dec 8 (from the term schedule).
-  { label: "Fall 2026", start: "2026-09-08", end: "2026-12-08" },
+  // Fall 2026 date index: first session Sep 15, last meeting Dec 8.
+  { label: "Fall 2026", start: "2026-09-15", end: "2026-12-08" },
   // { label: "Spring 2027", start: "2027-01-19", end: "2027-04-27" },
 ];
 
@@ -68,6 +68,12 @@ export const WEEKLY_SKIP: string[] = [
  * published agenda (title, end time, note), put it here so the admin calendar
  * and the members "next meeting" strip show the real session instead of the
  * generic WEEKLY defaults. Missing dates still fall back to WEEKLY.
+ *
+ * Source: Investment Club Fall 2026 Format and Index.
+ * Standard night: 7:30 recap → skill block → pitch → club-book decisions.
+ * Guest-speaker night (Nov 3, Dec 1): speaker first, then club-book notes; no
+ * full recap or pitch. Oct 6/20/27 are Eric Stein Tuesdays — club work moves
+ * to Thursday (see EXTRA_EVENTS).
  */
 export type SessionOverride = {
   title: string;
@@ -76,65 +82,60 @@ export type SessionOverride = {
 };
 
 export const SESSION_OVERRIDES: Record<string, SessionOverride> = {
-  "2026-09-08": {
-    title: "Intro Meeting",
-    end: "20:30",
-    note: "Term kickoff. September 8 introduction is complete.",
-  },
   "2026-09-15": {
-    title: "Operating night",
-    end: "20:45",
-    note: "How the club runs. Recap method. Club book opens. Sample pitch.",
+    title: "Recap and first pitch",
+    end: "21:00",
+    note: "Market recap. How a meeting runs. Officer or member pitch. Sign-ups for later nights. Club book stays closed.",
   },
   "2026-09-22": {
     title: "Equities, all sectors",
     end: "21:00",
-    note: "How to cover the equity universe in one framework. First club-book names.",
+    note: "Equity universe in one framework. Club book opens. First names voted in.",
   },
   "2026-09-29": {
     title: "Fixed income",
-    end: "20:45",
+    end: "21:00",
     note: "Rates, credit, and how bonds sit next to the equity book.",
   },
   "2026-10-06": {
-    title: "Guest speaker",
-    end: "20:45",
-    note: "First Tuesday of October. Career path / recruiting alum.",
+    title: "Eric Stein",
+    end: "21:00",
+    note: "Eric Stein meeting. No club recap or pitch tonight. Club meeting moves to Thursday Oct 8 at 8:00 p.m.",
   },
   "2026-10-13": {
-    title: "Pitching and valuation basics",
-    end: "20:45",
-    note: "What a club pitch must include before the terminal arrives.",
-  },
-  "2026-10-20": {
     title: "Bloomberg workshop",
     end: "21:00",
     note: "First hands-on session after mid-October access.",
   },
-  "2026-10-27": {
-    title: "Financial modeling I",
+  "2026-10-20": {
+    title: "Eric Stein",
     end: "21:00",
-    note: "Three statements and how they link.",
+    note: "Eric Stein meeting. No club recap or pitch tonight. Club meeting moves to Thursday Oct 22 at 8:00 p.m.",
+  },
+  "2026-10-27": {
+    title: "Eric Stein",
+    end: "21:00",
+    note: "Eric Stein meeting. No club recap or pitch tonight. Club meeting moves to Thursday Oct 29 at 8:00 p.m.",
   },
   "2026-11-03": {
     title: "Guest speaker",
-    end: "20:45",
-    note: "First Tuesday of November. Wealth management / insurance.",
+    end: "20:35",
+    note: "First Tuesday of November. Wealth management / insurance. Guest-speaker format: remarks and Q&A, then club-book notes — no market recap or full pitch.",
   },
   "2026-11-10": {
-    title: "Financial modeling II",
+    title: "Risk and position sizing",
     end: "21:00",
-    note: "DCF. Midpoint review of the club book.",
+    note: "How the club book should be sized, concentrated, and trimmed. Correlation and the 25 percent cap in practice.",
   },
   "2026-11-17": {
     title: "Club book work night",
-    end: "20:45",
-    note: "Revisit every position. Prepare the Thanksgiving hold.",
+    end: "21:00",
+    note: "Revisit every position. Prepare the Thanksgiving hold. Formal book review.",
   },
   "2026-12-01": {
     title: "Guest speaker",
-    end: "20:45",
-    note: "First Tuesday of December. IB or long-horizon investor.",
+    end: "20:35",
+    note: "First Tuesday of December. IB or long-horizon investor. Guest-speaker format: remarks and Q&A, then club-book notes — no market recap or full pitch.",
   },
   "2026-12-08": {
     title: "Final meeting",
@@ -142,6 +143,44 @@ export const SESSION_OVERRIDES: Record<string, SessionOverride> = {
     note: "Year-end recap. Full review of the club book. Close for winter break.",
   },
 };
+
+/**
+ * Non-Tuesday club sessions from the Fall 2026 index. On Eric Stein Tuesdays
+ * (Oct 6, 20, 27) the normal club meeting moves to Thursday at 8:00 p.m. and
+ * uses the standard-night format.
+ */
+export const EXTRA_EVENTS: ClubEvent[] = [
+  {
+    id: "moved-2026-10-08",
+    title: "Pitching and valuation basics",
+    date: "2026-10-08",
+    start: "20:00",
+    end: "21:30",
+    location: WEEKLY.location,
+    kind: "club",
+    note: "This week's club meeting, moved off Tuesday for Eric Stein. What a club pitch must include. Standard-night format.",
+  },
+  {
+    id: "moved-2026-10-22",
+    title: "Financial modeling I",
+    date: "2026-10-22",
+    start: "20:00",
+    end: "21:30",
+    location: WEEKLY.location,
+    kind: "club",
+    note: "This week's club meeting, moved off Tuesday for Eric Stein. Three statements and how they link. Standard-night format.",
+  },
+  {
+    id: "moved-2026-10-29",
+    title: "Financial modeling II",
+    date: "2026-10-29",
+    start: "20:00",
+    end: "21:30",
+    location: WEEKLY.location,
+    kind: "club",
+    note: "This week's club meeting, moved off Tuesday for Eric Stein. DCF. Standard-night format.",
+  },
+];
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -158,7 +197,10 @@ export function toDay(date: Date): string {
   return `${date.getFullYear()}-${m}-${d}`;
 }
 
-/** Every weekly meeting across the configured terms, minus the skip list. */
+/**
+ * Standing Tuesday meetings across the configured terms (minus the skip list),
+ * plus EXTRA_EVENTS such as Thursday makeups when Eric Stein takes Tuesday.
+ */
 export function weeklyMeetings(): ClubEvent[] {
   const skip = new Set(WEEKLY_SKIP);
   const out: ClubEvent[] = [];
@@ -187,7 +229,7 @@ export function weeklyMeetings(): ClubEvent[] {
       cursor.setDate(cursor.getDate() + 7);
     }
   }
-  return out;
+  return sortEvents([...out, ...EXTRA_EVENTS]);
 }
 
 export function sortEvents(events: ClubEvent[]): ClubEvent[] {

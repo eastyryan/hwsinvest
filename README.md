@@ -59,23 +59,29 @@ Both are read **only on the server** (no `NEXT_PUBLIC_` prefix), so they never r
 
 `/admin` needs the `ADMIN_PASSWORD` login and holds these sections:
 
-- **Calendar**: the standing Tuesday 7:30 PM meeting, the college's required
-  Club Training and Title IX Training sessions, and anything else the board
-  adds. Exports to `.ics` for Google/Apple/Outlook. The schedule that ships in
-  code is split in two: `data/calendar.ts` holds the standing meeting (edit
-  `TERMS` each semester, `WEEKLY` if the meeting moves, `SESSION_OVERRIDES`
-  for per-night titles and agendas, `WEEKLY_SKIP` for breaks), and
-  `data/calendar-board.ts` holds `FIXED_EVENTS`, the dates the college hands
-  down. The split is deliberate: members only ever see the standing meeting, so
-  only `/admin` imports the board module and the training dates never reach a
-  member's JavaScript bundle. Keep board-only dates in the board file.
+- **Calendar**: the standing Tuesday 7:30 PM meeting (Fall 2026 Format and
+  Index), Thursday makeups when Eric Stein takes Tuesday, remaining required
+  Title IX Training sessions, and anything else the board adds. Exports to `.ics` for Google/Apple/Outlook. The schedule that
+  ships in code is split in two: `data/calendar.ts` holds the standing meeting
+  (edit `TERMS` each semester, `WEEKLY` if the meeting moves,
+  `SESSION_OVERRIDES` for per-night titles and agendas, `WEEKLY_SKIP` for
+  breaks, `EXTRA_EVENTS` for Thursday makeups and other off-Tuesday nights),
+  and `data/calendar-board.ts` holds `FIXED_EVENTS`, the dates the college
+  hands down. The split is deliberate: members only ever see the standing
+  meeting, so only `/admin` imports the board module and the training dates
+  never reach a member's JavaScript bundle. Keep board-only dates in the board
+  file.
 - **Email list**: names and school emails, with copy buttons for pasting into a
   mail client (use Bcc for anything club-wide) and a bulk paste importer.
-- **Attendance**: paste or upload each week's Google Form CSV. Names are matched
-  to the email list (including common nicknames). Confirm the matches, save the
-  meeting, and every roster member gets a running % (meetings attended ÷
-  meetings tracked). Admin-only — members never see this tab. Optional
-  `XAI_API_KEY` can help with unusual name spellings; it is not required.
+- **Attendance**: paste or upload each week's Google Form CSV/xlsx. Names are
+  matched to the email list (including common nicknames). Confirm the matches,
+  save the meeting, and every roster member gets a running % (meetings attended
+  ÷ meetings tracked). Saved meetings can be opened to **Edit** (label, date,
+  present/absent) or **Delete**. Class Year from the sheet
+  (Freshman/Sophomore/Junior/Senior) is written onto the Email list Year column
+  as `'30` / `'29` / `'28` / `'27` for the academic year of the meeting.
+  Admin-only — members never see this tab. Optional `XAI_API_KEY` can help with
+  unusual name spellings; it is not required.
 - **Newsletter**: every published issue.
 - **Files**: the Dropbox uploader that feeds `/members/files`.
 - **Board files**: a private `_board/` Dropbox folder only visible with the

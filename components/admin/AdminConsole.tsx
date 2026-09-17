@@ -24,7 +24,7 @@ type TabId = (typeof TABS)[number]["id"];
 
 export default function AdminConsole({ issues }: { issues: Newsletter[] }) {
   const [tab, setTab] = useState<TabId>("calendar");
-  const { data, state, setRoster, setEvents, setAttendance } = useClubData();
+  const { data, state, setRoster, setEvents, setAttendance, setAttendanceAndRoster } = useClubData();
 
   return (
     <main className="container-x" style={{ padding: "clamp(32px,5vh,56px) 0 80px", maxWidth: 1100, margin: "0 auto" }}>
@@ -83,12 +83,13 @@ export default function AdminConsole({ issues }: { issues: Newsletter[] }) {
         {tab === "attendance" && (
           <Section
             title="Attendance"
-            blurb="Paste each week's sign-in CSV. Names are matched to the email list (nicknames included), you confirm, and everyone gets a running attendance percentage (meetings attended ÷ meetings tracked). Board-only — members never see this."
+            blurb="Paste or upload each week's sign-in CSV/xlsx. Names are matched to the email list (nicknames included), Class Year fills the Members Year column, and everyone gets a running attendance percentage. Board-only — members never see this."
           >
             <Attendance
               roster={data.roster}
               meetings={data.attendance ?? []}
               onChange={setAttendance}
+              onCommitMeeting={setAttendanceAndRoster}
             />
           </Section>
         )}

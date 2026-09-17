@@ -10,6 +10,11 @@ export type AttendanceMatch = {
   /** How the match was made. */
   via: "exact" | "nickname" | "fuzzy" | "ai" | "none";
   confidence: "high" | "medium" | "low";
+  /**
+   * Class year from the sheet (e.g. "'28"), when the CSV/xlsx had a Class Year
+   * column. Written onto the Members roster on save.
+   */
+  year?: string;
 };
 
 export type ParseAttendanceResult = {
@@ -24,6 +29,8 @@ export type ParseAttendanceResult = {
   /** Set when AI was wanted but unavailable / failed. */
   aiNote?: string;
 };
+
+export type SignInRow = { name: string; year?: string };
 
 const NICKNAMES: Record<string, string[]> = {
   tom: ["thomas", "tommy"],
@@ -89,9 +96,73 @@ function firstName(name: string): string {
   return tokens(name)[0] ?? "";
 }
 
-/** Pull unique sign-in names + an optional meeting date from pasted CSV/text. */
-export function extractSignIns(text: string): { names: string[]; meetingDate: string | null } {
+/**
+ * Turn a Class Year cell into the roster Year column value.
+ * Freshman/Sophomore/Junior/Senior → "'30" / "'29" / "'28" / "'27" using the
+ * academic year of `asOf` (July–June). Bare years like 2028 or '28 pass through.
+ */
+export function normalizeClassYear(
+  raw: string | undefined | null,
+  asOf?: string | Date | null
+): string | undefined {
+  if (!raw) return undefined;
+  const cleaned = raw.replace(/^["']+|["']+$/g, "").trim();
+  if (!cleaned) return undefined;
+
+  const lower = cleaned.toLowerCase();
+
+  // Already a graduation year: '28, 28, 2028, Class of 2028, Class of '28
+  const yearHit =
+    lower.match(/^'?(\d{2})$/) ||
+    lower.match(/^(20\d{2})$/) ||
+    lower.match(/class\s+of\s+'?(\d{2})$/i) ||
+    lower.match(/class\s+of\s+(20\d{2})$/i);
+  if (yearHit) {
+    const digits = yearHit[1];
+    const yy = digits.length === 4 ? digits.slice(-2) : digits;
+    return `'${yy}`;
+  }
+
+  const standingYears: Record<string, number> = {
+    freshman: 4,
+    frosh: 4,
+    "first year": 4,
+    "first-year": 4,
+    "1st year": 4,
+    sophomore: 3,
+    "2nd year": 3,
+    junior: 2,
+    "3rd year": 2,
+    senior: 1,
+    "4th year": 1,
+  };
+  const offset = standingYears[lower];
+  if (offset == null) {
+    // Keep free-text standings we don't recognize, title-cased and capped.
+    return cleaned.slice(0, 24);
+  }
+
+  const ref =
+    typeof asOf === "string" && /^\d{4}-\d{2}-\d{2}$/.test(asOf)
+      ? new Date(Number(asOf.slice(0, 4)), Number(asOf.slice(5, 7)) - 1, Number(asOf.slice(8, 10)))
+      : asOf instanceof Date
+        ? asOf
+        : new Date();
+  // Academic year starts in July: Fall 2026 seniors graduate spring 2027.
+  const academicStart = ref.getMonth() >= 6 ? ref.getFullYear() : ref.getFullYear() - 1;
+  const grad = academicStart + offset;
+  return `'${String(grad).slice(-2)}`;
+}
+
+/** Pull unique sign-in names (+ class year when present) and an optional meeting date. */
+export function extractSignIns(text: string): {
+  names: string[];
+  /** Normalized class year keyed by normalizeName(name). Later rows win. */
+  yearsByName: Record<string, string>;
+  meetingDate: string | null;
+} {
   const names: string[] = [];
+  const yearsByName: Record<string, string> = {};
   const seen = new Set<string>();
   let meetingDate: string | null = null;
 
@@ -104,23 +175,42 @@ export function extractSignIns(text: string): { names: string[]; meetingDate: st
       /^timestamp\b/.test(headerProbe) ||
       /^"?timestamp"?\s*,/.test(trimmed.toLowerCase()) ||
       headerProbe === "full name" ||
-      /^full name\b/.test(headerProbe)
+      /^full name\b/.test(headerProbe) ||
+      /^"?full name"?\s*[,;\t]/.test(trimmed.toLowerCase())
     ) {
       continue;
     }
 
-    // CSV: "2026/09/15 7:29:30 PM AST","Olivia Wilkins","Junior"
+    // CSV / TSV: "2026/09/15 7:29:30 PM AST","Olivia Wilkins","Junior"
+    // Timestamp must stop before the first comma/tab so Class Year isn't
+    // mistaken for the name when the engine backtracks.
     const csv = trimmed.match(
-      /^"?(\d{4}[/-]\d{1,2}[/-]\d{1,2}[^"]*)"?\s*,\s*"?([^",]+)"?/
+      /^"?(\d{4}[/-]\d{1,2}[/-]\d{1,2}[^",;\t]*)"?\s*[,;\t]\s*"?([^",;\t]+)"?(?:\s*[,;\t]\s*"?([^",;\t]*)"?)?/
     );
     if (csv) {
       if (!meetingDate) meetingDate = parseLooseDate(csv[1]);
       const n = csv[2].trim();
       const key = normalizeName(n);
+      const year = normalizeClassYear(csv[3], meetingDate);
       if (key && !seen.has(key)) {
         seen.add(key);
         names.push(n);
       }
+      if (key && year) yearsByName[key] = year;
+      continue;
+    }
+
+    // Tab / comma: Name, Class Year (no timestamp)
+    const nameYear = trimmed.match(/^"?([A-Za-z][^",;\t]{1,60})"?\s*[,;\t]\s*"?(Freshman|Sophomore|Junior|Senior|Frosh|'?\d{2}|20\d{2}|Class of '?[\d]{2,4})"?\s*$/i);
+    if (nameYear) {
+      const n = nameYear[1].trim();
+      const key = normalizeName(n);
+      const year = normalizeClassYear(nameYear[2], meetingDate);
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        names.push(n);
+      }
+      if (key && year) yearsByName[key] = year;
       continue;
     }
 
@@ -138,7 +228,7 @@ export function extractSignIns(text: string): { names: string[]; meetingDate: st
     }
   }
 
-  return { names, meetingDate };
+  return { names, yearsByName, meetingDate };
 }
 
 function parseLooseDate(raw: string): string | null {
@@ -150,6 +240,31 @@ function parseLooseDate(raw: string): string | null {
   const d = m[3].padStart(2, "0");
   const iso = `${y}-${mo}-${d}`;
   return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : null;
+}
+
+/**
+ * Apply class years from attendance matches onto the roster. Matched emails
+ * with a year overwrite the existing Year cell (including blanks).
+ */
+export function applyYearsToRoster(
+  roster: Array<{ id: string; name: string; email: string; year?: string; role?: string }>,
+  matches: AttendanceMatch[]
+): { roster: typeof roster; updated: number } {
+  const yearByEmail = new Map<string, string>();
+  for (const m of matches) {
+    if (!m.email || !m.year) continue;
+    yearByEmail.set(m.email.toLowerCase(), m.year);
+  }
+  if (yearByEmail.size === 0) return { roster, updated: 0 };
+
+  let updated = 0;
+  const next = roster.map((r) => {
+    const year = yearByEmail.get(r.email.trim().toLowerCase());
+    if (!year || r.year === year) return r;
+    updated += 1;
+    return { ...r, year };
+  });
+  return { roster: next, updated };
 }
 
 function firstNamesMatch(a: string, b: string): boolean {
@@ -351,7 +466,8 @@ export async function parseAttendanceSheet(
     .map((r) => ({ name: r.name.trim(), email: r.email.trim().toLowerCase() }))
     .filter((r) => r.name && r.email.includes("@"));
 
-  const { names, meetingDate } = extractSignIns(text);
+  const { names, yearsByName, meetingDate } = extractSignIns(text);
+  const yearFor = (rawName: string) => yearsByName[normalizeName(rawName)];
   const matches: AttendanceMatch[] = [];
   const needAi: string[] = [];
 
@@ -363,6 +479,7 @@ export async function parseAttendanceSheet(
         email: hit.email,
         via: hit.via,
         confidence: confidenceFor(hit.score, hit.via),
+        year: yearFor(rawName),
       });
     } else {
       needAi.push(rawName);
@@ -378,10 +495,11 @@ export async function parseAttendanceSheet(
     const byRaw = new Map(ai.matches.map((m) => [normalizeName(m.rawName), m]));
     for (const rawName of needAi) {
       const m = byRaw.get(normalizeName(rawName));
+      const year = yearFor(rawName);
       if (m) {
-        matches.push({ ...m, rawName });
+        matches.push({ ...m, rawName, year });
       } else {
-        matches.push({ rawName, email: null, via: "none", confidence: "low" });
+        matches.push({ rawName, email: null, via: "none", confidence: "low", year });
       }
     }
   }

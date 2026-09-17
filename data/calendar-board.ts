@@ -12,28 +12,7 @@ import { sortEvents, weeklyMeetings, type ClubEvent } from "./calendar";
 // these costs the club its active status.
 
 export const FIXED_EVENTS: ClubEvent[] = [
-  {
-    id: "club-training-a",
-    title: "Club Training (option A)",
-    date: "2026-09-15",
-    start: "17:30",
-    end: "18:30",
-    location: "Geneva Room, Library",
-    kind: "required",
-    group: "Club Training",
-    note: "Choose this session or the September 16th one. One exec board member must attend.",
-  },
-  {
-    id: "club-training-b",
-    title: "Club Training (option B)",
-    date: "2026-09-16",
-    start: "15:00",
-    end: "16:00",
-    location: "AIC Stine Room",
-    kind: "required",
-    group: "Club Training",
-    note: "Choose this session or the September 15th one. One exec board member must attend.",
-  },
+  // Club Training (Sep 15 / 16) completed — removed from the board calendar.
   {
     id: "title-ix-a",
     title: "Title IX Training (option A)",

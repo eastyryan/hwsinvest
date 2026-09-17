@@ -5,6 +5,7 @@ import {
   Check,
   ClipboardCheck,
   Loader2,
+  Pencil,
   Plus,
   Search,
   Trash2,
@@ -12,12 +13,16 @@ import {
   X,
 } from "lucide-react";
 import type { AttendanceMeeting, RosterEntry } from "@/lib/club-store";
-import type { AttendanceMatch } from "@/lib/attendance-match";
+import { applyYearsToRoster, type AttendanceMatch } from "@/lib/attendance-match";
 import { inputStyle } from "./ClubCalendar";
+import { sheetFileToText } from "@/lib/attendance-sheet";
 
 type SortKey = "pct" | "name" | "present";
+type Mode = "summary" | "add" | "edit";
 
 type Draft = {
+  /** Set when editing an existing meeting; null when adding. */
+  editingId: string | null;
   label: string;
   date: string;
   text: string;
@@ -31,6 +36,7 @@ type Draft = {
 };
 
 const emptyDraft = (): Draft => ({
+  editingId: null,
   label: "",
   date: "",
   text: "",
@@ -45,12 +51,15 @@ export default function Attendance({
   roster,
   meetings,
   onChange,
+  onCommitMeeting,
 }: {
   roster: RosterEntry[];
   meetings: AttendanceMeeting[];
   onChange: (meetings: AttendanceMeeting[]) => void;
+  /** Save a meeting and write Class Year onto matched roster rows in one write. */
+  onCommitMeeting: (meetings: AttendanceMeeting[], roster: RosterEntry[]) => void;
 }) {
-  const [mode, setMode] = useState<"summary" | "add">("summary");
+  const [mode, setMode] = useState<Mode>("summary");
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("pct");
@@ -145,6 +154,28 @@ export default function Attendance({
     }
   }
 
+  function startEdit(meeting: AttendanceMeeting) {
+    setDraft({
+      ...emptyDraft(),
+      editingId: meeting.id,
+      label: meeting.label,
+      date: meeting.date,
+      presentEmails: new Set(meeting.presentEmails.map((e) => e.toLowerCase())),
+      unmatchedNames: meeting.unmatchedNames,
+      // Synthetic matches so the review list can show every roster member.
+      matches: roster
+        .filter((r) => r.email.trim())
+        .map((r) => ({
+          rawName: r.name || r.email,
+          email: r.email.toLowerCase(),
+          via: "exact" as const,
+          confidence: "high" as const,
+        })),
+    });
+    setSelectedId(meeting.id);
+    setMode("edit");
+  }
+
   function saveMeeting() {
     const label = draft.label.trim() || `Week ${meetings.length + 1}`;
     const date = draft.date.trim();
@@ -152,20 +183,38 @@ export default function Attendance({
       setDraft((d) => ({ ...d, error: "Set a meeting date (YYYY-MM-DD)." }));
       return;
     }
+
+    const editingId = draft.editingId;
+    const dateTaken = meetings.some(
+      (m) => m.date === date && m.id !== editingId
+    );
+    if (dateTaken) {
+      setDraft((d) => ({
+        ...d,
+        error: "Another meeting is already saved on that date. Change the date or edit that meeting instead.",
+      }));
+      return;
+    }
+
+    const prior = editingId ? meetings.find((m) => m.id === editingId) : undefined;
     const meeting: AttendanceMeeting = {
-      id: `a-${date}-${Date.now().toString(36)}`,
+      id: editingId || `a-${date}-${Date.now().toString(36)}`,
       date,
       label,
       presentEmails: [...draft.presentEmails],
       unmatchedNames: draft.unmatchedNames,
-      recordedAt: new Date().toISOString(),
+      recordedAt: prior?.recordedAt || new Date().toISOString(),
     };
-    // Replace same-date meeting if re-uploading the same week
+
     const next = [
-      ...meetings.filter((m) => m.date !== date),
+      ...meetings.filter((m) => m.id !== meeting.id && m.date !== date),
       meeting,
-    ].sort((a, b) => a.date.localeCompare(b.date));
-    onChange(next);
+    ].sort((a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label));
+
+    // Class Year from a freshly matched sheet → Members Year column.
+    // Edits that only toggle checkboxes have empty matches.year and leave the roster alone.
+    const { roster: nextRoster } = applyYearsToRoster(roster, draft.matches);
+    onCommitMeeting(next, nextRoster);
     setDraft(emptyDraft());
     setMode("summary");
     setSelectedId(meeting.id);
@@ -174,11 +223,16 @@ export default function Attendance({
   function removeMeeting(id: string) {
     onChange(meetings.filter((m) => m.id !== id));
     if (selectedId === id) setSelectedId(null);
+    if (draft.editingId === id) {
+      setDraft(emptyDraft());
+      setMode("summary");
+    }
   }
 
-  if (mode === "add") {
+  if (mode === "add" || mode === "edit") {
     return (
       <AddMeeting
+        mode={mode}
         draft={draft}
         setDraft={setDraft}
         roster={roster}
@@ -200,8 +254,9 @@ export default function Attendance({
           <div style={{ flex: 1, minWidth: 0 }}>
             <h3 className="h-sub" style={{ fontSize: 17 }}>Weekly attendance</h3>
             <p style={{ fontSize: 13.5, color: "var(--muted)", margin: "5px 0 0", lineHeight: 1.55, maxWidth: "68ch" }}>
-              Paste each week&apos;s Google Form CSV. Names are matched to the email list (including
-              common nicknames). Percentage is meetings attended ÷ meetings tracked.
+              Paste or upload each week&apos;s Google Form CSV/xlsx. Names are matched to the email
+              list (including nicknames), Class Year fills the Email list Year column, and percentage
+              is meetings attended ÷ meetings tracked.
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14, alignItems: "center" }}>
               <button
@@ -253,6 +308,7 @@ export default function Attendance({
           meeting={selected}
           roster={roster}
           onClose={() => setSelectedId(null)}
+          onEdit={() => startEdit(selected)}
           onDelete={() => removeMeeting(selected.id)}
         />
       )}
@@ -349,11 +405,13 @@ function MeetingDetail({
   meeting,
   roster,
   onClose,
+  onEdit,
   onDelete,
 }: {
   meeting: AttendanceMeeting;
   roster: RosterEntry[];
   onClose: () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   const present = new Set(meeting.presentEmails.map((e) => e.toLowerCase()));
@@ -376,10 +434,14 @@ function MeetingDetail({
               ` · ${meeting.unmatchedNames.length} not on the email list`}
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="ctl" onClick={onClose}>
             <X size={14} />
             Close
+          </button>
+          <button className="ctl" onClick={onEdit} style={{ color: "var(--brand)", borderColor: "var(--brand)" }}>
+            <Pencil size={14} />
+            Edit
           </button>
           <button
             className="ctl"
@@ -428,6 +490,7 @@ function MeetingDetail({
 }
 
 function AddMeeting({
+  mode,
   draft,
   setDraft,
   roster,
@@ -435,6 +498,7 @@ function AddMeeting({
   onMatch,
   onSave,
 }: {
+  mode: "add" | "edit";
   draft: Draft;
   setDraft: React.Dispatch<React.SetStateAction<Draft>>;
   roster: RosterEntry[];
@@ -442,7 +506,14 @@ function AddMeeting({
   onMatch: () => void;
   onSave: () => void;
 }) {
-  const reviewed = draft.matches.length > 0;
+  const editing = mode === "edit";
+  // Add flow needs a sheet match first; edit can save from the current checklist.
+  const reviewed = editing || draft.matches.length > 0;
+  const showMatchMeta = draft.matches.some((m) => {
+    if (!m.email) return false;
+    const person = roster.find((r) => r.email.toLowerCase() === m.email);
+    return m.via !== "exact" || Boolean(m.year) || (person ? m.rawName !== person.name : true);
+  });
 
   function toggleEmail(email: string) {
     setDraft((d) => {
@@ -454,10 +525,53 @@ function AddMeeting({
     });
   }
 
+  type ChecklistRow = {
+    email: string;
+    label: string;
+    rawName?: string;
+    year?: string;
+    via?: string;
+    confidence?: string;
+  };
+
+  const checklist: ChecklistRow[] = (() => {
+    if (draft.matches.some((m) => m.email)) {
+      // Prefer sheet matches when present; also list roster people missing from the match set so edit can add walk-ins.
+      const byEmail = new Map<string, AttendanceMatch>();
+      for (const m of draft.matches) {
+        if (m.email) byEmail.set(m.email.toLowerCase(), m);
+      }
+      const rows: ChecklistRow[] = [];
+      for (const r of roster) {
+        const email = r.email.trim().toLowerCase();
+        if (!email) continue;
+        const m = byEmail.get(email);
+        rows.push({
+          email,
+          label: r.name || email,
+          rawName: m && m.rawName !== r.name ? m.rawName : undefined,
+          year: m?.year,
+          via: m?.via,
+          confidence: m?.confidence,
+        });
+      }
+      // Matched names not on the roster stay in unmatchedNames, not the checklist.
+      return rows;
+    }
+    return roster
+      .filter((r) => r.email.trim())
+      .map((r) => ({
+        email: r.email.trim().toLowerCase(),
+        label: r.name || r.email,
+      }));
+  })();
+
   return (
     <div style={{ display: "grid", gap: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-        <h3 className="h-sub" style={{ fontSize: 18, margin: 0 }}>Add a meeting</h3>
+        <h3 className="h-sub" style={{ fontSize: 18, margin: 0 }}>
+          {editing ? "Edit meeting" : "Add a meeting"}
+        </h3>
         <button className="ctl" onClick={onCancel}>
           Cancel
         </button>
@@ -468,7 +582,7 @@ function AddMeeting({
           Label
           <input
             value={draft.label}
-            onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))}
+            onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value, error: undefined }))}
             placeholder="Week 2"
             style={inputStyle}
           />
@@ -478,19 +592,30 @@ function AddMeeting({
           <input
             type="date"
             value={draft.date}
-            onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value }))}
+            onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value, error: undefined }))}
             style={inputStyle}
           />
         </label>
       </div>
 
       <label style={{ display: "grid", gap: 5, fontSize: 13, color: "var(--muted)" }}>
-        Sign-in sheet (CSV or names)
+        {editing ? "Re-import sign-in sheet (optional)" : "Sign-in sheet (CSV or names)"}
         <textarea
           value={draft.text}
-          onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value, matches: [] }))}
-          rows={8}
-          placeholder={'Paste the Google Form CSV here — columns like Timestamp, Full Name, Class Year.\nOr just one name per line.'}
+          onChange={(e) =>
+            setDraft((d) => ({
+              ...d,
+              text: e.target.value,
+              // Clearing the paste shouldn't wipe an edit checklist until they match again.
+              matches: editing ? d.matches : [],
+            }))
+          }
+          rows={editing ? 5 : 8}
+          placeholder={
+            editing
+              ? "Optional: paste a new CSV/xlsx export to rematch names and refresh class years."
+              : "Paste the Google Form CSV here — columns like Timestamp, Full Name, Class Year.\nOr just one name per line."
+          }
           style={{ ...inputStyle, fontFamily: "var(--font-mono), ui-monospace, monospace", fontSize: 12.5, resize: "vertical" }}
         />
       </label>
@@ -498,16 +623,28 @@ function AddMeeting({
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <label className="ctl" style={{ cursor: "pointer" }}>
           <Upload size={15} />
-          Upload CSV
+          Upload CSV / xlsx
           <input
             type="file"
-            accept=".csv,text/csv,text/plain"
+            accept=".csv,.xlsx,.xls,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
             style={{ display: "none" }}
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
-              const text = await file.text();
-              setDraft((d) => ({ ...d, text, matches: [] }));
+              try {
+                const text = await sheetFileToText(file);
+                setDraft((d) => ({
+                  ...d,
+                  text,
+                  matches: editing ? d.matches : [],
+                  error: undefined,
+                }));
+              } catch (err) {
+                setDraft((d) => ({
+                  ...d,
+                  error: err instanceof Error ? err.message : "Could not read that file.",
+                }));
+              }
               e.target.value = "";
             }}
           />
@@ -519,7 +656,7 @@ function AddMeeting({
           onClick={onMatch}
         >
           {draft.parsing ? <Loader2 size={15} className="animate-spin" /> : <ClipboardCheck size={15} />}
-          {draft.parsing ? "Matching…" : "Match to roster"}
+          {draft.parsing ? "Matching…" : editing ? "Rematch sheet" : "Match to roster"}
         </button>
       </div>
 
@@ -531,7 +668,7 @@ function AddMeeting({
           {draft.aiNote} Exact and nickname matches still ran.
         </p>
       )}
-      {reviewed && draft.usedAi && !draft.aiNote && (
+      {draft.usedAi && !draft.aiNote && draft.text.trim() && (
         <p style={{ fontSize: 12.5, color: "var(--faint)", margin: 0 }}>
           Fuzzy names were checked with AI.
         </p>
@@ -541,47 +678,57 @@ function AddMeeting({
         <>
           <section className="card" style={{ padding: 16, display: "grid", gap: 10 }}>
             <h4 className="h-sub" style={{ fontSize: 15, margin: 0 }}>
-              Review — {draft.presentEmails.size} marked present
+              {editing ? "Who was present" : "Review"} — {draft.presentEmails.size} marked present
             </h4>
             <p style={{ fontSize: 13, color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
-              Uncheck anyone matched by mistake. Absentees are everyone else on the email list.
+              {editing
+                ? "Toggle anyone who should be marked present or absent. You can also rematch a sheet above."
+                : "Uncheck anyone matched by mistake. Absentees are everyone else on the email list."}{" "}
+              Class years from a sheet write to the Email list Year column when you save.
             </p>
             <div style={{ display: "grid", gap: 6 }}>
-              {draft.matches
-                .filter((m) => m.email)
-                .map((m) => {
-                  const person = roster.find((r) => r.email.toLowerCase() === m.email);
-                  const on = draft.presentEmails.has(m.email!.toLowerCase());
-                  return (
-                    <label
-                      key={`${m.rawName}-${m.email}`}
-                      style={{
-                        display: "flex",
-                        gap: 10,
-                        alignItems: "center",
-                        fontSize: 13.5,
-                        padding: "6px 8px",
-                        borderRadius: 8,
-                        background: on ? "transparent" : "var(--card)",
-                        opacity: on ? 1 : 0.55,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={on}
-                        onChange={() => toggleEmail(m.email!)}
-                      />
-                      <span style={{ flex: 1 }}>
-                        <strong>{person?.name ?? m.email}</strong>
-                        <span style={{ color: "var(--muted)" }}> ← {m.rawName}</span>
-                      </span>
+              {checklist.map((row) => {
+                const on = draft.presentEmails.has(row.email);
+                return (
+                  <label
+                    key={row.email}
+                    style={{
+                      display: "flex",
+                      gap: 10,
+                      alignItems: "center",
+                      fontSize: 13.5,
+                      padding: "6px 8px",
+                      borderRadius: 8,
+                      background: on ? "transparent" : "var(--card)",
+                      opacity: on ? 1 : 0.55,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() => toggleEmail(row.email)}
+                    />
+                    <span style={{ flex: 1 }}>
+                      <strong>{row.label}</strong>
+                      {row.rawName && (
+                        <span style={{ color: "var(--muted)" }}> ← {row.rawName}</span>
+                      )}
+                      {row.year && (
+                        <span className="mono" style={{ color: "var(--brand)", marginLeft: 8 }}>
+                          {row.year}
+                        </span>
+                      )}
+                    </span>
+                    {showMatchMeta && row.via && (
                       <span className="mono" style={{ fontSize: 11, color: "var(--faint)" }}>
-                        {m.via} · {m.confidence}
+                        {row.via}
+                        {row.confidence ? ` · ${row.confidence}` : ""}
                       </span>
-                    </label>
-                  );
-                })}
+                    )}
+                  </label>
+                );
+              })}
             </div>
 
             {draft.unmatchedNames.length > 0 && (
@@ -597,7 +744,7 @@ function AddMeeting({
             onClick={onSave}
           >
             <Check size={15} />
-            Save meeting
+            {editing ? "Save changes" : "Save meeting"}
           </button>
         </>
       )}

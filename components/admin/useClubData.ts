@@ -134,6 +134,12 @@ export function useClubData() {
     (attendance: AttendanceMeeting[]) => save({ ...dataRef.current, attendance }),
     [save]
   );
+  /** One write for a meeting save that also fills class years on the roster. */
+  const setAttendanceAndRoster = useCallback(
+    (attendance: AttendanceMeeting[], roster: RosterEntry[]) =>
+      save({ ...dataRef.current, attendance, roster }),
+    [save]
+  );
 
-  return { data, state, setRoster, setEvents, setAttendance };
+  return { data, state, setRoster, setEvents, setAttendance, setAttendanceAndRoster };
 }
