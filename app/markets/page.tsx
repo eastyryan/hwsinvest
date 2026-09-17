@@ -5,8 +5,9 @@ import YieldChart from "@/components/YieldChart";
 import EconCard, { type EconSeries } from "@/components/EconCard";
 import { getQuotes } from "@/lib/finnhub";
 import { getHistory } from "@/lib/fred";
+import { getEffr, getTreasuryYields, getUmichSentiment, withNewer, type Obs } from "@/lib/macro";
 import { indices, sectors } from "@/data/sectors";
-import { yoyChange } from "@/lib/format";
+import { formatEcon, periodLabel, yoyChange } from "@/lib/format";
 
 import type { EconFmt } from "@/lib/format";
 
@@ -33,10 +34,10 @@ const SERIES: { id: string; label: string; fmt: EconFmt; note: string; desc: str
     desc: "The yield on the 30-year U.S. government bond. As the longest common maturity, it reflects the market's long-run expectations for growth and inflation.",
   },
   {
-    id: "FEDFUNDS",
+    id: "DFF",
     label: "Fed Funds Rate",
     fmt: "pct",
-    note: "monthly",
+    note: "daily",
     desc: "The interest rate banks charge each other for overnight loans, steered into a target range by the Federal Reserve. It's the main lever of U.S. monetary policy and ripples into nearly every other rate.",
   },
   {
@@ -128,12 +129,20 @@ function summarize(hist: { date: string; value: number }[], fmt: EconFmt) {
 }
 
 export default async function MarketsPage() {
-  const [indexQuotes, sectorQuotes, histories, idxHistories] = await Promise.all([
+  const [indexQuotes, sectorQuotes, fredHistories, idxHistories, treasury, effr, umich] = await Promise.all([
     getQuotes(indices.map((i) => i.symbol)),
     getQuotes(sectors.map((s) => s.etf)),
     Promise.all(SERIES.map((s) => getHistory(s.id, 800))),
     Promise.all(indices.map((i) => (i.fred ? getHistory(i.fred, 800) : Promise.resolve([])))),
+    getTreasuryYields(),
+    getEffr(),
+    getUmichSentiment(),
   ]);
+
+  // Top up the series FRED republishes on a lag with the original publisher's
+  // newer readings.
+  const fresher: Record<string, Obs[]> = { ...treasury, DFF: effr, UMCSENT: umich };
+  const histories = SERIES.map((s, i) => withNewer(fredHistories[i], fresher[s.id] ?? []));
 
   const econ: EconSeries[] = SERIES.map((s, i) => ({ ...s, ...summarize(histories[i], s.fmt) }));
 
@@ -147,7 +156,7 @@ export default async function MarketsPage() {
   const dgs10Hist = histories[SERIES.findIndex((s) => s.id === "DGS10")] ?? [];
   const tenYearChart = dgs10Hist.slice(-90);
   const dgs10Latest = dgs10Hist[dgs10Hist.length - 1];
-  const latestYield = dgs10Latest ? `${dgs10Latest.value}%` : "n/a";
+  const latestYield = formatEcon(dgs10Latest?.value, "pct");
 
   return (
     <main>
@@ -159,7 +168,7 @@ export default async function MarketsPage() {
         >
           <p className="kicker">Markets &amp; Economy</p>
           <h1 className="h-page">The markets, in one place</h1>
-          <p className="lede" style={{ maxWidth: 640 }}>
+          <p className="lede">
             Live equities via index and sector ETFs, the names the club is
             researching, and the rates and economic data that drive it all.
           </p>
@@ -227,7 +236,7 @@ export default async function MarketsPage() {
       {/* Sectors */}
       <section id="sectors" className="container-x" style={{ paddingTop: "clamp(44px,6vh,72px)", scrollMarginTop: 80 }}>
         <h2 className="h-sub">Explore by sector</h2>
-        <p className="lede" style={{ maxWidth: 560, margin: "11px 0 24px" }}>
+        <p className="lede" style={{ margin: "11px 0 24px" }}>
           Each sector maps to its SPDR ETF, with a few representative names the
           club follows.
         </p>
@@ -251,9 +260,11 @@ export default async function MarketsPage() {
         <h2 className="h-sub" style={{ margin: "8px 0 0" }}>
           Bonds, rates &amp; the economy
         </h2>
-        <p className="lede" style={{ maxWidth: 600, margin: "11px 0 24px" }}>
-          Authoritative data from the Federal Reserve Bank of St. Louis (FRED).
-          Tap any indicator to see its year-over-year change and history.
+        <p className="lede" style={{ margin: "11px 0 24px" }}>
+          Data from the Federal Reserve Bank of St. Louis (FRED), kept current
+          with same-day releases from the U.S. Treasury, the New York Fed, and
+          the University of Michigan. Tap any indicator to see its
+          year-over-year change and history.
         </p>
         <div
           style={{
@@ -272,7 +283,7 @@ export default async function MarketsPage() {
       {/* 10-Year yield chart */}
       <section className="container-x" style={{ paddingTop: "clamp(40px,5vh,60px)" }}>
         <h2 className="h-sub">10-Year Treasury yield</h2>
-        <p className="lede" style={{ maxWidth: 600, margin: "11px 0 22px" }}>
+        <p className="lede" style={{ margin: "11px 0 22px" }}>
           The benchmark rate that influences mortgages, corporate borrowing, and
           equity valuations. Last ~90 observations.
         </p>
@@ -288,7 +299,7 @@ export default async function MarketsPage() {
             }}
           >
             <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>
-              DGS10 · daily
+              DGS10 · {dgs10Latest ? periodLabel(dgs10Latest.date, "daily") : "daily"}
             </span>
             <span className="mono" style={{ fontSize: 24, fontWeight: 600, color: "var(--brand)" }}>
               {latestYield}

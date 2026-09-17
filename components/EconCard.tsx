@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import MiniChart from "./MiniChart";
-import { formatEcon, type EconFmt } from "@/lib/format";
+import { formatEcon, periodLabel, type EconFmt } from "@/lib/format";
 
 export type EconSeries = {
   id: string;
@@ -73,7 +73,7 @@ export default function EconCard({ s }: { s: EconSeries }) {
             </span>
           )}
           <span className="mono" style={{ fontSize: 11, color: "var(--faint)", letterSpacing: "0.05em" }}>
-            {s.date ? `as of ${s.date}` : s.note} · {s.id}
+            {s.date ? periodLabel(s.date, s.note) : s.note} · {s.id}
           </span>
         </div>
       </button>

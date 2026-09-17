@@ -42,6 +42,19 @@ export function yoyChange(
   return { text: `${d >= 0 ? "+" : ""}${d.toFixed(1)}%`, up: d >= 0 };
 }
 
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// FRED dates mark the start of a period, so "2026-04-01" on a quarterly series
+// is Q2 2026, not April 1st. Label by frequency so current data doesn't read
+// months stale.
+export function periodLabel(date: string, freq: string): string {
+  const [y, m, d] = date.split("-").map(Number);
+  if (!y || !m) return date;
+  if (freq === "quarterly") return `Q${Math.floor((m - 1) / 3) + 1} ${y}`;
+  if (freq === "monthly") return `${MON[m - 1]} ${y}`;
+  return `${MON[m - 1]} ${d}, ${y}`;
+}
+
 export const arrow = (n: number | undefined) => (isUp(n) ? "▲" : "▼");
 
 // Human-readable file size, e.g. 1536 → "1.5 KB".

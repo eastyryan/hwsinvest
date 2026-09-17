@@ -9,7 +9,7 @@ function key(): string | null {
   return process.env.FRED_API_KEY ?? null;
 }
 
-// Latest single observation for a series, e.g. DGS10. Cached 1h (daily data).
+// Latest single observation for a series, e.g. DGS10. Cached 15m so new releases show up promptly.
 // Returns null (rather than throwing) when the key is missing so pages degrade
 // gracefully in local dev / preview without credentials.
 export async function getLatest(
@@ -20,7 +20,7 @@ export async function getLatest(
   const url =
     `${BASE}/series/observations?series_id=${series}` +
     `&api_key=${k}&file_type=json&sort_order=desc&limit=1`;
-  const res = await fetch(url, { next: { revalidate: 3600 } });
+  const res = await fetch(url, { next: { revalidate: 900 } });
   if (!res.ok) return null;
   const json = await res.json();
   const o: Observation | undefined = json.observations?.[0];
@@ -38,7 +38,7 @@ export async function getHistory(
   const url =
     `${BASE}/series/observations?series_id=${series}` +
     `&api_key=${k}&file_type=json&sort_order=desc&limit=${limit}`;
-  const res = await fetch(url, { next: { revalidate: 3600 } });
+  const res = await fetch(url, { next: { revalidate: 900 } });
   if (!res.ok) return [];
   const json = await res.json();
   const obs: Observation[] = json.observations ?? [];
