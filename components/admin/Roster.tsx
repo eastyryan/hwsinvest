@@ -223,7 +223,7 @@ export default function Roster({
                       />
                     </td>
                     <td>
-                      <Cell row={row} field="year" rows={rows} setRows={setRows} commit={commit} placeholder="e.g. '28" />
+                      <Cell row={row} field="year" rows={rows} setRows={setRows} commit={commit} placeholder="e.g. Junior" />
                     </td>
                     <td>
                       <Cell row={row} field="role" rows={rows} setRows={setRows} commit={commit} placeholder="e.g. Analyst" />

@@ -78,8 +78,8 @@ Both are read **only on the server** (no `NEXT_PUBLIC_` prefix), so they never r
   save the meeting, and every roster member gets a running % (meetings attended
   ÷ meetings tracked). Saved meetings can be opened to **Edit** (label, date,
   present/absent) or **Delete**. Class Year from the sheet
-  (Freshman/Sophomore/Junior/Senior) is written onto the Email list Year column
-  as `'30` / `'29` / `'28` / `'27` for the academic year of the meeting.
+  (Freshman/Sophomore/Junior/Senior) is written onto the Email list and
+  Attendance Year columns using those same labels.
   Admin-only — members never see this tab. Optional `XAI_API_KEY` can help with
   unusual name spellings; it is not required.
 - **Newsletter**: every published issue.

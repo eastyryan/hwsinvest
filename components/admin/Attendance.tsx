@@ -87,7 +87,8 @@ export default function Attendance({
           (r) =>
             r.name.toLowerCase().includes(q) ||
             r.email.includes(q) ||
-            (r.role ?? "").toLowerCase().includes(q)
+            (r.role ?? "").toLowerCase().includes(q) ||
+            (r.year ?? "").toLowerCase().includes(q)
         )
       : list;
 
@@ -358,12 +359,13 @@ export default function Attendance({
             </caption>
             <thead>
               <tr>
-                <th style={{ width: "28%" }}>Name</th>
-                <th style={{ width: "32%" }}>Email</th>
+                <th style={{ width: "24%" }}>Name</th>
+                <th style={{ width: "28%" }}>Email</th>
+                <th style={{ width: "12%" }}>Year</th>
                 <th style={{ width: "12%" }}>Role</th>
-                <th style={{ width: "12%" }}>Present</th>
-                <th style={{ width: "10%" }}>%</th>
-                <th style={{ width: "16%" }}>Last in</th>
+                <th style={{ width: "10%" }}>Present</th>
+                <th style={{ width: "8%" }}>%</th>
+                <th style={{ width: "12%" }}>Last in</th>
               </tr>
             </thead>
             <tbody>
@@ -371,6 +373,7 @@ export default function Attendance({
                 <tr key={r.id || r.email}>
                   <td>{r.name}</td>
                   <td className="mono" style={{ fontSize: 12.5 }}>{r.email}</td>
+                  <td style={{ color: "var(--muted)", fontSize: 13 }}>{r.year || "—"}</td>
                   <td style={{ color: "var(--muted)", fontSize: 13 }}>{r.role ?? "—"}</td>
                   <td className="mono" style={{ fontSize: 13 }}>
                     {r.present}/{total}
@@ -469,7 +472,14 @@ function MeetingDetail({
           </p>
           <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.55 }}>
             {presentRows.map((r) => (
-              <li key={r.email}>{r.name}</li>
+              <li key={r.email}>
+                {r.name}
+                {r.year ? (
+                  <span className="mono" style={{ color: "var(--faint)", marginLeft: 6, fontSize: 12 }}>
+                    {r.year}
+                  </span>
+                ) : null}
+              </li>
             ))}
           </ul>
         </div>
@@ -479,7 +489,14 @@ function MeetingDetail({
           </p>
           <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.55, color: "var(--muted)" }}>
             {absentRows.slice(0, 40).map((r) => (
-              <li key={r.email}>{r.name}</li>
+              <li key={r.email}>
+                {r.name}
+                {r.year ? (
+                  <span className="mono" style={{ color: "var(--faint)", marginLeft: 6, fontSize: 12 }}>
+                    {r.year}
+                  </span>
+                ) : null}
+              </li>
             ))}
             {absentRows.length > 40 && <li>…and {absentRows.length - 40} more</li>}
           </ul>

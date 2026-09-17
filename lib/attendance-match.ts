@@ -98,18 +98,34 @@ function firstName(name: string): string {
 
 /**
  * Turn a Class Year cell into the roster Year column value.
- * Freshman/Sophomore/Junior/Senior → "'30" / "'29" / "'28" / "'27" using the
- * academic year of `asOf` (July–June). Bare years like 2028 or '28 pass through.
+ * Keeps Freshman / Sophomore / Junior / Senior (what the Google Form collects).
+ * Aliases like frosh / first-year map to Freshman. Bare graduation years
+ * ('28, 2028, Class of 2028) are left as "'YY".
  */
 export function normalizeClassYear(
   raw: string | undefined | null,
-  asOf?: string | Date | null
+  _asOf?: string | Date | null
 ): string | undefined {
   if (!raw) return undefined;
   const cleaned = raw.replace(/^["']+|["']+$/g, "").trim();
   if (!cleaned) return undefined;
 
   const lower = cleaned.toLowerCase();
+
+  const standings: Record<string, string> = {
+    freshman: "Freshman",
+    frosh: "Freshman",
+    "first year": "Freshman",
+    "first-year": "Freshman",
+    "1st year": "Freshman",
+    sophomore: "Sophomore",
+    "2nd year": "Sophomore",
+    junior: "Junior",
+    "3rd year": "Junior",
+    senior: "Senior",
+    "4th year": "Senior",
+  };
+  if (standings[lower]) return standings[lower];
 
   // Already a graduation year: '28, 28, 2028, Class of 2028, Class of '28
   const yearHit =
@@ -123,35 +139,8 @@ export function normalizeClassYear(
     return `'${yy}`;
   }
 
-  const standingYears: Record<string, number> = {
-    freshman: 4,
-    frosh: 4,
-    "first year": 4,
-    "first-year": 4,
-    "1st year": 4,
-    sophomore: 3,
-    "2nd year": 3,
-    junior: 2,
-    "3rd year": 2,
-    senior: 1,
-    "4th year": 1,
-  };
-  const offset = standingYears[lower];
-  if (offset == null) {
-    // Keep free-text standings we don't recognize, title-cased and capped.
-    return cleaned.slice(0, 24);
-  }
-
-  const ref =
-    typeof asOf === "string" && /^\d{4}-\d{2}-\d{2}$/.test(asOf)
-      ? new Date(Number(asOf.slice(0, 4)), Number(asOf.slice(5, 7)) - 1, Number(asOf.slice(8, 10)))
-      : asOf instanceof Date
-        ? asOf
-        : new Date();
-  // Academic year starts in July: Fall 2026 seniors graduate spring 2027.
-  const academicStart = ref.getMonth() >= 6 ? ref.getFullYear() : ref.getFullYear() - 1;
-  const grad = academicStart + offset;
-  return `'${String(grad).slice(-2)}`;
+  // Keep free-text we don't recognize, capped.
+  return cleaned.slice(0, 24);
 }
 
 /** Pull unique sign-in names (+ class year when present) and an optional meeting date. */
