@@ -32,6 +32,18 @@ export type Newsletter = {
 
 export const ISSUES: Newsletter[] = [
   {
+    no: 2,
+    slug: "2026-09-18-issue-02",
+    file: "/newsletters/2026-09-18-issue-02.html",
+    title: "The Fed hiked 12 to 0, and told you it is not finished",
+    week: "September 14–18, 2026",
+    published: "2026-09-18",
+    publishedLabel: "September 18, 2026",
+    summary:
+      "The Fed raised rates for the first time since 2023 by a unanimous 12 to 0, and the dot plot now shows one more hike this year. Plus Buffett steps down and the AI pledge gets sued.",
+    topics: ["Rates", "Fed", "Equities", "AI"],
+  },
+  {
     no: 1,
     slug: "2026-09-13-issue-01",
     file: "/newsletters/2026-09-13-issue-01.html",
