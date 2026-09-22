@@ -60,6 +60,7 @@ export const TERMS: Term[] = [
 
 // Tuesdays we skip: breaks, reading days, finals. Add "YYYY-MM-DD" rows.
 export const WEEKLY_SKIP: string[] = [
+  "2026-09-22", // moved to Thursday Sep 24 per the president's Sep 21 schedule update
   "2026-11-24", // Thanksgiving week — no meeting
 ];
 
@@ -87,11 +88,6 @@ export const SESSION_OVERRIDES: Record<string, SessionOverride> = {
     end: "21:00",
     note: "Market recap. How a meeting runs. Officer or member pitch. Sign-ups for later nights. Club book stays closed.",
   },
-  "2026-09-22": {
-    title: "Equities, all sectors",
-    end: "21:00",
-    note: "Equity universe in one framework. Club book opens. First names voted in.",
-  },
   "2026-09-29": {
     title: "Fixed income",
     end: "21:00",
@@ -100,7 +96,7 @@ export const SESSION_OVERRIDES: Record<string, SessionOverride> = {
   "2026-10-06": {
     title: "Eric Stein",
     end: "21:00",
-    note: "Eric Stein meeting. No club recap or pitch tonight. Club meeting moves to Thursday Oct 8 at 8:00 p.m.",
+    note: "Eric Stein meeting. No club recap or pitch tonight. Club meeting moves to Thursday Oct 8 at 7:30 p.m.",
   },
   "2026-10-13": {
     title: "Bloomberg workshop",
@@ -110,12 +106,12 @@ export const SESSION_OVERRIDES: Record<string, SessionOverride> = {
   "2026-10-20": {
     title: "Eric Stein",
     end: "21:00",
-    note: "Eric Stein meeting. No club recap or pitch tonight. Club meeting moves to Thursday Oct 22 at 8:00 p.m.",
+    note: "Eric Stein meeting. No club recap or pitch tonight. Club meeting moves to Thursday Oct 22 at 7:30 p.m.",
   },
   "2026-10-27": {
     title: "Eric Stein",
     end: "21:00",
-    note: "Eric Stein meeting. No club recap or pitch tonight. Club meeting moves to Thursday Oct 29 at 8:00 p.m.",
+    note: "Eric Stein meeting. No club recap or pitch tonight. Club meeting moves to Thursday Oct 29 at 7:30 p.m.",
   },
   "2026-11-03": {
     title: "Guest speaker",
@@ -146,16 +142,26 @@ export const SESSION_OVERRIDES: Record<string, SessionOverride> = {
 
 /**
  * Non-Tuesday club sessions from the Fall 2026 index. On Eric Stein Tuesdays
- * (Oct 6, 20, 27) the normal club meeting moves to Thursday at 8:00 p.m. and
+ * (Oct 6, 20, 27) the normal club meeting moves to Thursday at 7:30 p.m. and
  * uses the standard-night format.
  */
 export const EXTRA_EVENTS: ClubEvent[] = [
   {
+    id: "moved-2026-09-24",
+    title: "Equities, all sectors",
+    date: "2026-09-24",
+    start: "19:30",
+    end: "21:00",
+    location: WEEKLY.location,
+    kind: "club",
+    note: "This week's club meeting, moved off Tuesday Sep 22 per the president's Sep 21 schedule update. Equity universe in one framework. Club book opens. First names voted in.",
+  },
+  {
     id: "moved-2026-10-08",
     title: "Pitching and valuation basics",
     date: "2026-10-08",
-    start: "20:00",
-    end: "21:30",
+    start: "19:30",
+    end: "21:00",
     location: WEEKLY.location,
     kind: "club",
     note: "This week's club meeting, moved off Tuesday for Eric Stein. What a club pitch must include. Standard-night format.",
@@ -164,8 +170,8 @@ export const EXTRA_EVENTS: ClubEvent[] = [
     id: "moved-2026-10-22",
     title: "Financial modeling I",
     date: "2026-10-22",
-    start: "20:00",
-    end: "21:30",
+    start: "19:30",
+    end: "21:00",
     location: WEEKLY.location,
     kind: "club",
     note: "This week's club meeting, moved off Tuesday for Eric Stein. Three statements and how they link. Standard-night format.",
@@ -174,8 +180,8 @@ export const EXTRA_EVENTS: ClubEvent[] = [
     id: "moved-2026-10-29",
     title: "Financial modeling II",
     date: "2026-10-29",
-    start: "20:00",
-    end: "21:30",
+    start: "19:30",
+    end: "21:00",
     location: WEEKLY.location,
     kind: "club",
     note: "This week's club meeting, moved off Tuesday for Eric Stein. DCF. Standard-night format.",
