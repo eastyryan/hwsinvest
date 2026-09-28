@@ -32,6 +32,18 @@ export type Newsletter = {
 
 export const ISSUES: Newsletter[] = [
   {
+    no: 3,
+    slug: "2026-09-25-issue-03",
+    file: "/newsletters/2026-09-25-issue-03.html",
+    title: "Yields hit a 19-year high, and AI agents carried the Nasdaq anyway",
+    week: "September 21–25, 2026",
+    published: "2026-09-25",
+    publishedLabel: "September 25, 2026",
+    summary:
+      "The 10-year closed at 5.17%, a 19-year high, and the Fed's speakers kept another hike in play. The Nasdaq rose 2.1% on the AI agent trade while the equal-weight S&P slipped.",
+    topics: ["Rates", "Equities", "AI", "Energy"],
+  },
+  {
     no: 2,
     slug: "2026-09-18-issue-02",
     file: "/newsletters/2026-09-18-issue-02.html",
