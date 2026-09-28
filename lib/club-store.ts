@@ -22,6 +22,35 @@ export type RosterEntry = {
   role?: string;
 };
 
+/**
+ * Counted present at every meeting, whether or not that week's sign-in sheet
+ * includes them. Matched by email, and by the name "Easton Ryan" if the
+ * roster email ever changes.
+ */
+export const ALWAYS_PRESENT_EMAILS = ["easton.ryan@hws.edu"] as const;
+
+export function isAlwaysPresentMember(person: { email?: string; name?: string }): boolean {
+  const email = (person.email ?? "").trim().toLowerCase();
+  if ((ALWAYS_PRESENT_EMAILS as readonly string[]).includes(email)) return true;
+  return (person.name ?? "").trim().toLowerCase().replace(/\s+/g, " ") === "easton ryan";
+}
+
+/** Present list for a meeting, with always-present members included. */
+export function presentEmailsForMeeting(
+  emails: string[],
+  roster: Array<{ email?: string; name?: string }> = []
+): string[] {
+  const set = new Set(
+    emails.map((e) => e.trim().toLowerCase()).filter((e) => e.includes("@"))
+  );
+  for (const email of ALWAYS_PRESENT_EMAILS) set.add(email);
+  for (const person of roster) {
+    const email = (person.email ?? "").trim().toLowerCase();
+    if (email.includes("@") && isAlwaysPresentMember(person)) set.add(email);
+  }
+  return [...set];
+}
+
 /** One club meeting with who signed in (matched to roster emails). */
 export type AttendanceMeeting = {
   id: string;
@@ -150,6 +179,7 @@ export function sanitize(raw: unknown): ClubData {
         .filter((x): x is AttendanceMeeting => x !== null)
         .slice(0, 200)
         .sort((a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label))
+        .map((m) => ({ ...m, presentEmails: presentEmailsForMeeting(m.presentEmails, roster) }))
     : [];
   return { roster, events, attendance, updated: str(d.updated, 40) };
 }

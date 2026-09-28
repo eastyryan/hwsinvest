@@ -12,7 +12,12 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import type { AttendanceMeeting, RosterEntry } from "@/lib/club-store";
+import {
+  isAlwaysPresentMember,
+  presentEmailsForMeeting,
+  type AttendanceMeeting,
+  type RosterEntry,
+} from "@/lib/club-store";
 import { applyYearsToRoster, type AttendanceMatch } from "@/lib/attendance-match";
 import { inputStyle } from "./ClubCalendar";
 import { sheetFileToText } from "@/lib/attendance-sheet";
@@ -72,7 +77,7 @@ export default function Attendance({
     const list = roster.map((r) => {
       const email = r.email.toLowerCase();
       const attended = meetings.filter((m) =>
-        m.presentEmails.some((e) => e.toLowerCase() === email)
+        presentEmailsForMeeting(m.presentEmails, roster).includes(email)
       );
       const present = attended.length;
       const pct = total === 0 ? 0 : Math.round((present / total) * 100);
@@ -129,7 +134,10 @@ export default function Attendance({
       if (!res.ok) throw new Error(json?.error ?? `Match failed (${res.status})`);
 
       const presentEmails = new Set<string>(
-        (json.presentEmails as string[] | undefined)?.map((e) => e.toLowerCase()) ?? []
+        presentEmailsForMeeting(
+          (json.presentEmails as string[] | undefined) ?? [],
+          roster
+        )
       );
       setDraft((d) => ({
         ...d,
@@ -161,7 +169,7 @@ export default function Attendance({
       editingId: meeting.id,
       label: meeting.label,
       date: meeting.date,
-      presentEmails: new Set(meeting.presentEmails.map((e) => e.toLowerCase())),
+      presentEmails: new Set(presentEmailsForMeeting(meeting.presentEmails, roster)),
       unmatchedNames: meeting.unmatchedNames,
       // Synthetic matches so the review list can show every roster member.
       matches: roster
@@ -202,7 +210,7 @@ export default function Attendance({
       id: editingId || `a-${date}-${Date.now().toString(36)}`,
       date,
       label,
-      presentEmails: [...draft.presentEmails],
+      presentEmails: presentEmailsForMeeting([...draft.presentEmails], roster),
       unmatchedNames: draft.unmatchedNames,
       recordedAt: prior?.recordedAt || new Date().toISOString(),
     };
@@ -297,7 +305,7 @@ export default function Attendance({
             >
               {m.label}
               <span className="mono" style={{ fontSize: 11, color: "var(--faint)", marginLeft: 6 }}>
-                {m.date} · {m.presentEmails.length} present
+                {m.date} · {presentEmailsForMeeting(m.presentEmails, roster).length} present
               </span>
             </button>
           ))}
@@ -417,7 +425,7 @@ function MeetingDetail({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const present = new Set(meeting.presentEmails.map((e) => e.toLowerCase()));
+  const present = new Set(presentEmailsForMeeting(meeting.presentEmails, roster));
   const presentRows = roster.filter((r) => present.has(r.email.toLowerCase()));
   const absentRows = roster.filter((r) => !present.has(r.email.toLowerCase()));
 
@@ -533,6 +541,8 @@ function AddMeeting({
   });
 
   function toggleEmail(email: string) {
+    const person = roster.find((r) => r.email.toLowerCase() === email.toLowerCase());
+    if (person && isAlwaysPresentMember(person)) return;
     setDraft((d) => {
       const next = new Set(d.presentEmails);
       const key = email.toLowerCase();
@@ -706,6 +716,7 @@ function AddMeeting({
             <div style={{ display: "grid", gap: 6 }}>
               {checklist.map((row) => {
                 const on = draft.presentEmails.has(row.email);
+                const locked = isAlwaysPresentMember({ email: row.email, name: row.label });
                 return (
                   <label
                     key={row.email}
@@ -718,12 +729,13 @@ function AddMeeting({
                       borderRadius: 8,
                       background: on ? "transparent" : "var(--card)",
                       opacity: on ? 1 : 0.55,
-                      cursor: "pointer",
+                      cursor: locked ? "default" : "pointer",
                     }}
                   >
                     <input
                       type="checkbox"
-                      checked={on}
+                      checked={on || locked}
+                      disabled={locked}
                       onChange={() => toggleEmail(row.email)}
                     />
                     <span style={{ flex: 1 }}>
@@ -734,6 +746,11 @@ function AddMeeting({
                       {row.year && (
                         <span className="mono" style={{ color: "var(--brand)", marginLeft: 8 }}>
                           {row.year}
+                        </span>
+                      )}
+                      {locked && (
+                        <span className="mono" style={{ color: "var(--faint)", marginLeft: 8, fontSize: 11 }}>
+                          always present
                         </span>
                       )}
                     </span>
