@@ -83,7 +83,7 @@ export default function AdminConsole({ issues }: { issues: Newsletter[] }) {
         {tab === "attendance" && (
           <Section
             title="Attendance"
-            blurb="Paste or upload each week's sign-in CSV/xlsx. Names are matched to the email list (nicknames included), Class Year fills the Members Year column, and everyone gets a running attendance percentage. Board-only — members never see this."
+            blurb="Paste or upload each meeting's sign-in CSV/xlsx. Names are matched to the email list (nicknames included), Class Year fills the Members Year column, and everyone gets a running attendance percentage. Meetings are numbered by date. Board-only — members never see this."
           >
             <Attendance
               roster={data.roster}

@@ -139,21 +139,20 @@ export default function Attendance({
           roster
         )
       );
-      setDraft((d) => ({
-        ...d,
-        parsing: false,
-        matches: (json.matches as AttendanceMatch[]) ?? [],
-        presentEmails,
-        unmatchedNames: (json.unmatchedNames as string[]) ?? [],
-        usedAi: Boolean(json.usedAi),
-        aiNote: typeof json.aiNote === "string" ? json.aiNote : undefined,
-        date: d.date || (typeof json.meetingDate === "string" ? json.meetingDate : ""),
-        label:
-          d.label ||
-          (typeof json.meetingDate === "string"
-            ? weekLabel(json.meetingDate, meetings.length + 1)
-            : `Week ${meetings.length + 1}`),
-      }));
+      setDraft((d) => {
+        const date = d.date || (typeof json.meetingDate === "string" ? json.meetingDate : "");
+        return {
+          ...d,
+          parsing: false,
+          matches: (json.matches as AttendanceMatch[]) ?? [],
+          presentEmails,
+          unmatchedNames: (json.unmatchedNames as string[]) ?? [],
+          usedAi: Boolean(json.usedAi),
+          aiNote: typeof json.aiNote === "string" ? json.aiNote : undefined,
+          date,
+          label: labelForDate(date, meetings, d.editingId),
+        };
+      });
     } catch (e) {
       setDraft((d) => ({
         ...d,
@@ -186,7 +185,6 @@ export default function Attendance({
   }
 
   function saveMeeting() {
-    const label = draft.label.trim() || `Week ${meetings.length + 1}`;
     const date = draft.date.trim();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       setDraft((d) => ({ ...d, error: "Set a meeting date (YYYY-MM-DD)." }));
@@ -209,16 +207,16 @@ export default function Attendance({
     const meeting: AttendanceMeeting = {
       id: editingId || `a-${date}-${Date.now().toString(36)}`,
       date,
-      label,
+      label: labelForDate(date, meetings, editingId),
       presentEmails: presentEmailsForMeeting([...draft.presentEmails], roster),
       unmatchedNames: draft.unmatchedNames,
       recordedAt: prior?.recordedAt || new Date().toISOString(),
     };
 
-    const next = [
+    const next = numberedByDate([
       ...meetings.filter((m) => m.id !== meeting.id && m.date !== date),
       meeting,
-    ].sort((a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label));
+    ]);
 
     // Class Year from a freshly matched sheet → Members Year column.
     // Edits that only toggle checkboxes have empty matches.year and leave the roster alone.
@@ -230,7 +228,7 @@ export default function Attendance({
   }
 
   function removeMeeting(id: string) {
-    onChange(meetings.filter((m) => m.id !== id));
+    onChange(numberedByDate(meetings.filter((m) => m.id !== id)));
     if (selectedId === id) setSelectedId(null);
     if (draft.editingId === id) {
       setDraft(emptyDraft());
@@ -249,6 +247,7 @@ export default function Attendance({
           setDraft(emptyDraft());
           setMode("summary");
         }}
+        meetings={meetings}
         onMatch={runMatch}
         onSave={saveMeeting}
       />
@@ -261,11 +260,12 @@ export default function Attendance({
         <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
           <ClipboardCheck size={19} color="var(--brand)" style={{ flexShrink: 0, marginTop: 2 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h3 className="h-sub" style={{ fontSize: 17 }}>Weekly attendance</h3>
+            <h3 className="h-sub" style={{ fontSize: 17 }}>Attendance</h3>
             <p style={{ fontSize: 13.5, color: "var(--muted)", margin: "5px 0 0", lineHeight: 1.55, maxWidth: "68ch" }}>
-              Paste or upload each week&apos;s Google Form CSV/xlsx. Names are matched to the email
+              Paste or upload each meeting&apos;s Google Form CSV/xlsx. Names are matched to the email
               list (including nicknames), Class Year fills the Email list Year column, and percentage
-              is meetings attended ÷ meetings tracked.
+              is meetings attended ÷ meetings tracked. Meetings are numbered by date, so a cancelled
+              night does not leave a gap.
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14, alignItems: "center" }}>
               <button
@@ -274,7 +274,7 @@ export default function Attendance({
                 onClick={() => {
                   setDraft({
                     ...emptyDraft(),
-                    label: `Week ${meetings.length + 1}`,
+                    label: labelForDate("", meetings, null),
                   });
                   setMode("add");
                 }}
@@ -520,6 +520,7 @@ function AddMeeting({
   setDraft,
   roster,
   onCancel,
+  meetings,
   onMatch,
   onSave,
 }: {
@@ -527,6 +528,7 @@ function AddMeeting({
   draft: Draft;
   setDraft: React.Dispatch<React.SetStateAction<Draft>>;
   roster: RosterEntry[];
+  meetings: AttendanceMeeting[];
   onCancel: () => void;
   onMatch: () => void;
   onSave: () => void;
@@ -606,11 +608,12 @@ function AddMeeting({
 
       <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
         <label style={{ display: "grid", gap: 5, fontSize: 13, color: "var(--muted)" }}>
-          Label
+          Meeting
           <input
             value={draft.label}
-            onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value, error: undefined }))}
-            placeholder="Week 2"
+            readOnly
+            aria-label="Meeting number"
+            placeholder="Meeting 1"
             style={inputStyle}
           />
         </label>
@@ -619,11 +622,22 @@ function AddMeeting({
           <input
             type="date"
             value={draft.date}
-            onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value, error: undefined }))}
+            onChange={(e) => {
+              const date = e.target.value;
+              setDraft((d) => ({
+                ...d,
+                date,
+                label: labelForDate(date, meetings, d.editingId),
+                error: undefined,
+              }));
+            }}
             style={inputStyle}
           />
         </label>
       </div>
+      <p style={{ fontSize: 12.5, color: "var(--faint)", margin: 0 }}>
+        Numbered by the date of each meeting that was held.
+      </p>
 
       <label style={{ display: "grid", gap: 5, fontSize: 13, color: "var(--muted)" }}>
         {editing ? "Re-import sign-in sheet (optional)" : "Sign-in sheet (CSV or names)"}
@@ -786,7 +800,22 @@ function AddMeeting({
   );
 }
 
-function weekLabel(date: string, fallbackN: number): string {
-  // Prefer "Week N" for the club; date is still stored separately.
-  return `Week ${fallbackN}`;
+/** Meeting N from chronological order. An empty date sorts after every saved meeting. */
+function labelForDate(
+  date: string,
+  meetings: AttendanceMeeting[],
+  editingId: string | null
+): string {
+  const others = meetings.filter((m) => m.id !== editingId);
+  const n = /^\d{4}-\d{2}-\d{2}$/.test(date)
+    ? others.filter((m) => m.date < date).length + 1
+    : others.length + 1;
+  return `Meeting ${n}`;
+}
+
+/** Rewrite labels so Meeting 1 is the earliest date. */
+function numberedByDate(meetings: AttendanceMeeting[]): AttendanceMeeting[] {
+  return [...meetings]
+    .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id))
+    .map((m, i) => ({ ...m, label: `Meeting ${i + 1}` }));
 }

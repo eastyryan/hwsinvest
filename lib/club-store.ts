@@ -56,7 +56,10 @@ export type AttendanceMeeting = {
   id: string;
   /** YYYY-MM-DD of the meeting. */
   date: string;
-  /** e.g. "Week 2". */
+  /**
+   * "Meeting 1", "Meeting 2", … in date order. Cancelled nights are omitted,
+   * so the number is how many meetings were actually held, not the calendar week.
+   */
   label: string;
   /** Roster emails marked present (stable if roster row ids change). */
   presentEmails: string[];
@@ -178,8 +181,12 @@ export function sanitize(raw: unknown): ClubData {
         .map(cleanMeeting)
         .filter((x): x is AttendanceMeeting => x !== null)
         .slice(0, 200)
-        .sort((a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label))
-        .map((m) => ({ ...m, presentEmails: presentEmailsForMeeting(m.presentEmails, roster) }))
+        .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id))
+        .map((m, i) => ({
+          ...m,
+          label: `Meeting ${i + 1}`,
+          presentEmails: presentEmailsForMeeting(m.presentEmails, roster),
+        }))
     : [];
   return { roster, events, attendance, updated: str(d.updated, 40) };
 }
