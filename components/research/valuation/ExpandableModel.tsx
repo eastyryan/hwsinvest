@@ -13,6 +13,7 @@ export default function ExpandableModel({
   subtitle,
   summary,
   defaultOpen = false,
+  preload = false,
   children,
 }: {
   title: string;
@@ -20,10 +21,12 @@ export default function ExpandableModel({
   /** One-line teaser shown while collapsed (e.g. range preview). */
   summary?: ReactNode;
   defaultOpen?: boolean;
+  /** Mount children while collapsed so their data can feed the football field. */
+  preload?: boolean;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
-  const [everOpened, setEverOpened] = useState(defaultOpen);
+  const [everOpened, setEverOpened] = useState(defaultOpen || preload);
   const panelId = useId();
 
   function toggle() {

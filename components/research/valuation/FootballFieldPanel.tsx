@@ -20,52 +20,50 @@ export default function FootballFieldPanel({
   currentPrice,
   dcfGordon,
   dcfExit,
-  comps,
+  compsPe,
+  compsEvEbitda,
+  analystTargets,
   precedents,
   lbo,
   tradingRange,
-  sotp,
   monteCarlo,
 }: {
   currentPrice: number | null;
   dcfGordon: number | null;
   dcfExit: number | null;
-  comps: MethodRange | null;
+  compsPe: MethodRange | null;
+  compsEvEbitda: MethodRange | null;
+  analystTargets: MethodRange | null;
   precedents: MethodRange | null;
   lbo: MethodRange | null;
   tradingRange: MethodRange | null;
-  sotp?: MethodRange | null;
   monteCarlo?: MethodRange | null;
 }) {
   const field = useMemo(() => {
     const bars: FootballBar[] = assembleValuationBars({
+      tradingRange: tradingRange ?? undefined,
+      analystTargets: analystTargets ?? undefined,
+      compsPe: compsPe ?? undefined,
+      compsEvEbitda: compsEvEbitda ?? undefined,
+      precedents: precedents ?? undefined,
+      monteCarlo: monteCarlo ?? undefined,
       dcf: {
         gordonPerShare: dcfGordon,
         exitPerShare: dcfExit,
       },
-      comps: comps ?? undefined,
-      precedents: precedents ?? undefined,
-      lbo: lbo
-        ? {
-            entryEquityPerShare: lbo.low,
-            exitEquityPerShare: lbo.high,
-            irrMidPerShare: lbo.mid,
-          }
-        : undefined,
-      sotp: sotp ?? undefined,
-      monteCarlo: monteCarlo ?? undefined,
-      tradingRange: tradingRange ?? undefined,
+      lbo: lbo ?? undefined,
     });
     return buildFootballField({ currentPrice, bars });
   }, [
     currentPrice,
     dcfGordon,
     dcfExit,
-    comps,
+    compsPe,
+    compsEvEbitda,
+    analystTargets,
     precedents,
     lbo,
     tradingRange,
-    sotp,
     monteCarlo,
   ]);
 
@@ -79,15 +77,16 @@ export default function FootballFieldPanel({
   return (
     <ExpandableModel
       title="Football field"
-      subtitle="Triangulation across DCF, MC, comps, SOTP, precedents, LBO, and 52-week range — with provenance labels."
+      subtitle="52-week range, analyst targets, comp P/E, comp EV/EBITDA, then DCF and LBO."
       summary={summary}
       defaultOpen={false}
     >
       <FootballFieldChart field={field} />
       <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-        DCF updates live. Comps, trading range, Monte Carlo, and SOTP appear
-        after you open those sections (and run MC once). Illustrative bars are
-        not real deal comps.
+        52-week range and analyst targets load with this page. Comp P/E and
+        EV/EBITDA fill in once peer comps finish. DCF updates as you change
+        assumptions. Open precedents or Monte Carlo to add those bars. The
+        52-week range is context and is left out of the central estimate.
       </p>
     </ExpandableModel>
   );

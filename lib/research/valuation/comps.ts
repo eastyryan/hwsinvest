@@ -205,6 +205,32 @@ function imply(
   };
 }
 
+export type PerShareBand = {
+  low: number | null;
+  mid: number | null;
+  high: number | null;
+};
+
+/**
+ * Implied price at the peer 25th / median / 75th multiple.
+ * Low and high are ordered so a lower multiple always sits on the left.
+ */
+export function impliedPerShareBand(
+  key: CompMultipleKey,
+  dist: MultipleDist,
+  subject: CompPeerInput
+): PerShareBand {
+  let low = imply(key, dist.p25, subject).perShare;
+  const mid = imply(key, dist.median, subject).perShare;
+  let high = imply(key, dist.p75, subject).perShare;
+  if (low != null && high != null && low > high) {
+    const swap = low;
+    low = high;
+    high = swap;
+  }
+  return { low, mid, high };
+}
+
 function collectNotes(
   subject: CompPeerRow,
   peerRows: CompPeerRow[],

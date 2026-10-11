@@ -10,13 +10,17 @@ import type ExcelJS from "exceljs";
 import type { CompanyFinancials } from "@/lib/research/edgar";
 import type { Dcf } from "@/lib/research/excel-dcf";
 import { companyOperatingMetrics, lastLine } from "@/lib/research/valuation/metrics";
-import { runComps, type CompPeerInput } from "@/lib/research/valuation/comps";
+import {
+  impliedPerShareBand,
+  runComps,
+  type CompPeerInput,
+} from "@/lib/research/valuation/comps";
 import { runPrecedents } from "@/lib/research/valuation/precedents";
 import {
   defaultLboInputsFromMetrics,
+  lboEntryBand,
   runLbo,
 } from "@/lib/research/valuation/lbo";
-import { runSotp } from "@/lib/research/valuation/sotp";
 import { runMerger, type MergerInputs } from "@/lib/research/valuation/merger";
 import { runCreditCapacity } from "@/lib/research/valuation/credit";
 import { runMonteCarloDcf, type McDcfInputs } from "@/lib/research/valuation/monte-carlo-dcf";
@@ -31,7 +35,6 @@ import { fillPrecedentsSheet, PRECEDENTS_SHEET_NAME } from "./precedents";
 import { fillFootballSheet, FOOTBALL_SHEET_NAME } from "./football";
 import { fillTradingRangeSheet, TRADING_RANGE_SHEET_NAME } from "./trading-range";
 import { fillLboSheet, LBO_SHEET_NAME } from "./lbo";
-import { fillSotpSheet, SOTP_SHEET_NAME } from "./sotp";
 import { fillMergerSheet, MERGER_SHEET_NAME } from "./merger";
 import { fillCreditSheet, CREDIT_SHEET_NAME } from "./credit";
 import { fillMonteCarloSheet, MC_SHEET_NAME } from "./monte-carlo";
@@ -51,7 +54,6 @@ export const VALUATION_SHEET_NAMES = [
   COMPS_SHEET_NAME,
   PRECEDENTS_SHEET_NAME,
   LBO_SHEET_NAME,
-  SOTP_SHEET_NAME,
   MERGER_SHEET_NAME,
   CREDIT_SHEET_NAME,
   MC_SHEET_NAME,
@@ -69,8 +71,6 @@ export function valuationSheetBlurb(name: string): string {
       return "Precedent transactions — empty until you add real deals";
     case LBO_SHEET_NAME:
       return "LBO sources & uses, P&L, debt schedule, MOIC / IRR";
-    case SOTP_SHEET_NAME:
-      return "Sum-of-the-parts — edit segment multiples";
     case MERGER_SHEET_NAME:
       return "Accretion / dilution — replace the placeholder target";
     case CREDIT_SHEET_NAME:
@@ -153,25 +153,6 @@ export function fillValuationSuite(
   });
   const lbo = lboInputs ? runLbo(lboInputs) : null;
 
-  const sotp = runSotp({
-    segments:
-      finite(revMm) || finite(ebitdaMm)
-        ? [
-            {
-              id: "consolidated",
-              name: "Consolidated operations",
-              revenue: revMm,
-              ebitda: ebitdaMm,
-              multiple: finite(ebitdaMm) && ebitdaMm! > 0 ? 10 : 2,
-              multipleType:
-                finite(ebitdaMm) && ebitdaMm! > 0 ? "evEbitda" : "evSales",
-            },
-          ]
-        : [],
-    netDebt: netDebtMm,
-    shares: sharesMm,
-  });
-
   const mergerInputs: MergerInputs | null =
     finite(niMm) &&
     finite(sharesMm) &&
@@ -236,29 +217,27 @@ export function fillValuationSuite(
 
   const lboPerShare =
     lbo && finite(sharesMm) && sharesMm! > 0
-      ? {
-          entryEquityPerShare: lbo.sourcesAndUses.sponsorEquity / sharesMm!,
-          exitEquityPerShare: lbo.exit.equityProceeds / sharesMm!,
-          irrMidPerShare: lbo.returns.moic
-            ? (lbo.sourcesAndUses.sponsorEquity * lbo.returns.moic) / sharesMm!
-            : null,
-        }
+      ? lboEntryBand(lbo, sharesMm)
       : undefined;
 
   const field = buildFootballField({
     currentPrice: price,
     bars: assembleValuationBars({
-      dcf: dcf
-        ? { gordonPerShare: dcf.perShare, exitPerShare: dcf.exitPerShare }
-        : undefined,
-      comps: comps.range,
+      tradingRange: trading.range,
+      compsPe: impliedPerShareBand("pe", comps.peerMultiples.pe, subject),
+      compsEvEbitda: impliedPerShareBand(
+        "evEbitda",
+        comps.peerMultiples.evEbitda,
+        subject
+      ),
       precedents: precedents.range,
-      lbo: lboPerShare,
-      sotp: sotp.perShare != null ? { mid: sotp.perShare } : undefined,
       monteCarlo: mc
         ? { low: mc.p5, mid: mc.medianPerShare, high: mc.p95 }
         : undefined,
-      tradingRange: trading.range,
+      dcf: dcf
+        ? { gordonPerShare: dcf.perShare, exitPerShare: dcf.exitPerShare }
+        : undefined,
+      lbo: lboPerShare,
       precedentsIllustrative: true,
     }),
   });
@@ -273,9 +252,6 @@ export function fillValuationSuite(
   if (lbo) {
     safeFill("lbo", () => fillLboSheet(addSheet(wb, LBO_SHEET_NAME), lbo));
   }
-  safeFill("sotp", () =>
-    fillSotpSheet(addSheet(wb, SOTP_SHEET_NAME), { ...sotp, shares: sharesMm })
-  );
   if (merger && mergerInputs) {
     safeFill("merger", () =>
       fillMergerSheet(addSheet(wb, MERGER_SHEET_NAME), {

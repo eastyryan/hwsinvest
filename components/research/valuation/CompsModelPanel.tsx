@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { CompMultipleKey, CompsResult } from "@/lib/research/valuation/comps";
+import {
+  impliedPerShareBand,
+  type CompMultipleKey,
+  type CompsResult,
+} from "@/lib/research/valuation/comps";
 import ExpandableModel from "./ExpandableModel";
 import { fmtMult, fmtPerShare, fmtRange } from "./fmt";
 
@@ -35,7 +39,10 @@ export default function CompsModelPanel({
   sector: string | null;
   industry: string | null;
   marketCap: number | null;
-  onRange?: (r: { low: number | null; mid: number | null; high: number | null }) => void;
+  onRange?: (r: {
+    pe: { low: number | null; mid: number | null; high: number | null };
+    evEbitda: { low: number | null; mid: number | null; high: number | null };
+  }) => void;
 }) {
   const [data, setData] = useState<CompsApi | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,8 +63,18 @@ export default function CompsModelPanel({
       );
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to load comps");
-      setData(json as CompsApi);
-      onRange?.(json.range);
+      const payload = json as CompsApi;
+      setData(payload);
+      if (payload.subject && payload.peerMultiples) {
+        onRange?.({
+          pe: impliedPerShareBand("pe", payload.peerMultiples.pe, payload.subject),
+          evEbitda: impliedPerShareBand(
+            "evEbitda",
+            payload.peerMultiples.evEbitda,
+            payload.subject
+          ),
+        });
+      }
       setLoaded(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load comps");
@@ -81,6 +98,7 @@ export default function CompsModelPanel({
       subtitle="Comparable company analysis — peer EV/EBITDA, EV/Sales, P/E, P/S applied to this company."
       summary={summary}
       defaultOpen={false}
+      preload
     >
       {loading && !data && (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">

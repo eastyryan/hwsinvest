@@ -96,7 +96,7 @@ export default function FootballFieldChart({
           return (
             <div
               key={bar.id}
-              className="grid grid-cols-[7.5rem_1fr_auto] items-center gap-2 sm:grid-cols-[9rem_1fr_auto] sm:gap-3"
+              className="grid grid-cols-[8.25rem_1fr_auto] items-center gap-2 sm:grid-cols-[10.5rem_1fr_auto] sm:gap-3"
             >
               <div className="text-right text-xs font-medium leading-tight text-zinc-700 dark:text-zinc-300">
                 {bar.label}
@@ -140,7 +140,7 @@ export default function FootballFieldChart({
         })}
       </div>
 
-      <div className="flex justify-between pr-[4.75rem] pl-[7.5rem] font-mono text-[10px] text-zinc-400 sm:pr-[4.75rem] sm:pl-[9rem] dark:text-zinc-500">
+      <div className="flex justify-between pr-[4.75rem] pl-[8.25rem] font-mono text-[10px] text-zinc-400 sm:pr-[4.75rem] sm:pl-[10.5rem] dark:text-zinc-500">
         <span>{fmtPerShare(axis.min)}</span>
         <span>{fmtPerShare(axis.max)}</span>
       </div>

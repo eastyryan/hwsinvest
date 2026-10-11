@@ -195,7 +195,7 @@ export default function StreetVsReported({
             {street.disclaimer ?? STREET_DISCLAIMER}
           </p>
           {/* Context strip: last actual + price target */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
               <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                 Latest reported diluted EPS
@@ -222,11 +222,29 @@ export default function StreetVsReported({
                 {street.priceTargetLow != null &&
                 street.priceTargetHigh != null
                   ? `Range ${fmtMoney(street.priceTargetLow, currency)}–${fmtMoney(street.priceTargetHigh, currency)}`
-                  : street.meanRating
-                    ? `Mean rating: ${street.meanRating}`
-                    : "Consensus target"}
+                  : "Consensus target"}
               </p>
             </div>
+            {(street.meanRating ||
+              street.buy != null ||
+              street.hold != null ||
+              street.sell != null) && (
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  Analyst sentiment
+                </p>
+                <p className="mt-1 text-xl font-semibold capitalize">
+                  {street.meanRating ?? "—"}
+                </p>
+                <p className="mt-0.5 font-mono text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">
+                  {street.buy ?? 0} buy · {street.hold ?? 0} hold ·{" "}
+                  {street.sell ?? 0} sell
+                </p>
+                <p className="mt-1 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                  Sell-side counts from Nasdaq. A rating mix, not short interest or news flow.
+                </p>
+              </div>
+            )}
             {surprises[0] && (
               <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
                 <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">

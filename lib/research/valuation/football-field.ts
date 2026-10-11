@@ -30,6 +30,11 @@ export type FootballBar = {
   enabled?: boolean;
   /** Honesty label: filing / market / model / illustrative */
   provenance?: FootballProvenance;
+  /**
+   * Context bar (the 52-week range). Drawn on the chart, left out of the
+   * central estimate so a trading range does not pretend to be a value.
+   */
+  reference?: boolean;
 };
 
 /** Short display label for a provenance tag. */
@@ -152,12 +157,22 @@ export function buildFootballField(args: {
     notes.push("No bars with finite bounds; football field is empty.");
   }
 
-  // Illustrative bars stay on the chart / axis but do not pull the midpoint.
-  const centralBars = bars.filter((b) => b.provenance !== "illustrative");
-  const droppedIllustrative = bars.length - centralBars.length;
+  // Illustrative and reference bars stay on the chart but do not pull the midpoint.
+  const centralBars = bars.filter(
+    (b) => b.provenance !== "illustrative" && !b.reference
+  );
+  const droppedIllustrative = bars.filter(
+    (b) => b.provenance === "illustrative"
+  ).length;
   if (droppedIllustrative > 0) {
     notes.push(
       `${droppedIllustrative} illustrative bar(s) excluded from the central estimate.`
+    );
+  }
+  const referenceCount = bars.filter((b) => b.reference).length;
+  if (referenceCount > 0) {
+    notes.push(
+      "52-week range is context and is left out of the central estimate."
     );
   }
 
@@ -231,18 +246,36 @@ function hasAnyFinite(
   return vals.some(finite);
 }
 
+type Band = { low?: number | null; mid?: number | null; high?: number | null };
+
+function pushBand(
+  bars: FootballBar[],
+  bar: FootballBar & { low: number | null; mid: number | null; high: number | null }
+) {
+  if (!hasAnyFinite(bar.low, bar.mid, bar.high)) return;
+  const range = rangeFromPoints([bar.low, bar.mid, bar.high]);
+  const mid = finite(bar.mid) ? bar.mid : range.mid;
+  bars.push({
+    ...bar,
+    low: finite(bar.low) ? bar.low : range.low,
+    mid,
+    high: finite(bar.high) ? bar.high : range.high,
+  });
+}
+
 /**
- * Build the standard IB bar set from method outputs.
+ * Build the football-field bars in pitch-book order.
  * Skips methods where every input is null/non-finite.
  *
- * Bars (when present):
- * - DCF — min/avg/max of Gordon and exit per-share values
- * - Trading comps
- * - Precedent transactions
- * - LBO (implied equity) — entry / IRR mid / exit per share
- * - SOTP
- * - Monte Carlo DCF (distribution band)
- * - 52-week range
+ * Order:
+ * 1. 52-week range (context; excluded from the central estimate)
+ * 2. Analyst price targets
+ * 3. Comp P/E (peer p25 / median / p75)
+ * 4. Comp EV/EBITDA
+ * 5. Precedent transactions, when a real or illustrative set exists
+ * 6. Monte Carlo DCF, when it has been run
+ * 7. DCF
+ * 8. LBO — price a buyer could pay today at a 25% / 20% / 15% IRR
  */
 export function assembleValuationBars(args: {
   dcf?: {
@@ -250,29 +283,16 @@ export function assembleValuationBars(args: {
     exitPerShare?: number | null;
     label?: string;
   };
-  comps?: { low?: number | null; mid?: number | null; high?: number | null };
-  precedents?: {
-    low?: number | null;
-    mid?: number | null;
-    high?: number | null;
-  };
-  lbo?: {
-    /** sponsor equity value per share at entry or exit */
-    entryEquityPerShare?: number | null;
-    exitEquityPerShare?: number | null;
-    irrMidPerShare?: number | null;
-  };
-  sotp?: { low?: number | null; mid?: number | null; high?: number | null };
-  monteCarlo?: {
-    low?: number | null;
-    mid?: number | null;
-    high?: number | null;
-  };
-  tradingRange?: {
-    low?: number | null;
-    mid?: number | null;
-    high?: number | null;
-  };
+  /** Peer P/E applied to the subject: p25 / median / p75. */
+  compsPe?: Band;
+  /** Peer EV/EBITDA applied to the subject: p25 / median / p75. */
+  compsEvEbitda?: Band;
+  analystTargets?: Band;
+  precedents?: Band;
+  /** Entry price per share at a 25% / 20% / 15% IRR. */
+  lbo?: Band;
+  monteCarlo?: Band;
+  tradingRange?: Band;
   /**
    * When true (default), precedent bars are tagged illustrative — sector
    * templates / synthetic deals, not a real M&A set. Set false for market-sourced deals.
@@ -281,6 +301,87 @@ export function assembleValuationBars(args: {
 }): FootballBar[] {
   const bars: FootballBar[] = [];
   const precedentsIllustrative = args.precedentsIllustrative ?? true;
+
+  if (args.tradingRange) {
+    pushBand(bars, {
+      id: "trading-range",
+      label: "52-week range",
+      low: args.tradingRange.low ?? null,
+      mid: args.tradingRange.mid ?? null,
+      high: args.tradingRange.high ?? null,
+      unit: "perShare",
+      provenance: "market",
+      reference: true,
+      note: "Where the stock has traded. Context, not a valuation.",
+    });
+  }
+
+  if (args.analystTargets) {
+    pushBand(bars, {
+      id: "analyst-targets",
+      label: "Analyst targets",
+      low: args.analystTargets.low ?? null,
+      mid: args.analystTargets.mid ?? null,
+      high: args.analystTargets.high ?? null,
+      unit: "perShare",
+      provenance: "market",
+      note: "Nasdaq consensus low / mean / high. Unofficial, not IBES.",
+    });
+  }
+
+  if (args.compsPe) {
+    pushBand(bars, {
+      id: "comps-pe",
+      label: "Comp P/E",
+      low: args.compsPe.low ?? null,
+      mid: args.compsPe.mid ?? null,
+      high: args.compsPe.high ?? null,
+      unit: "perShare",
+      provenance: "market",
+      note: "Peer P/E p25, median, and p75 applied to subject earnings",
+    });
+  }
+
+  if (args.compsEvEbitda) {
+    pushBand(bars, {
+      id: "comps-ev-ebitda",
+      label: "Comp EV/EBITDA",
+      low: args.compsEvEbitda.low ?? null,
+      mid: args.compsEvEbitda.mid ?? null,
+      high: args.compsEvEbitda.high ?? null,
+      unit: "perShare",
+      provenance: "market",
+      note: "Peer EV/EBITDA p25, median, and p75, bridged through net debt",
+    });
+  }
+
+  if (args.precedents) {
+    pushBand(bars, {
+      id: "precedents",
+      label: "Precedent transactions",
+      low: args.precedents.low ?? null,
+      mid: args.precedents.mid ?? null,
+      high: args.precedents.high ?? null,
+      unit: "perShare",
+      provenance: precedentsIllustrative ? "illustrative" : "market",
+      note: precedentsIllustrative
+        ? "Illustrative sector multiples — not a real deal set"
+        : undefined,
+    });
+  }
+
+  if (args.monteCarlo) {
+    pushBand(bars, {
+      id: "monte-carlo",
+      label: "Monte Carlo DCF",
+      low: args.monteCarlo.low ?? null,
+      mid: args.monteCarlo.mid ?? null,
+      high: args.monteCarlo.high ?? null,
+      unit: "perShare",
+      provenance: "model",
+      note: "Simulated distribution (e.g. P5–P50–P95)",
+    });
+  }
 
   if (args.dcf && hasAnyFinite(args.dcf.gordonPerShare, args.dcf.exitPerShare)) {
     const range = rangeFromPoints([
@@ -304,175 +405,16 @@ export function assembleValuationBars(args: {
     });
   }
 
-  if (
-    args.comps &&
-    hasAnyFinite(args.comps.low, args.comps.mid, args.comps.high)
-  ) {
-    const range = rangeFromPoints([
-      args.comps.low,
-      args.comps.mid,
-      args.comps.high,
-    ]);
-    // Prefer explicit mid when provided; rangeFromPoints re-means all points
-    const mid = finite(args.comps.mid)
-      ? args.comps.mid
-      : range.mid;
-    bars.push({
-      id: "comps",
-      label: "Trading comps",
-      low: finite(args.comps.low) ? args.comps.low : range.low,
-      mid,
-      high: finite(args.comps.high) ? args.comps.high : range.high,
-      unit: "perShare",
-      provenance: "market",
-    });
-  }
-
-  if (
-    args.precedents &&
-    hasAnyFinite(
-      args.precedents.low,
-      args.precedents.mid,
-      args.precedents.high
-    )
-  ) {
-    const range = rangeFromPoints([
-      args.precedents.low,
-      args.precedents.mid,
-      args.precedents.high,
-    ]);
-    const mid = finite(args.precedents.mid)
-      ? args.precedents.mid
-      : range.mid;
-    bars.push({
-      id: "precedents",
-      label: "Precedent transactions",
-      low: finite(args.precedents.low) ? args.precedents.low : range.low,
-      mid,
-      high: finite(args.precedents.high) ? args.precedents.high : range.high,
-      unit: "perShare",
-      provenance: precedentsIllustrative ? "illustrative" : "market",
-      note: precedentsIllustrative
-        ? "Illustrative sector multiples — not a real deal set"
-        : undefined,
-    });
-  }
-
-  if (
-    args.lbo &&
-    hasAnyFinite(
-      args.lbo.entryEquityPerShare,
-      args.lbo.exitEquityPerShare,
-      args.lbo.irrMidPerShare
-    )
-  ) {
-    const low = finite(args.lbo.entryEquityPerShare)
-      ? args.lbo.entryEquityPerShare
-      : null;
-    const high = finite(args.lbo.exitEquityPerShare)
-      ? args.lbo.exitEquityPerShare
-      : null;
-    const mid = finite(args.lbo.irrMidPerShare)
-      ? args.lbo.irrMidPerShare
-      : null;
-    // Fall back to range of whatever is present
-    const filled = rangeFromPoints([
-      args.lbo.entryEquityPerShare,
-      args.lbo.irrMidPerShare,
-      args.lbo.exitEquityPerShare,
-    ]);
-    bars.push({
+  if (args.lbo) {
+    pushBand(bars, {
       id: "lbo",
-      label: "LBO (implied equity)",
-      low: low ?? filled.low,
-      mid: mid ?? filled.mid,
-      high: high ?? filled.high,
+      label: "LBO 15–25% IRR",
+      low: args.lbo.low ?? null,
+      mid: args.lbo.mid ?? null,
+      high: args.lbo.high ?? null,
       unit: "perShare",
       provenance: "model",
-      note: "Entry / target IRR / exit equity per share",
-    });
-  }
-
-  if (
-    args.sotp &&
-    hasAnyFinite(args.sotp.low, args.sotp.mid, args.sotp.high)
-  ) {
-    const range = rangeFromPoints([
-      args.sotp.low,
-      args.sotp.mid,
-      args.sotp.high,
-    ]);
-    const mid = finite(args.sotp.mid) ? args.sotp.mid : range.mid;
-    bars.push({
-      id: "sotp",
-      label: "SOTP",
-      low: finite(args.sotp.low) ? args.sotp.low : range.low,
-      mid,
-      high: finite(args.sotp.high) ? args.sotp.high : range.high,
-      unit: "perShare",
-      provenance: "model",
-      note: "Sum-of-the-parts segment multiples",
-    });
-  }
-
-  if (
-    args.monteCarlo &&
-    hasAnyFinite(
-      args.monteCarlo.low,
-      args.monteCarlo.mid,
-      args.monteCarlo.high
-    )
-  ) {
-    const range = rangeFromPoints([
-      args.monteCarlo.low,
-      args.monteCarlo.mid,
-      args.monteCarlo.high,
-    ]);
-    const mid = finite(args.monteCarlo.mid)
-      ? args.monteCarlo.mid
-      : range.mid;
-    bars.push({
-      id: "monte-carlo",
-      label: "Monte Carlo DCF",
-      low: finite(args.monteCarlo.low) ? args.monteCarlo.low : range.low,
-      mid,
-      high: finite(args.monteCarlo.high)
-        ? args.monteCarlo.high
-        : range.high,
-      unit: "perShare",
-      provenance: "model",
-      note: "Simulated distribution (e.g. P5–P50–P95)",
-    });
-  }
-
-  if (
-    args.tradingRange &&
-    hasAnyFinite(
-      args.tradingRange.low,
-      args.tradingRange.mid,
-      args.tradingRange.high
-    )
-  ) {
-    const range = rangeFromPoints([
-      args.tradingRange.low,
-      args.tradingRange.mid,
-      args.tradingRange.high,
-    ]);
-    const mid = finite(args.tradingRange.mid)
-      ? args.tradingRange.mid
-      : range.mid;
-    bars.push({
-      id: "trading-range",
-      label: "52-week range",
-      low: finite(args.tradingRange.low)
-        ? args.tradingRange.low
-        : range.low,
-      mid,
-      high: finite(args.tradingRange.high)
-        ? args.tradingRange.high
-        : range.high,
-      unit: "perShare",
-      provenance: "market",
+      note: "Price a buyer could pay today. Low is a 25% IRR, high is 15%.",
     });
   }
 

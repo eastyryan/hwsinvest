@@ -82,6 +82,7 @@ export default function TradingRangePanel({
       subtitle="Market-based valuation band from the last year of prices, mapped to equity/EV and implied multiples."
       summary={summary}
       defaultOpen={false}
+      preload
     >
       {loading && (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">

@@ -5,6 +5,7 @@ import type { CompanyFinancials } from "@/lib/research/edgar";
 import { companyOperatingMetrics } from "@/lib/research/valuation/metrics";
 import {
   defaultLboInputsFromMetrics,
+  lboEntryBand,
   runLbo,
   type LboInputs,
 } from "@/lib/research/valuation/lbo";
@@ -72,13 +73,7 @@ export default function LboModelPanel({
       onRange?.({ low: null, mid: null, high: null });
       return;
     }
-    const entryPs = result.returns.equityIn / metrics.shares;
-    const exitPs = result.returns.equityOut / metrics.shares;
-    onRange?.({
-      low: Math.min(entryPs, exitPs),
-      mid: (entryPs + exitPs) / 2,
-      high: Math.max(entryPs, exitPs),
-    });
+    onRange?.(lboEntryBand(result, metrics.shares));
   }, [result, metrics.shares, onRange]);
 
   if (!defaults) {
@@ -110,6 +105,7 @@ export default function LboModelPanel({
       subtitle="Sources & uses, dual-tranche debt, mandatory amort + cash sweep, exit equity, IRR & MOIC."
       summary={summary}
       defaultOpen={false}
+      preload
     >
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -159,6 +155,11 @@ export default function LboModelPanel({
                 emphasize
               />
             </div>
+            <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+              IRR and MOIC are at the entry multiple above. The football field
+              uses a different number: the price a buyer could pay today and
+              still earn 25%, 20%, or 15%.
+            </p>
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">

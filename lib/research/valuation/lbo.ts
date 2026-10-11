@@ -470,3 +470,50 @@ export function runLbo(inputs: LboInputs): LboResult | null {
     notes,
   };
 }
+
+/**
+ * Equity value per share a buyer could pay today and still earn `irr`.
+ *
+ * Debt is set in turns of EBITDA, and the cash sweep pays debt rather than
+ * the sponsor, so exit equity does not depend on the entry multiple. The
+ * hurdle then solves for the sponsor's check. Fees sit on top of enterprise
+ * value, so the figure returned is equity value (entry EV minus entry debt),
+ * not the check itself.
+ */
+export function lboEntryPerShare(
+  result: LboResult,
+  shares: number,
+  irr: number
+): number | null {
+  const equityOut = result.returns.equityOut;
+  const years = result.inputs.years;
+  if (!(shares > 0) || !(equityOut > 0) || !(years > 0)) return null;
+  if (!isFiniteNumber(irr) || irr <= -0.5) return null;
+
+  const sponsorCheck = equityOut / Math.pow(1 + irr, years);
+  if (!(sponsorCheck > 0)) return null;
+
+  const feePct = result.inputs.feesPctEv;
+  const fee = isFiniteNumber(feePct) && feePct > 0 ? feePct : 0;
+  const debt = result.sourcesAndUses.totalDebt;
+  const entryDebt = isFiniteNumber(debt) && debt > 0 ? debt : 0;
+  const entryEv = (sponsorCheck + entryDebt) / (1 + fee);
+  const equityValue = entryEv - entryDebt;
+  if (!(equityValue > 0)) return null;
+  return equityValue / shares;
+}
+
+/** Football-field band: 25% IRR (low price), 20% (mid), 15% (high price). */
+export function lboEntryBand(
+  result: LboResult,
+  shares: number | null
+): { low: number | null; mid: number | null; high: number | null } {
+  if (shares == null || !(shares > 0)) {
+    return { low: null, mid: null, high: null };
+  }
+  return {
+    low: lboEntryPerShare(result, shares, 0.25),
+    mid: lboEntryPerShare(result, shares, 0.2),
+    high: lboEntryPerShare(result, shares, 0.15),
+  };
+}

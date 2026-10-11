@@ -10,6 +10,8 @@ export interface Insight {
   text: string;
   detail?: string;
   tone: "positive" | "negative" | "neutral";
+  /** External source, when the line is a filing or a market print. */
+  href?: string;
 }
 
 export interface Insights {

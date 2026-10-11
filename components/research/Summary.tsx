@@ -13,10 +13,12 @@ function Group({
   title,
   items,
   accent,
+  empty = "Nothing notable in recent quarters.",
 }: {
   title: string;
   items: Insight[];
   accent: string;
+  empty?: string;
 }) {
   return (
     <div className="rounded-lg border border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/30">
@@ -24,14 +26,25 @@ function Group({
         {title}
       </h3>
       {items.length === 0 ? (
-        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-          Nothing notable in recent quarters.
-        </p>
+        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{empty}</p>
       ) : (
         <ul className="mt-2 space-y-2.5">
           {items.map((ins, i) => (
             <li key={i}>
-              <p className="text-sm leading-snug">{ins.text}</p>
+              <p className="text-sm leading-snug">
+                {ins.href ? (
+                  <a
+                    href={ins.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-500 dark:decoration-zinc-600"
+                  >
+                    {ins.text}
+                  </a>
+                ) : (
+                  ins.text
+                )}
+              </p>
               {ins.detail && (
                 <p className="mt-0.5 text-xs leading-snug text-zinc-500 dark:text-zinc-400">
                   {ins.detail}
@@ -54,6 +67,11 @@ export default function Summary({
   parts = "both",
   /** Hide internal h2 when parent accordion already titles the section. */
   hideChrome = false,
+  /**
+   * Company events (earnings, 8-Ks, short interest).
+   * null while that request is in flight. Empty falls back to filing patterns.
+   */
+  events = undefined,
 }: {
   insights: Insights;
   narrative?: Narrative | null;
@@ -61,6 +79,7 @@ export default function Summary({
   loading?: boolean;
   parts?: "analyst" | "numbers" | "both";
   hideChrome?: boolean;
+  events?: Insight[] | null;
 }) {
   const shown = summary ?? narrative ?? null;
   const isAi = summary != null;
@@ -166,8 +185,17 @@ export default function Summary({
             />
             <Group
               title="Catalysts to watch"
-              items={insights.catalysts}
+              items={
+                events && events.length > 0
+                  ? [...events, ...insights.catalysts]
+                  : insights.catalysts
+              }
               accent="text-sky-700 dark:text-sky-400"
+              empty={
+                events === null
+                  ? "Loading the earnings date, recent 8-Ks, and short interest…"
+                  : "Nothing notable in recent quarters."
+              }
             />
           </div>
         </div>

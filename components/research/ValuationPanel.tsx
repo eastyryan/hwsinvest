@@ -35,7 +35,6 @@ import PrecedentsModelPanel from "./valuation/PrecedentsModelPanel";
 import LboModelPanel from "./valuation/LboModelPanel";
 import TradingRangePanel from "./valuation/TradingRangePanel";
 import EvBridgeCard from "./valuation/EvBridgeCard";
-import SotpPanel from "./valuation/SotpPanel";
 import MergerPanel from "./valuation/MergerPanel";
 import MonteCarloPanel from "./valuation/MonteCarloPanel";
 import CreditPanel from "./valuation/CreditPanel";
@@ -45,7 +44,6 @@ import IcMemo from "./IcMemo";
 import DataAsOf from "./DataAsOf";
 import { fmtPerShare as fmtPs } from "./valuation/fmt";
 import { rangeFromPoints } from "@/lib/research/valuation/football-field";
-import type { SegmentsPayload } from "@/lib/research/segments";
 
 type Preset = "history" | "street";
 
@@ -174,7 +172,6 @@ export default function ValuationPanel({
   sector = null,
   industry = null,
   marketCap = null,
-  segmentsPayload = null,
   loadedAt = null,
 }: {
   fin: CompanyFinancials;
@@ -185,7 +182,6 @@ export default function ValuationPanel({
   sector?: string | null;
   industry?: string | null;
   marketCap?: number | null;
-  segmentsPayload?: SegmentsPayload | null;
   loadedAt?: number | null;
 }) {
   const betaRef = sectorBeta(sic);
@@ -240,7 +236,12 @@ export default function ValuationPanel({
   const [opex, setOpex] = useState<string | null>(saved?.opex ?? null);
 
   // Ranges fed into the football field as each expandable model computes.
-  const [compsRange, setCompsRange] = useState<{
+  const [compsPe, setCompsPe] = useState<{
+    low: number | null;
+    mid: number | null;
+    high: number | null;
+  } | null>(null);
+  const [compsEvEbitda, setCompsEvEbitda] = useState<{
     low: number | null;
     mid: number | null;
     high: number | null;
@@ -256,11 +257,6 @@ export default function ValuationPanel({
     high: number | null;
   } | null>(null);
   const [tradingRange, setTradingRange] = useState<{
-    low: number | null;
-    mid: number | null;
-    high: number | null;
-  } | null>(null);
-  const [sotpRange, setSotpRange] = useState<{
     low: number | null;
     mid: number | null;
     high: number | null;
@@ -493,9 +489,8 @@ export default function ValuationPanel({
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Valuation</h2>
           <p className="mt-1 max-w-[75ch] text-xs text-zinc-500 dark:text-zinc-400">
-            Multi-method free suite: football field, DCF, Monte Carlo, comps,
-            SOTP, precedents, LBO, credit, M&A A/D, sector packs, EV bridge, and
-            52-week range. Collapsed by default. Not a recommendation.
+            Football field, DCF, comps, precedents, LBO, credit, and the
+            52-week range. Not a recommendation.
           </p>
           <DataAsOf
             className="mt-2"
@@ -542,9 +537,9 @@ export default function ValuationPanel({
             rangeFromPoints([
               dcf.perShare,
               dcf.exitPerShare,
-              compsRange?.mid,
-              tradingRange?.mid,
-              sotpRange?.mid,
+              compsPe?.mid,
+              compsEvEbitda?.mid,
+              streetData?.priceTarget,
             ]).mid
           }
         />
@@ -554,11 +549,23 @@ export default function ValuationPanel({
         currentPrice={marketPrice}
         dcfGordon={dcf.perShare}
         dcfExit={dcf.exitPerShare}
-        comps={compsRange}
+        compsPe={compsPe}
+        compsEvEbitda={compsEvEbitda}
+        analystTargets={
+          streetData &&
+          (streetData.priceTarget != null ||
+            streetData.priceTargetLow != null ||
+            streetData.priceTargetHigh != null)
+            ? {
+                low: streetData.priceTargetLow,
+                mid: streetData.priceTarget,
+                high: streetData.priceTargetHigh,
+              }
+            : null
+        }
         precedents={precedentsRange}
         lbo={lboRange}
         tradingRange={tradingRange}
-        sotp={sotpRange}
         monteCarlo={mcRange}
       />
 
@@ -1239,7 +1246,10 @@ export default function ValuationPanel({
         sector={sector}
         industry={industry}
         marketCap={marketCap}
-        onRange={setCompsRange}
+        onRange={(r) => {
+          setCompsPe(r.pe);
+          setCompsEvEbitda(r.evEbitda);
+        }}
       />
       <PrecedentsModelPanel
         fin={fin}
@@ -1251,24 +1261,6 @@ export default function ValuationPanel({
         fin={fin}
         marketPrice={marketPrice}
         onRange={setTradingRange}
-      />
-      <SotpPanel
-        fin={fin}
-        segmentsPayload={
-          segmentsPayload?.history
-            ? {
-                product: segmentsPayload.history.rows.map((row) => {
-                  const periods = segmentsPayload.history!.periods;
-                  const values: Record<string, number | null> = {};
-                  periods.forEach((p, i) => {
-                    values[p] = row.values[i] ?? null;
-                  });
-                  return { name: row.name, values, periods };
-                }),
-              }
-            : null
-        }
-        onRange={setSotpRange}
       />
       <MonteCarloPanel
         fcf={dcf.fcf}

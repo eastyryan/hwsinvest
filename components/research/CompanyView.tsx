@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { CompanyFinancials, StatementSet, LineValues } from "@/lib/research/edgar";
-import type { Insights } from "@/lib/research/insights";
+import type { Insight, Insights } from "@/lib/research/insights";
+import {
+  catalystsToInsights,
+  type CompanyCatalysts,
+} from "@/lib/research/catalysts";
 import type { Narrative } from "@/lib/research/narrative";
 import {
   getServerWatchlistSnapshot,
@@ -164,6 +168,8 @@ export default function CompanyView({
   } | null>(null);
   const [summary, setSummary] = useState<AiSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
+  /** null while the earnings / 8-K / short-interest request is in flight. */
+  const [catalystItems, setCatalystItems] = useState<Insight[] | null>(null);
   const [freq, setFreq] = useState<"annual" | "quarterly">("annual");
   const [tab, setTab] = useState<TabKey>(initialTab);
   const [compareLinkCopied, setCompareLinkCopied] = useState(false);
@@ -179,6 +185,30 @@ export default function CompanyView({
     getWatchlistSnapshot,
     getServerWatchlistSnapshot
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    setCatalystItems(null);
+    (async () => {
+      try {
+        const qs = new URLSearchParams({ cik });
+        const res = await fetch(
+          `/api/research/catalysts/${encodeURIComponent(ticker)}?${qs}`
+        );
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? "Could not load catalysts");
+        const payload = json.catalysts as CompanyCatalysts | null;
+        if (!cancelled) {
+          setCatalystItems(payload ? catalystsToInsights(payload) : []);
+        }
+      } catch {
+        if (!cancelled) setCatalystItems([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ticker, cik]);
 
   useEffect(() => {
     let cancelled = false;
@@ -720,7 +750,7 @@ export default function CompanyView({
               {/* 2 — What the numbers say */}
               <OverviewSection
                 title="What the numbers say"
-                subtitle="Growing, slowing, and catalysts from recent quarters."
+                subtitle="Growth and slowdown from the filings. Catalysts are the next earnings date, recent 8-Ks, and short interest."
                 summary={
                   [
                     data.insights.growing.length
@@ -728,6 +758,9 @@ export default function CompanyView({
                       : null,
                     data.insights.slowing.length
                       ? `${data.insights.slowing.length} slowing`
+                      : null,
+                    catalystItems && catalystItems.length
+                      ? `${catalystItems.length} events`
                       : null,
                   ]
                     .filter(Boolean)
@@ -741,6 +774,7 @@ export default function CompanyView({
                   loading={summaryLoading}
                   parts="numbers"
                   hideChrome
+                  events={catalystItems}
                 />
               </OverviewSection>
 
@@ -924,7 +958,6 @@ export default function CompanyView({
                 sector={profile.sector}
                 industry={profile.industry}
                 marketCap={profile.marketCap}
-                segmentsPayload={segments}
                 loadedAt={loadedAt}
               />
             </div>
