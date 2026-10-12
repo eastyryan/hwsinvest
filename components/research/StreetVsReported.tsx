@@ -241,7 +241,7 @@ export default function StreetVsReported({
                   {street.sell ?? 0} sell
                 </p>
                 <p className="mt-1 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-                  Sell-side counts from Nasdaq. A rating mix, not short interest or news flow.
+                  Nasdaq sell-side buy, hold, and sell counts.
                 </p>
               </div>
             )}

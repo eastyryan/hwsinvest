@@ -21,7 +21,7 @@ export default function ExpandableModel({
   /** One-line teaser shown while collapsed (e.g. range preview). */
   summary?: ReactNode;
   defaultOpen?: boolean;
-  /** Mount children while collapsed so their data can feed the football field. */
+  /** Mount children immediately so their ranges reach the football field. */
   preload?: boolean;
   children: ReactNode;
 }) {

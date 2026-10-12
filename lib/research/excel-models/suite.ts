@@ -215,15 +215,15 @@ export function fillValuationSuite(
     revenue: m.revenue,
   });
 
-  const lboPerShare =
-    lbo && finite(sharesMm) && sharesMm! > 0
-      ? lboEntryBand(lbo, sharesMm)
-      : undefined;
+  const lboBand =
+    lbo && finite(sharesMm) ? lboEntryBand(lbo, sharesMm) : undefined;
 
   const field = buildFootballField({
     currentPrice: price,
     bars: assembleValuationBars({
-      tradingRange: trading.range,
+      dcf: dcf
+        ? { gordonPerShare: dcf.perShare, exitPerShare: dcf.exitPerShare }
+        : undefined,
       compsPe: impliedPerShareBand("pe", comps.peerMultiples.pe, subject),
       compsEvEbitda: impliedPerShareBand(
         "evEbitda",
@@ -231,13 +231,11 @@ export function fillValuationSuite(
         subject
       ),
       precedents: precedents.range,
+      lbo: lboBand,
       monteCarlo: mc
         ? { low: mc.p5, mid: mc.medianPerShare, high: mc.p95 }
         : undefined,
-      dcf: dcf
-        ? { gordonPerShare: dcf.perShare, exitPerShare: dcf.exitPerShare }
-        : undefined,
-      lbo: lboPerShare,
+      tradingRange: trading.range,
       precedentsIllustrative: true,
     }),
   });

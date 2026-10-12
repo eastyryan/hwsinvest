@@ -41,17 +41,17 @@ export default function FootballFieldPanel({
 }) {
   const field = useMemo(() => {
     const bars: FootballBar[] = assembleValuationBars({
-      tradingRange: tradingRange ?? undefined,
-      analystTargets: analystTargets ?? undefined,
-      compsPe: compsPe ?? undefined,
-      compsEvEbitda: compsEvEbitda ?? undefined,
-      precedents: precedents ?? undefined,
-      monteCarlo: monteCarlo ?? undefined,
       dcf: {
         gordonPerShare: dcfGordon,
         exitPerShare: dcfExit,
       },
+      compsPe: compsPe ?? undefined,
+      compsEvEbitda: compsEvEbitda ?? undefined,
+      analystTargets: analystTargets ?? undefined,
+      precedents: precedents ?? undefined,
       lbo: lbo ?? undefined,
+      monteCarlo: monteCarlo ?? undefined,
+      tradingRange: tradingRange ?? undefined,
     });
     return buildFootballField({ currentPrice, bars });
   }, [
@@ -77,16 +77,15 @@ export default function FootballFieldPanel({
   return (
     <ExpandableModel
       title="Football field"
-      subtitle="52-week range, analyst targets, comp P/E, comp EV/EBITDA, then DCF and LBO."
+      subtitle="52-week range, analyst targets, comp P/E, and comp EV/EBITDA, then DCF and LBO. The central estimate averages analyst targets, comps, DCF, and LBO."
       summary={summary}
       defaultOpen={false}
     >
       <FootballFieldChart field={field} />
       <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-        52-week range and analyst targets load with this page. Comp P/E and
-        EV/EBITDA fill in once peer comps finish. DCF updates as you change
-        assumptions. Open precedents or Monte Carlo to add those bars. The
-        52-week range is context and is left out of the central estimate.
+        DCF updates live. The 52-week range, comps, and the LBO band load with
+        the page. Monte Carlo runs when you open it. Precedent bars stay empty
+        until real deals are added.
       </p>
     </ExpandableModel>
   );

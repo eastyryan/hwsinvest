@@ -540,6 +540,7 @@ export default function ValuationPanel({
               compsPe?.mid,
               compsEvEbitda?.mid,
               streetData?.priceTarget,
+              lboRange?.mid,
             ]).mid
           }
         />
@@ -1246,9 +1247,9 @@ export default function ValuationPanel({
         sector={sector}
         industry={industry}
         marketCap={marketCap}
-        onRange={(r) => {
-          setCompsPe(r.pe);
-          setCompsEvEbitda(r.evEbitda);
+        onBands={({ pe, evEbitda }) => {
+          setCompsPe(pe);
+          setCompsEvEbitda(evEbitda);
         }}
       />
       <PrecedentsModelPanel

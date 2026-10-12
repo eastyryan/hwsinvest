@@ -5,6 +5,7 @@
 import { fetchJson, singleFlight } from "./http";
 import { cached } from "./cache";
 import { isValidTicker } from "./validate";
+import { marketCalendarFromYahoo, type MarketCalendar } from "./catalysts";
 
 export interface CompanyProfile {
   sector?: string;
@@ -109,6 +110,36 @@ export async function getProfile(ticker: string): Promise<CompanyProfile | null>
           currency: result.price?.currency,
         };
         return Object.values(profile).some((v) => v != null) ? profile : null;
+      })
+    );
+  } catch {
+    return null;
+  }
+}
+
+/** Next earnings date and ex-dividend date. Null when Yahoo is blocked. */
+export async function getMarketCalendar(ticker: string): Promise<MarketCalendar | null> {
+  if (!isValidTicker(ticker)) return null;
+  const key = `yahoocal:v1:${ticker.toUpperCase()}`;
+  try {
+    return await singleFlight(key, () =>
+      cached(key, { ttl: 10_800, tags: ["calendar"] }, async () => {
+        const auth = await getCrumb();
+        if (!auth) return null;
+        const data = await fetchJson<{ quoteSummary?: { result?: unknown[] } }>(
+          `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(
+            ticker
+          )}?modules=calendarEvents&crumb=${encodeURIComponent(auth.crumb)}`,
+          {
+            source: "Yahoo Finance",
+            headers: { "User-Agent": BROWSER_UA, Cookie: auth.cookie },
+            timeoutMs: 8_000,
+            retries: 1,
+            nullOn: [401, 403, 404],
+          }
+        );
+        const result = data?.quoteSummary?.result?.[0];
+        return result ? marketCalendarFromYahoo(result) : null;
       })
     );
   } catch {

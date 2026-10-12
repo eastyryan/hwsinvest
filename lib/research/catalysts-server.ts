@@ -1,20 +1,23 @@
-// Next earnings date, recent 8-Ks, and short interest.
-// Nasdaq's public quote pages and SEC submissions. No paid feed.
+// Server lookup for company catalysts. Import only from API routes.
 
 import { fetchJson, singleFlight } from "./http";
 import { cached } from "./cache";
 import { isValidCik, isValidTicker } from "./validate";
-import { documentUrl, type SubmissionsRecent } from "./filings";
+import { getMarketCalendar } from "./yahoo";
 import {
-  labelsFor8KItems,
-  parseEarningsDate,
+  buildCatalysts,
+  nasdaqEarningsCatalyst,
+  parseNasdaqEarningsDate,
   parseShortInterestRows,
-  toneFor8KItems,
-  type CompanyCatalysts,
-  type EightKEvent,
+  todayInNewYork,
+  withMarketCalendar,
+  type CatalystSourceFiling,
+  type CatalystsPayload,
+  type NasdaqEarningsDate,
+  type ShortInterestPrint,
 } from "./catalysts";
 
-const UA_SEC = "FinanceExplorer/1.0 (easton.ryan@hws.edu)";
+const UA = "FinanceExplorer/1.0 (easton.ryan@hws.edu)";
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 const NASDAQ_HEADERS = {
@@ -24,120 +27,156 @@ const NASDAQ_HEADERS = {
   Referer: "https://www.nasdaq.com/",
 };
 
-const MAX_8K = 5;
-const EIGHT_K_WINDOW_MS = 548 * 86400000;
-
-interface SubmissionsWithItems extends SubmissionsRecent {
+interface SecRecent {
+  accessionNumber?: string[];
+  filingDate?: string[];
+  form?: string[];
+  primaryDocument?: string[];
+  primaryDocDescription?: string[];
   items?: string[];
 }
 
-function recent8Ks(cik: string, recent: SubmissionsWithItems): EightKEvent[] {
-  const out: EightKEvent[] = [];
-  const now = Date.now();
-  const forms = recent.form ?? [];
-  for (let i = 0; i < forms.length && out.length < MAX_8K; i++) {
-    const form = forms[i];
-    if (form !== "8-K" && form !== "8-K/A") continue;
-    const filingDate = (recent.filingDate?.[i] || "").slice(0, 10);
+function rowsFromRecent(recent: SecRecent | undefined): CatalystSourceFiling[] {
+  if (!recent?.form?.length) return [];
+  const out: CatalystSourceFiling[] = [];
+  for (let i = 0; i < recent.form.length && out.length < 600; i++) {
+    const filingDate = (recent.filingDate?.[i] ?? "").slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(filingDate)) continue;
-    const filedMs = Date.parse(filingDate + "T00:00:00Z");
-    if (!Number.isFinite(filedMs) || now - filedMs > EIGHT_K_WINDOW_MS) continue;
-    const accession = recent.accessionNumber?.[i];
-    if (!accession) continue;
-    const items = recent.items?.[i] ?? "";
-    const labels = labelsFor8KItems(items);
-    if (form === "8-K/A" && !labels.includes("Amendment")) {
-      labels.unshift("Amendment");
-    }
     out.push({
+      form: recent.form[i] ?? "",
       filingDate,
-      labels: labels.length ? labels : [form],
-      href: documentUrl(cik, accession, recent.primaryDocument?.[i] || ""),
-      tone: toneFor8KItems(items),
+      accession: recent.accessionNumber?.[i] ?? "",
+      primaryDocument: recent.primaryDocument?.[i] ?? "",
+      items: recent.items?.[i] ?? "",
+      description: recent.primaryDocDescription?.[i] ?? "",
     });
   }
   return out;
 }
 
-export async function getCompanyCatalysts(
-  ticker: string,
-  cik: string | null
-): Promise<CompanyCatalysts | null> {
-  if (!isValidTicker(ticker)) return null;
-  const t = ticker.toUpperCase();
-  const cikOk = cik && isValidCik(cik) ? cik : null;
-  const key = `catalysts:v1:${t}:${cikOk ?? "nocik"}`;
+function empty(cik: string, ticker: string): CatalystsPayload {
+  return buildCatalysts({
+    cik,
+    ticker,
+    filings: [],
+    calendar: null,
+    today: todayInNewYork(),
+  });
+}
 
+/** Nasdaq settlement short interest. Cached on its own so a miss does not pin the filing list. */
+async function getShortInterest(ticker: string): Promise<ShortInterestPrint | null> {
+  const key = `short-interest:v1:${ticker}`;
   return singleFlight(key, () =>
     cached(
       key,
-      { ttl: 10_800, tags: ["catalysts", `ticker:${t}`], nullTtl: 600 },
+      { ttl: 21_600, tags: ["catalysts", `ticker:${ticker}`], nullTtl: 600 },
       async () => {
-        const [earningsRes, shortRes, filingsRes] = await Promise.allSettled([
-          fetchJson<{
-            data?: { reportText?: string; announcement?: string };
-          }>(
-            `https://api.nasdaq.com/api/analyst/${encodeURIComponent(t)}/earnings-date`,
-            {
-              source: "Nasdaq earnings date",
-              headers: NASDAQ_HEADERS,
-              timeoutMs: 10_000,
-              retries: 1,
-              nullOn: [404, 403, 429],
-            }
-          ),
-          fetchJson<{
-            data?: {
-              shortInterestTable?: {
-                rows?: {
-                  settlementDate?: string;
-                  interest?: string | number;
-                  daysToCover?: string | number;
-                }[];
-              };
+        const data = await fetchJson<{
+          data?: {
+            shortInterestTable?: {
+              rows?: {
+                settlementDate?: string;
+                interest?: string | number;
+                daysToCover?: string | number;
+              }[];
             };
-          }>(
-            `https://api.nasdaq.com/api/quote/${encodeURIComponent(t)}/short-interest?assetclass=stocks`,
-            {
-              source: "Nasdaq short interest",
-              headers: NASDAQ_HEADERS,
-              timeoutMs: 10_000,
-              retries: 1,
-              nullOn: [404, 403, 429],
-            }
-          ),
-          cikOk
-            ? fetchJson<{ filings?: { recent?: SubmissionsWithItems } }>(
-                `https://data.sec.gov/submissions/CIK${cikOk.padStart(10, "0")}.json`,
-                {
-                  source: "SEC EDGAR",
-                  headers: { "User-Agent": UA_SEC },
-                  rateLimit: "sec",
-                  nullOn: [404],
-                  timeoutMs: 15_000,
-                }
-              )
-            : Promise.resolve(null),
-        ]);
-
-        const earnings =
-          earningsRes.status === "fulfilled"
-            ? parseEarningsDate(earningsRes.value?.data ?? null)
-            : null;
-        const shortInterest =
-          shortRes.status === "fulfilled"
-            ? parseShortInterestRows(
-                shortRes.value?.data?.shortInterestTable?.rows ?? []
-              )
-            : null;
-        const filings =
-          filingsRes.status === "fulfilled" && filingsRes.value?.filings?.recent
-            ? recent8Ks(cikOk!, filingsRes.value.filings.recent)
-            : [];
-
-        if (!earnings && !shortInterest && filings.length === 0) return null;
-        return { ticker: t, earnings, filings, shortInterest };
+          };
+        }>(
+          `https://api.nasdaq.com/api/quote/${encodeURIComponent(ticker)}/short-interest?assetclass=stocks`,
+          {
+            source: "Nasdaq short interest",
+            headers: NASDAQ_HEADERS,
+            timeoutMs: 10_000,
+            retries: 1,
+            nullOn: [404, 403, 429],
+          }
+        );
+        return parseShortInterestRows(data?.data?.shortInterestTable?.rows ?? []);
       }
     )
   );
+}
+
+/** Nasdaq earnings-date prose. Cached apart from the filing list. */
+async function getNasdaqEarnings(ticker: string): Promise<NasdaqEarningsDate | null> {
+  const key = `nasdaq-earnings:v1:${ticker}`;
+  return singleFlight(key, () =>
+    cached(
+      key,
+      { ttl: 10_800, tags: ["catalysts", `ticker:${ticker}`], nullTtl: 600 },
+      async () => {
+        const data = await fetchJson<{
+          data?: { reportText?: string | null; announcement?: string | null };
+        }>(
+          `https://api.nasdaq.com/api/analyst/${encodeURIComponent(ticker)}/earnings-date`,
+          {
+            source: "Nasdaq earnings date",
+            headers: NASDAQ_HEADERS,
+            timeoutMs: 10_000,
+            retries: 1,
+            nullOn: [404, 403, 429],
+          }
+        );
+        return parseNasdaqEarningsDate(data?.data ?? null);
+      }
+    )
+  );
+}
+
+/** Cached catalyst list for one filer. Yahoo failure leaves the filing list intact. */
+export async function getCatalysts(cik: string, ticker: string): Promise<CatalystsPayload> {
+  if (!isValidCik(cik)) return empty(cik, ticker);
+  const symbol = isValidTicker(ticker) ? ticker.toUpperCase() : "";
+  const key = `catalysts:v1:${cik}:${symbol}`;
+  return singleFlight(key, () =>
+    cached(key, { ttl: 10_800, tags: ["catalysts", `cik:${cik}`] }, async () => {
+      const padded = cik.padStart(10, "0");
+      const data = await fetchJson<{ filings?: { recent?: SecRecent } }>(
+        `https://data.sec.gov/submissions/CIK${padded}.json`,
+        {
+          source: "SEC EDGAR",
+          headers: { "User-Agent": UA },
+          rateLimit: "sec",
+          nullOn: [404],
+          timeoutMs: 15_000,
+        }
+      );
+      const filings = rowsFromRecent(data?.filings?.recent);
+      // Calendar is merged after this cache. A Yahoo miss must not pin
+      // "no earnings date" for the full filing TTL.
+      return buildCatalysts({
+        cik,
+        ticker: symbol,
+        filings,
+        calendar: null,
+        today: todayInNewYork(),
+      });
+    })
+  ).then(async (filed) => {
+    if (!symbol) return { ...filed, shortInterest: null };
+    const today = todayInNewYork();
+    const [calendar, shortInterest, nasdaqEarnings] = await Promise.all([
+      getMarketCalendar(symbol).catch(() => null),
+      getShortInterest(symbol).catch(() => null),
+      getNasdaqEarnings(symbol).catch(() => null),
+    ]);
+    let withCal = calendar ? withMarketCalendar(filed, calendar, today) : filed;
+    const earnings = nasdaqEarnings
+      ? nasdaqEarningsCatalyst(nasdaqEarnings, today)
+      : null;
+    if (
+      earnings &&
+      !withCal.events.some((event) => event.kind === "Earnings" && event.when === "upcoming")
+    ) {
+      const events = [...withCal.events, earnings].sort((a, b) => {
+        if (a.when !== b.when) return a.when === "upcoming" ? -1 : 1;
+        return a.when === "upcoming"
+          ? a.date.localeCompare(b.date)
+          : b.date.localeCompare(a.date);
+      });
+      withCal = { ...withCal, events };
+    }
+    return { ...withCal, shortInterest };
+  });
 }

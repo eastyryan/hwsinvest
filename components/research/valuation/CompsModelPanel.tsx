@@ -5,6 +5,7 @@ import {
   impliedPerShareBand,
   type CompMultipleKey,
   type CompsResult,
+  type PerShareBand,
 } from "@/lib/research/valuation/comps";
 import ExpandableModel from "./ExpandableModel";
 import { fmtMult, fmtPerShare, fmtRange } from "./fmt";
@@ -32,17 +33,14 @@ export default function CompsModelPanel({
   sector,
   industry,
   marketCap,
-  onRange,
+  onBands,
 }: {
   ticker: string;
   cik: string;
   sector: string | null;
   industry: string | null;
   marketCap: number | null;
-  onRange?: (r: {
-    pe: { low: number | null; mid: number | null; high: number | null };
-    evEbitda: { low: number | null; mid: number | null; high: number | null };
-  }) => void;
+  onBands?: (bands: { pe: PerShareBand; evEbitda: PerShareBand }) => void;
 }) {
   const [data, setData] = useState<CompsApi | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -63,18 +61,15 @@ export default function CompsModelPanel({
       );
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to load comps");
-      const payload = json as CompsApi;
-      setData(payload);
-      if (payload.subject && payload.peerMultiples) {
-        onRange?.({
-          pe: impliedPerShareBand("pe", payload.peerMultiples.pe, payload.subject),
-          evEbitda: impliedPerShareBand(
-            "evEbitda",
-            payload.peerMultiples.evEbitda,
-            payload.subject
-          ),
-        });
-      }
+      setData(json as CompsApi);
+      onBands?.({
+        pe: impliedPerShareBand("pe", json.peerMultiples.pe, json.subject),
+        evEbitda: impliedPerShareBand(
+          "evEbitda",
+          json.peerMultiples.evEbitda,
+          json.subject
+        ),
+      });
       setLoaded(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load comps");
@@ -89,7 +84,11 @@ export default function CompsModelPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load once on mount (panel mounts when expanded)
   }, [ticker, cik]);
 
-  const summary = data ? fmtRange(data.range) : loading ? "Loading…" : undefined;
+  const summary = data
+    ? `P/E ${fmtRange(impliedPerShareBand("pe", data.peerMultiples.pe, data.subject))} · EV/EBITDA ${fmtRange(impliedPerShareBand("evEbitda", data.peerMultiples.evEbitda, data.subject))}`
+    : loading
+      ? "Loading…"
+      : undefined;
   const peerCount = data?.peers.length ?? 0;
 
   return (

@@ -156,9 +156,9 @@ export default function LboModelPanel({
               />
             </div>
             <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-              IRR and MOIC are at the entry multiple above. The football field
-              uses a different number: the price a buyer could pay today and
-              still earn 25%, 20%, or 15%.
+              IRR and MOIC use the entry multiple in this form. The football
+              field shows the price a buyer could pay today and still earn
+              15–25%. The low end of that bar is a 25% IRR. The high end is 15%.
             </p>
 
             <div className="grid gap-3 md:grid-cols-2">

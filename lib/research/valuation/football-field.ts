@@ -3,8 +3,8 @@
  *
  * IB-style triangulation chart data: each method is a low/mid/high bar,
  * plotted on a shared axis with the current share price for context.
- * Inspired by standard pitch-book practice (DCF, comps, precedents, LBO,
- * trading range) — pure data assembly, no rendering.
+ * Pitch-book order: 52-week range, analyst targets, comp P/E, comp
+ * EV/EBITDA, then DCF and LBO. Pure data assembly, no rendering.
  */
 
 import { filterFinite, mean } from "@/lib/research/valuation/stats";
@@ -31,10 +31,10 @@ export type FootballBar = {
   /** Honesty label: filing / market / model / illustrative */
   provenance?: FootballProvenance;
   /**
-   * Context bar (the 52-week range). Drawn on the chart, left out of the
-   * central estimate so a trading range does not pretend to be a value.
+   * When false, the bar stays on the chart but its midpoint is left out of
+   * the central average. The 52-week range is a price history, not a valuation.
    */
-  reference?: boolean;
+  includeInCentral?: boolean;
 };
 
 /** Short display label for a provenance tag. */
@@ -157,22 +157,17 @@ export function buildFootballField(args: {
     notes.push("No bars with finite bounds; football field is empty.");
   }
 
-  // Illustrative and reference bars stay on the chart but do not pull the midpoint.
+  // Illustrative bars and price-history bars stay on the chart. Only the
+  // illustrative ones are called out; the 52-week bar carries its own note.
   const centralBars = bars.filter(
-    (b) => b.provenance !== "illustrative" && !b.reference
+    (b) => b.provenance !== "illustrative" && b.includeInCentral !== false
   );
-  const droppedIllustrative = bars.filter(
+  const illustrativeCount = bars.filter(
     (b) => b.provenance === "illustrative"
   ).length;
-  if (droppedIllustrative > 0) {
+  if (illustrativeCount > 0) {
     notes.push(
-      `${droppedIllustrative} illustrative bar(s) excluded from the central estimate.`
-    );
-  }
-  const referenceCount = bars.filter((b) => b.reference).length;
-  if (referenceCount > 0) {
-    notes.push(
-      "52-week range is context and is left out of the central estimate."
+      `${illustrativeCount} illustrative bar(s) excluded from the central estimate.`
     );
   }
 
@@ -250,16 +245,19 @@ type Band = { low?: number | null; mid?: number | null; high?: number | null };
 
 function pushBand(
   bars: FootballBar[],
-  bar: FootballBar & { low: number | null; mid: number | null; high: number | null }
+  bar: Omit<FootballBar, "low" | "mid" | "high"> & Band
 ) {
-  if (!hasAnyFinite(bar.low, bar.mid, bar.high)) return;
-  const range = rangeFromPoints([bar.low, bar.mid, bar.high]);
-  const mid = finite(bar.mid) ? bar.mid : range.mid;
+  const low = bar.low ?? null;
+  const midIn = bar.mid ?? null;
+  const high = bar.high ?? null;
+  if (!hasAnyFinite(low, midIn, high)) return;
+  const range = rangeFromPoints([low, midIn, high]);
+  const mid = finite(midIn) ? midIn : range.mid;
   bars.push({
     ...bar,
-    low: finite(bar.low) ? bar.low : range.low,
+    low: finite(low) ? low : range.low,
     mid,
-    high: finite(bar.high) ? bar.high : range.high,
+    high: finite(high) ? high : range.high,
   });
 }
 
@@ -268,11 +266,11 @@ function pushBand(
  * Skips methods where every input is null/non-finite.
  *
  * Order:
- * 1. 52-week range (context; excluded from the central estimate)
+ * 1. 52-week range (price history; left out of the central estimate)
  * 2. Analyst price targets
  * 3. Comp P/E (peer p25 / median / p75)
  * 4. Comp EV/EBITDA
- * 5. Precedent transactions, when a real or illustrative set exists
+ * 5. Precedent transactions, when a set exists
  * 6. Monte Carlo DCF, when it has been run
  * 7. DCF
  * 8. LBO — price a buyer could pay today at a 25% / 20% / 15% IRR
@@ -306,13 +304,13 @@ export function assembleValuationBars(args: {
     pushBand(bars, {
       id: "trading-range",
       label: "52-week range",
-      low: args.tradingRange.low ?? null,
-      mid: args.tradingRange.mid ?? null,
-      high: args.tradingRange.high ?? null,
+      low: args.tradingRange.low,
+      mid: args.tradingRange.mid,
+      high: args.tradingRange.high,
       unit: "perShare",
       provenance: "market",
-      reference: true,
-      note: "Where the stock has traded. Context, not a valuation.",
+      includeInCentral: false,
+      note: "Price history. The central estimate leaves this bar out.",
     });
   }
 
@@ -320,12 +318,12 @@ export function assembleValuationBars(args: {
     pushBand(bars, {
       id: "analyst-targets",
       label: "Analyst targets",
-      low: args.analystTargets.low ?? null,
-      mid: args.analystTargets.mid ?? null,
-      high: args.analystTargets.high ?? null,
+      low: args.analystTargets.low,
+      mid: args.analystTargets.mid,
+      high: args.analystTargets.high,
       unit: "perShare",
       provenance: "market",
-      note: "Nasdaq consensus low / mean / high. Unofficial, not IBES.",
+      note: "Nasdaq consensus low, mean, and high. Unofficial public endpoint.",
     });
   }
 
@@ -333,9 +331,9 @@ export function assembleValuationBars(args: {
     pushBand(bars, {
       id: "comps-pe",
       label: "Comp P/E",
-      low: args.compsPe.low ?? null,
-      mid: args.compsPe.mid ?? null,
-      high: args.compsPe.high ?? null,
+      low: args.compsPe.low,
+      mid: args.compsPe.mid,
+      high: args.compsPe.high,
       unit: "perShare",
       provenance: "market",
       note: "Peer P/E p25, median, and p75 applied to subject earnings",
@@ -346,9 +344,9 @@ export function assembleValuationBars(args: {
     pushBand(bars, {
       id: "comps-ev-ebitda",
       label: "Comp EV/EBITDA",
-      low: args.compsEvEbitda.low ?? null,
-      mid: args.compsEvEbitda.mid ?? null,
-      high: args.compsEvEbitda.high ?? null,
+      low: args.compsEvEbitda.low,
+      mid: args.compsEvEbitda.mid,
+      high: args.compsEvEbitda.high,
       unit: "perShare",
       provenance: "market",
       note: "Peer EV/EBITDA p25, median, and p75, bridged through net debt",
@@ -359,9 +357,9 @@ export function assembleValuationBars(args: {
     pushBand(bars, {
       id: "precedents",
       label: "Precedent transactions",
-      low: args.precedents.low ?? null,
-      mid: args.precedents.mid ?? null,
-      high: args.precedents.high ?? null,
+      low: args.precedents.low,
+      mid: args.precedents.mid,
+      high: args.precedents.high,
       unit: "perShare",
       provenance: precedentsIllustrative ? "illustrative" : "market",
       note: precedentsIllustrative
@@ -374,12 +372,12 @@ export function assembleValuationBars(args: {
     pushBand(bars, {
       id: "monte-carlo",
       label: "Monte Carlo DCF",
-      low: args.monteCarlo.low ?? null,
-      mid: args.monteCarlo.mid ?? null,
-      high: args.monteCarlo.high ?? null,
+      low: args.monteCarlo.low,
+      mid: args.monteCarlo.mid,
+      high: args.monteCarlo.high,
       unit: "perShare",
       provenance: "model",
-      note: "Simulated distribution (e.g. P5–P50–P95)",
+      note: "Simulated distribution (P5, median, P95)",
     });
   }
 
@@ -409,9 +407,9 @@ export function assembleValuationBars(args: {
     pushBand(bars, {
       id: "lbo",
       label: "LBO 15–25% IRR",
-      low: args.lbo.low ?? null,
-      mid: args.lbo.mid ?? null,
-      high: args.lbo.high ?? null,
+      low: args.lbo.low,
+      mid: args.lbo.mid,
+      high: args.lbo.high,
       unit: "perShare",
       provenance: "model",
       note: "Price a buyer could pay today. Low is a 25% IRR, high is 15%.",
