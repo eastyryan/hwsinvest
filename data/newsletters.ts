@@ -32,6 +32,18 @@ export type Newsletter = {
 
 export const ISSUES: Newsletter[] = [
   {
+    no: 4,
+    slug: "2026-10-09-issue-04",
+    file: "/newsletters/2026-10-09-issue-04.html",
+    title: "A record with the 10-year at a 24-year high, then one report took the chips down",
+    week: "October 5–9, 2026",
+    published: "2026-10-09",
+    publishedLabel: "October 9, 2026",
+    summary:
+      "The 10-year closed Monday at 5.31%, a 24-year high, and the S&P still set a record. Thursday's OpenAI revenue report knocked the chips, while utilities led and small caps fell.",
+    topics: ["Rates", "Equities", "AI", "Telecom"],
+  },
+  {
     no: 3,
     slug: "2026-09-25-issue-03",
     file: "/newsletters/2026-09-25-issue-03.html",
