@@ -7,33 +7,31 @@
 
 import { sortEvents, weeklyMeetings, type ClubEvent } from "./calendar";
 
-// Required college trainings. At least one executive board member must attend
-// one session from each group, and any club member is welcome to go. Missing
-// these costs the club its active status.
+// Board-only dates that are not the standing club meeting.
+// Club Training and Title IX are finished, so they are not listed. Events here
+// have no `group`: the admin calendar's required-training warning only appears
+// for grouped sessions, and that warning should stay off.
 
 export const FIXED_EVENTS: ClubEvent[] = [
-  // Club Training (Sep 15 / 16) completed — removed from the board calendar.
   {
-    id: "title-ix-a",
-    title: "Title IX Training (option A)",
-    date: "2026-09-29",
-    start: "16:00",
-    end: "17:00",
-    location: "AIC Stine Room",
-    kind: "required",
-    group: "Title IX Training",
-    note: "Choose this session or the October 5th one. One exec board member must attend.",
+    id: "sga-2026-10-26",
+    title: "Student government",
+    date: "2026-10-26",
+    start: "20:00",
+    end: "21:00",
+    location: "Bartlett Theatre",
+    kind: "club",
+    note: "Extra board meeting.",
   },
   {
-    id: "title-ix-b",
-    title: "Title IX Training (option B)",
-    date: "2026-10-05",
-    start: "18:00",
-    end: "19:00",
-    location: "Geneva Room, Library",
-    kind: "required",
-    group: "Title IX Training",
-    note: "Choose this session or the September 29th one. One exec board member must attend.",
+    id: "sga-2026-11-16",
+    title: "Student government",
+    date: "2026-11-16",
+    start: "20:00",
+    end: "21:00",
+    location: "Bartlett Theatre",
+    kind: "club",
+    note: "Extra board meeting.",
   },
 ];
 

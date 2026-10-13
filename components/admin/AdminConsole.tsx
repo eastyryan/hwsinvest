@@ -65,7 +65,7 @@ export default function AdminConsole({ issues }: { issues: Newsletter[] }) {
         {tab === "calendar" && (
           <Section
             title="Club calendar"
-            blurb={`Weekly meetings run every Tuesday at 7:30 PM Eastern in Stern 301 and are already on the grid. The required college trainings are pinned at the top. Add anything else the board plans, then export the whole thing to your phone.`}
+            blurb={`Weekly meetings run every Tuesday at 7:30 PM Eastern in Stern 301 and are already on the grid. Student government board meetings are on the calendar too. Add anything else the board plans, then export the whole thing to your phone.`}
           >
             <ClubCalendar custom={data.events} onChange={setEvents} />
           </Section>

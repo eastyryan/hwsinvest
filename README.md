@@ -60,15 +60,15 @@ Both are read **only on the server** (no `NEXT_PUBLIC_` prefix), so they never r
 `/admin` needs the `ADMIN_PASSWORD` login and holds these sections:
 
 - **Calendar**: the standing Tuesday 7:30 PM meeting (Fall 2026 Format and
-  Index), Thursday makeups when Eric Stein takes Tuesday, remaining required
-  Title IX Training sessions, and anything else the board adds. Exports to `.ics` for Google/Apple/Outlook. The schedule that
+  Index), Thursday makeups when Eric Stein takes Tuesday, student government
+  board meetings, and anything else the board adds. Exports to `.ics` for Google/Apple/Outlook. The schedule that
   ships in code is split in two: `data/calendar.ts` holds the standing meeting
   (edit `TERMS` each semester, `WEEKLY` if the meeting moves,
   `SESSION_OVERRIDES` for per-night titles and agendas, `WEEKLY_SKIP` for
   breaks, `EXTRA_EVENTS` for Thursday makeups and other off-Tuesday nights),
-  and `data/calendar-board.ts` holds `FIXED_EVENTS`, the dates the college
-  hands down. The split is deliberate: members only ever see the standing
-  meeting, so only `/admin` imports the board module and the training dates
+  and `data/calendar-board.ts` holds `FIXED_EVENTS`, the board-only dates.
+  The split is deliberate: members only ever see the standing
+  meeting, so only `/admin` imports the board module and those dates
   never reach a member's JavaScript bundle. Keep board-only dates in the board
   file.
 - **Email list**: names and school emails, with copy buttons for pasting into a

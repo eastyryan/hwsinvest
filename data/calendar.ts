@@ -72,9 +72,10 @@ export const WEEKLY_SKIP: string[] = [
  *
  * Source: Investment Club Fall 2026 Format and Index.
  * Standard night: 7:30 recap → skill block → pitch → club-book decisions.
- * Guest-speaker night (Nov 3, Dec 1): speaker first, then club-book notes; no
+ * Guest-speaker night (Dec 1): speaker first, then club-book notes; no
  * full recap or pitch. Oct 6/20/27 are Eric Stein Tuesdays — club work moves
- * to Thursday (see EXTRA_EVENTS).
+ * to Thursday (see EXTRA_EVENTS). Bloomberg is the Oct 22 makeup. Modeling I
+ * is Oct 29; modeling II is Nov 3.
  */
 export type SessionOverride = {
   title: string;
@@ -99,9 +100,9 @@ export const SESSION_OVERRIDES: Record<string, SessionOverride> = {
     note: "Eric Stein meeting. No club recap or pitch tonight. Club meeting moves to Thursday Oct 8 at 7:30 p.m.",
   },
   "2026-10-13": {
-    title: "Bloomberg workshop",
+    title: "Weekly club meeting",
     end: "21:00",
-    note: "First hands-on session after mid-October access.",
+    note: "Standard night: market recap, skill block, pitch, and club-book decisions.",
   },
   "2026-10-20": {
     title: "Eric Stein",
@@ -114,9 +115,9 @@ export const SESSION_OVERRIDES: Record<string, SessionOverride> = {
     note: "Eric Stein meeting. No club recap or pitch tonight. Club meeting moves to Thursday Oct 29 at 7:30 p.m.",
   },
   "2026-11-03": {
-    title: "Guest speaker",
-    end: "20:35",
-    note: "First Tuesday of November. Wealth management / insurance. Guest-speaker format: remarks and Q&A, then club-book notes — no market recap or full pitch.",
+    title: "Financial modeling II",
+    end: "21:00",
+    note: "DCF. Standard-night format.",
   },
   "2026-11-10": {
     title: "Risk and position sizing",
@@ -168,23 +169,23 @@ export const EXTRA_EVENTS: ClubEvent[] = [
   },
   {
     id: "moved-2026-10-22",
-    title: "Financial modeling I",
+    title: "Bloomberg workshop",
     date: "2026-10-22",
     start: "19:30",
     end: "21:00",
     location: WEEKLY.location,
     kind: "club",
-    note: "This week's club meeting, moved off Tuesday for Eric Stein. Three statements and how they link. Standard-night format.",
+    note: "This week's club meeting, moved off Tuesday for Eric Stein. First hands-on session after mid-October access.",
   },
   {
     id: "moved-2026-10-29",
-    title: "Financial modeling II",
+    title: "Financial modeling I",
     date: "2026-10-29",
     start: "19:30",
     end: "21:00",
     location: WEEKLY.location,
     kind: "club",
-    note: "This week's club meeting, moved off Tuesday for Eric Stein. DCF. Standard-night format.",
+    note: "This week's club meeting, moved off Tuesday for Eric Stein. Three statements and how they link. Standard-night format.",
   },
 ];
 
