@@ -69,17 +69,35 @@ export type AttendanceMeeting = {
   recordedAt: string;
 };
 
+/** One person on a stock-pitch group. Email is set when they are on the roster. */
+export type PitchMember = {
+  name: string;
+  email?: string;
+};
+
+/** A student group pitching one stock. Ticker stays blank until they pick one. */
+export type PitchGroup = {
+  id: string;
+  /** Optional label. The ticker is the name when this is blank. */
+  name: string;
+  /** Uppercase ticker, or "" while the group is still choosing. */
+  ticker: string;
+  members: PitchMember[];
+};
+
 export type ClubData = {
   roster: RosterEntry[];
   /** Events added from the console. The built-in schedule lives in code. */
   events: ClubEvent[];
   /** Weekly meetings with attendance. Admin-only. */
   attendance: AttendanceMeeting[];
+  /** Stock-pitch groups. Admin-only. */
+  pitches: PitchGroup[];
   /** ISO timestamp of the last successful save. */
   updated: string;
 };
 
-export const EMPTY: ClubData = { roster: [], events: [], attendance: [], updated: "" };
+export const EMPTY: ClubData = { roster: [], events: [], attendance: [], pitches: [], updated: "" };
 
 export type Storage = "dropbox" | "none";
 
@@ -168,6 +186,45 @@ function cleanMeeting(raw: unknown, i: number): AttendanceMeeting | null {
   };
 }
 
+function cleanTicker(v: unknown): string {
+  return str(v, 12)
+    .toUpperCase()
+    .replace(/[^A-Z0-9.-]/g, "")
+    .slice(0, 8);
+}
+
+function cleanPitch(raw: unknown, i: number): PitchGroup | null {
+  if (!raw || typeof raw !== "object") return null;
+  const p = raw as Record<string, unknown>;
+  const membersRaw = Array.isArray(p.members) ? p.members : [];
+  const members: PitchMember[] = [];
+  const seen = new Set<string>();
+  for (const m of membersRaw.slice(0, 40)) {
+    if (typeof m === "string") {
+      const name = str(m, 120);
+      if (!name || seen.has(name.toLowerCase())) continue;
+      seen.add(name.toLowerCase());
+      members.push({ name });
+      continue;
+    }
+    if (!m || typeof m !== "object") continue;
+    const row = m as Record<string, unknown>;
+    const name = str(row.name, 120);
+    const email = str(row.email, 160).toLowerCase();
+    const key = (email.includes("@") ? email : name.toLowerCase());
+    if ((!name && !email.includes("@")) || seen.has(key)) continue;
+    seen.add(key);
+    members.push({
+      name: name || email,
+      email: email.includes("@") ? email : undefined,
+    });
+  }
+  const ticker = cleanTicker(p.ticker);
+  const name = str(p.name, 80);
+  const id = str(p.id, 64) || `p${i}-${ticker || name || "group"}`;
+  return { id, name, ticker, members };
+}
+
 export function sanitize(raw: unknown): ClubData {
   const d = (raw ?? {}) as Record<string, unknown>;
   const roster = Array.isArray(d.roster)
@@ -188,7 +245,10 @@ export function sanitize(raw: unknown): ClubData {
           presentEmails: presentEmailsForMeeting(m.presentEmails, roster),
         }))
     : [];
-  return { roster, events, attendance, updated: str(d.updated, 40) };
+  const pitches = Array.isArray(d.pitches)
+    ? d.pitches.map(cleanPitch).filter((x): x is PitchGroup => x !== null).slice(0, 80)
+    : [];
+  return { roster, events, attendance, pitches, updated: str(d.updated, 40) };
 }
 
 // ── Read / write ────────────────────────────────────────────
@@ -200,7 +260,14 @@ export async function loadClubData(): Promise<ClubData> {
 }
 
 export async function saveClubData(raw: unknown): Promise<ClubData> {
-  const clean = { ...sanitize(raw), updated: new Date().toISOString() };
+  const incoming = (raw ?? {}) as Record<string, unknown>;
+  // Older admin tabs don't send pitches. Keep the saved groups instead of wiping them.
+  let merged: unknown = incoming;
+  if (!Array.isArray(incoming.pitches)) {
+    const current = await loadClubData();
+    merged = { ...incoming, pitches: current.pitches };
+  }
+  const clean = { ...sanitize(merged), updated: new Date().toISOString() };
   await writeJson(FILE, clean);
   return clean;
 }

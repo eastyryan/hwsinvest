@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { AttendanceMeeting, ClubData, RosterEntry } from "@/lib/club-store";
+import type { AttendanceMeeting, ClubData, PitchGroup, RosterEntry } from "@/lib/club-store";
 import type { ClubEvent } from "@/data/calendar";
 
 const LOCAL_KEY = "hws_club_data_v1";
-const EMPTY: ClubData = { roster: [], events: [], attendance: [], updated: "" };
+const EMPTY: ClubData = { roster: [], events: [], attendance: [], pitches: [], updated: "" };
 
 export type SaveState =
   | { kind: "loading" }
@@ -64,10 +64,12 @@ export function useClubData() {
         const serverEmpty =
           server.roster.length === 0 &&
           server.events.length === 0 &&
-          (server.attendance?.length ?? 0) === 0;
+          (server.attendance?.length ?? 0) === 0 &&
+          (server.pitches?.length ?? 0) === 0;
         const next = localOnly.current || (serverEmpty && cached) ? cached ?? server : server;
-        // Older local caches may lack attendance; always keep an array.
+        // Older local caches may lack attendance or pitches; always keep arrays.
         if (!next.attendance) next.attendance = [];
+        if (!next.pitches) next.pitches = [];
 
         setData(next);
         setState({ kind: "idle", local: localOnly.current, updated: next.updated });
@@ -103,6 +105,7 @@ export function useClubData() {
           roster: next.roster,
           events: next.events,
           attendance: next.attendance ?? [],
+          pitches: next.pitches ?? [],
         }),
       });
       const json = await res.json();
@@ -111,6 +114,7 @@ export function useClubData() {
       if (gen !== saveGen.current) return;
       const saved = json.data as ClubData;
       if (!saved.attendance) saved.attendance = [];
+      if (!saved.pitches) saved.pitches = [];
       setData(saved);
       setState({ kind: "idle", local: false, updated: saved.updated });
     } catch (e) {
@@ -140,6 +144,10 @@ export function useClubData() {
       save({ ...dataRef.current, attendance, roster }),
     [save]
   );
+  const setPitches = useCallback(
+    (pitches: PitchGroup[]) => save({ ...dataRef.current, pitches }),
+    [save]
+  );
 
-  return { data, state, setRoster, setEvents, setAttendance, setAttendanceAndRoster };
+  return { data, state, setRoster, setEvents, setAttendance, setAttendanceAndRoster, setPitches };
 }

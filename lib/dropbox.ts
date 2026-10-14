@@ -229,7 +229,8 @@ export async function ensureFolder(path: string): Promise<void> {
 export async function uploadFile(
   dir: string,
   name: string,
-  data: ArrayBuffer
+  data: ArrayBuffer,
+  mode: "add" | "overwrite" = "add"
 ): Promise<void> {
   const token = await accessToken();
   const safeName = name.replace(/[\\/:*?"<>|]/g, "_"); // strip path-y chars
@@ -241,8 +242,8 @@ export async function uploadFile(
       "Content-Type": "application/octet-stream",
       "Dropbox-API-Arg": JSON.stringify({
         path: dropboxPath,
-        mode: "add",
-        autorename: true,
+        mode,
+        autorename: mode === "add",
         mute: true,
       }),
     },

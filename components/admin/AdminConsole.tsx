@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { AlertCircle, CalendarDays, ClipboardCheck, Cloud, Folder, HardDrive, Loader2, Lock, Newspaper, Users } from "lucide-react";
+import { AlertCircle, CalendarDays, ClipboardCheck, Cloud, Folder, HardDrive, Loader2, Lock, Newspaper, Presentation, Users } from "lucide-react";
 import MemberFiles from "@/components/MemberFiles";
 import IssueList from "@/components/club/IssueList";
 import type { Newsletter } from "@/data/newsletters";
 import Attendance from "./Attendance";
 import ClubCalendar from "./ClubCalendar";
+import PitchGroups from "./PitchGroups";
 import Roster from "./Roster";
 import { useClubData } from "./useClubData";
 
@@ -15,6 +16,7 @@ const TABS = [
   { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "roster", label: "Email list", icon: Users },
   { id: "attendance", label: "Attendance", icon: ClipboardCheck },
+  { id: "pitches", label: "Pitches", icon: Presentation },
   { id: "newsletter", label: "Newsletter", icon: Newspaper },
   { id: "files", label: "Files", icon: Folder },
   { id: "board", label: "Board files", icon: Lock },
@@ -24,7 +26,7 @@ type TabId = (typeof TABS)[number]["id"];
 
 export default function AdminConsole({ issues }: { issues: Newsletter[] }) {
   const [tab, setTab] = useState<TabId>("calendar");
-  const { data, state, setRoster, setEvents, setAttendance, setAttendanceAndRoster } = useClubData();
+  const { data, state, setRoster, setEvents, setAttendance, setAttendanceAndRoster, setPitches } = useClubData();
 
   return (
     <main className="container-x" style={{ padding: "clamp(32px,5vh,56px) 0 80px", maxWidth: 1100, margin: "0 auto" }}>
@@ -33,7 +35,7 @@ export default function AdminConsole({ issues }: { issues: Newsletter[] }) {
           <p className="kicker">Admin</p>
           <h1 className="h-page" style={{ fontSize: "clamp(30px,4vw,44px)" }}>Club console</h1>
           <p className="lede" style={{ maxWidth: "50ch" }}>
-            The schedule, the email list, attendance, the newsletter, member files, and a private board folder.
+            The schedule, the email list, attendance, pitch groups, the newsletter, member files, and a private board folder.
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -91,6 +93,15 @@ export default function AdminConsole({ issues }: { issues: Newsletter[] }) {
               onChange={setAttendance}
               onCommitMeeting={setAttendanceAndRoster}
             />
+          </Section>
+        )}
+
+        {tab === "pitches" && (
+          <Section
+            title="Pitch groups"
+            blurb="Groups for the stock pitches. Add a group, put names on it, and set or change the ticker. A group can sit here with no ticker until they pick a stock."
+          >
+            <PitchGroups groups={data.pitches ?? []} roster={data.roster} onChange={setPitches} />
           </Section>
         )}
 
