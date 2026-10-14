@@ -12,9 +12,9 @@ function parseMode(raw: string | null): OwnershipMode {
 
 export async function GET(
   req: Request,
-  { params }: { params: {  cik: string  } }
+  { params }: { params: { cik: string } }
 ) {
-  const { cik  } = params;
+  const { cik } = params;
   const url = new URL(req.url);
   const rawTicker = url.searchParams.get("ticker") ?? "";
   const mode = parseMode(url.searchParams.get("mode"));

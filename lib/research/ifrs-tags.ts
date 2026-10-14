@@ -76,9 +76,10 @@ export const IFRS_LINE_TAGS: Record<string, string[]> = {
     "OtherFinanceCost",
   ],
   netInterestIncome: [
+    // InterestRevenue is gross interest, not net interest income. It used to
+    // fill this line whenever the net tags were absent.
     "InterestRevenueExpense",
     "InterestRevenueCalculatedUsingEffectiveInterestMethod",
-    "InterestRevenue",
     "InterestIncome",
   ],
   premiumsEarned: [

@@ -1,4 +1,4 @@
-import { getCompanyFinancials, searchTickers } from "@/lib/research/edgar";
+import { getCompanyFinancials, getSecProfile, searchTickers } from "@/lib/research/edgar";
 import { getPeersForCompany } from "@/lib/research/peers";
 import { getLatestQuote } from "@/lib/research/prices";
 import { publicErrorMessage } from "@/lib/research/http";
@@ -38,9 +38,9 @@ function toCompInput(
  */
 export async function GET(
   req: Request,
-  { params }: { params: {  ticker: string  } }
+  { params }: { params: { ticker: string } }
 ) {
-  const { ticker: rawTicker  } = params;
+  const { ticker: rawTicker } = params;
   const ticker = rawTicker.toUpperCase();
   if (!isValidTicker(ticker)) {
     return Response.json({ error: "Invalid ticker." }, { status: 400 });
@@ -49,6 +49,8 @@ export async function GET(
   const url = new URL(req.url);
   const sector = url.searchParams.get("sector");
   const industry = url.searchParams.get("industry");
+  const sicRaw = url.searchParams.get("sic")?.trim() ?? "";
+  let sic = /^\d{3,4}$/.test(sicRaw) ? sicRaw : null;
   let cik = url.searchParams.get("cik") ?? "";
   const marketCapRaw = url.searchParams.get("marketCap");
   const marketCap =
@@ -65,12 +67,21 @@ export async function GET(
     }
 
     const subjectFin = await getCompanyFinancials(cik, ticker);
+    // Yahoo is often blocked, so the profile sector is the SEC description
+    // ("Electronic Computers") rather than "Technology". Peer lists key off
+    // the SIC code in that case — same path as the overview peer strip.
+    if (!sic) {
+      const sec = await getSecProfile(cik);
+      const fromSec = sec?.sic?.trim() ?? "";
+      if (/^\d{3,4}$/.test(fromSec)) sic = fromSec;
+    }
     const peersPayload = await getPeersForCompany({
       ticker,
       cik,
       name: subjectFin.name,
       sector: sector?.trim() || null,
       industry: industry?.trim() || null,
+      sic,
       marketCap: Number.isFinite(marketCap) ? marketCap : null,
     });
 

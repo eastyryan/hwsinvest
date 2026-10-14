@@ -6,9 +6,9 @@ export const maxDuration = 15;
 
 export async function GET(
   _req: Request,
-  { params }: { params: {  ticker: string  } }
+  { params }: { params: { ticker: string } }
 ) {
-  const { ticker  } = params;
+  const { ticker } = params;
   if (!isValidTicker(ticker)) {
     return Response.json({ error: "Invalid ticker." }, { status: 400 });
   }

@@ -39,7 +39,7 @@ export interface PeerAverages {
   n: number;
 }
 
-export type PeerSource = "yahoo" | "industry" | "sector" | "fallback";
+export type PeerSource = "yahoo" | "industry" | "sector" | "sic" | "none";
 
 export interface PeersPayload {
   subject: string;
@@ -109,7 +109,7 @@ const INDUSTRY_PEERS: Record<string, string[]> = {
   "Banks—Regional": ["PNC", "USB", "TFC", "CFG", "KEY", "RF", "FITB", "MTB"],
   "Credit Services": ["V", "MA", "AXP", "COF", "DFS", "PYPL", "SQ"],
   "Capital Markets": ["GS", "MS", "SCHW", "BLK", "BX", "KKR", "ICE", "CME"],
-  "Insurance—Diversified": ["BRK.B", "AIG", "MET", "PRU", "AFL"],
+  "Insurance—Diversified": ["BRK-B", "AIG", "MET", "PRU", "AFL"],
   "Insurance—Property & Casualty": ["PGR", "CB", "TRV", "ALL", "HIG", "CINF"],
   "Insurance—Life": ["MET", "PRU", "AFL", "LNC", "VOYA"],
   "Asset Management": ["BLK", "BX", "KKR", "TROW", "BEN", "IVZ"],
@@ -161,9 +161,51 @@ export function getIndustryPeerLists(): Readonly<Record<string, readonly string[
   return INDUSTRY_PEERS;
 }
 
-/** Large-cap fallback when sector/industry is unknown. */
+/**
+ * Liquid names for the screener universe only.
+ * An unclassified company does not get these as "peers".
+ */
 export function getFallbackPeerTickers(): readonly string[] {
   return FALLBACK_PEERS;
+}
+
+/**
+ * Narrow SIC ranges → an industry peer list. First match wins, so a specific
+ * code sits above the broader group that contains it.
+ */
+const SIC_INDUSTRY: { lo: number; hi: number; industry: string }[] = [
+  { lo: 7372, hi: 7372, industry: "Software—Application" },
+  { lo: 7370, hi: 7379, industry: "Software—Infrastructure" },
+  { lo: 3670, hi: 3679, industry: "Semiconductors" },
+  { lo: 3661, hi: 3669, industry: "Communication Equipment" },
+  { lo: 3571, hi: 3577, industry: "Computer Hardware" },
+  { lo: 2836, hi: 2836, industry: "Biotechnology" },
+  { lo: 2833, hi: 2835, industry: "Drug Manufacturers—General" },
+  { lo: 3841, hi: 3845, industry: "Medical Devices" },
+  { lo: 6021, hi: 6022, industry: "Banks—Diversified" },
+  { lo: 6020, hi: 6062, industry: "Banks—Regional" },
+  { lo: 6311, hi: 6399, industry: "Insurance—Property & Casualty" },
+  { lo: 2911, hi: 2911, industry: "Oil & Gas Refining & Marketing" },
+  { lo: 1311, hi: 1389, industry: "Oil & Gas E&P" },
+  { lo: 4911, hi: 4931, industry: "Utilities—Regulated Electric" },
+  { lo: 5812, hi: 5812, industry: "Restaurants" },
+  { lo: 3711, hi: 3711, industry: "Auto Manufacturers" },
+  { lo: 4812, hi: 4813, industry: "Telecom Services" },
+  { lo: 5311, hi: 5411, industry: "Discount Stores" },
+  { lo: 5211, hi: 5271, industry: "Specialty Retail" },
+  { lo: 3721, hi: 3761, industry: "Aerospace & Defense" },
+  { lo: 4011, hi: 4011, industry: "Railroads" },
+];
+
+/** Industry label for a SIC code, when this app has a peer list for it. */
+export function industryForSic(sic: string | null | undefined): string | null {
+  if (!sic) return null;
+  const n = parseInt(sic, 10);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  for (const r of SIC_INDUSTRY) {
+    if (n >= r.lo && n <= r.hi && INDUSTRY_PEERS[r.industry]) return r.industry;
+  }
+  return null;
 }
 
 /**
@@ -173,7 +215,7 @@ export function getFallbackPeerTickers(): readonly string[] {
  */
 const APPROX_MARKET_CAP: Record<string, number> = {
   AAPL: 3.4e12, MSFT: 3.2e12, NVDA: 3.0e12, GOOGL: 2.1e12, GOOG: 2.1e12, AMZN: 2.0e12,
-  META: 1.5e12, BRK_B: 1.0e12, "BRK.B": 1.0e12, LLY: 8e11, AVGO: 8e11, TSLA: 8e11,
+  META: 1.5e12, BRK_B: 1.0e12, "BRK.B": 1.0e12, "BRK-B": 1.0e12, LLY: 8e11, AVGO: 8e11, TSLA: 8e11,
   JPM: 7e11, V: 6e11, WMT: 6e11, XOM: 5e11, UNH: 5e11, MA: 5e11, ORCL: 4e11,
   COST: 4e11, PG: 4e11, JNJ: 4e11, HD: 4e11, ABBV: 3.5e11, CVX: 3e11, KO: 3e11,
   MRK: 3e11, CRM: 3e11, BAC: 3e11, AMD: 2.5e11, PEP: 2.5e11, TMO: 2.2e11,
@@ -278,6 +320,8 @@ export function resolvePeerTickers(
     preferred?: string[];
     /** Subject market cap — reorders curated pool by proximity. */
     marketCap?: number | null;
+    /** SEC SIC. Used when Yahoo did not supply a sector or industry. */
+    sic?: string | null;
   }
 ): { tickers: string[]; source: PeerSource } {
   const self = subjectTicker.toUpperCase();
@@ -296,6 +340,21 @@ export function resolvePeerTickers(
       }
     }
   }
+  // Specialty insurance, reinsurance, and brokers are not keys in the map.
+  // A fuzzy "includes" miss used to drop them into bank-heavy Financial peers.
+  if (!pool && ind) {
+    const nk = normalizeKey(ind);
+    if (nk.includes("reinsur")) {
+      pool = ["RNR", "EG", "ACGL", "RE", "RGA"];
+      source = "industry";
+    } else if (nk.includes("broker")) {
+      pool = ["MMC", "AON", "AJG", "WTW", "BRO"];
+      source = "industry";
+    } else if (nk.includes("insur")) {
+      pool = INDUSTRY_PEERS["Insurance—Property & Casualty"];
+      source = "industry";
+    }
+  }
   if (!pool) {
     pool = SECTOR_PEERS[sec];
     source = "sector";
@@ -309,9 +368,19 @@ export function resolvePeerTickers(
       }
     }
   }
+  if (!pool && opts?.sic) {
+    const sicIndustry = industryForSic(opts.sic);
+    const mapped = sicIndustry ? INDUSTRY_PEERS[sicIndustry] : undefined;
+    if (mapped) {
+      pool = mapped;
+      source = "sic";
+    }
+  }
+  // No mega-cap basket. A missing classification is not a reason to compare
+  // the filer with Apple and Microsoft.
   if (!pool) {
-    pool = FALLBACK_PEERS;
-    source = "fallback";
+    pool = [];
+    source = "none";
   }
 
   const preferred = (opts?.preferred ?? [])
@@ -335,6 +404,7 @@ export function resolvePeerTickers(
   if (preferred.some((p) => out.includes(p))) {
     source = "yahoo";
   }
+  if (out.length === 0) source = "none";
 
   return { tickers: out, source };
 }
@@ -414,6 +484,8 @@ export async function getPeersForCompany(args: {
   name: string;
   sector: string | null;
   industry: string | null;
+  /** SEC SIC, used when sector and industry are both missing. */
+  sic?: string | null;
   /** Optional preloaded subject financials to avoid a double fetch. */
   subjectFin?: CompanyFinancials;
   peerLimit?: number;
@@ -425,7 +497,7 @@ export async function getPeersForCompany(args: {
     args.marketCap != null && args.marketCap > 0
       ? String(Math.round(Math.log10(args.marketCap) * 10))
       : "";
-  const key = `peers:v2:${subject}:${args.sector ?? ""}:${args.industry ?? ""}:${capKey}`;
+  const key = `peers:v3:${subject}:${args.sector ?? ""}:${args.industry ?? ""}:${args.sic ?? ""}:${capKey}`;
 
   return singleFlight(key, () =>
     cached(key, { ttl: 14_400, tags: ["peers", `ticker:${subject}`] }, async () => {
@@ -437,7 +509,7 @@ export async function getPeersForCompany(args: {
         args.industry,
         subject,
         args.peerLimit ?? 5,
-        { preferred: yahooPeers, marketCap: args.marketCap }
+        { preferred: yahooPeers, marketCap: args.marketCap, sic: args.sic }
       );
 
       const notes: string[] = [];
@@ -462,14 +534,24 @@ export async function getPeersForCompany(args: {
               ? ", sorted by approximate market-cap proximity."
               : ".")
         );
+      } else if (source === "sic") {
+        const sicIndustry = industryForSic(args.sic);
+        notes.push(
+          `Yahoo did not supply a sector. Peers are the ${sicIndustry ?? "SIC"} set from the SEC industry code` +
+            (args.marketCap != null && args.marketCap > 0
+              ? ", sorted by approximate market-cap proximity."
+              : ".")
+        );
       } else {
         notes.push(
-          "Sector/industry unavailable — showing large-cap reference names. Peer averages are of this set, not a true sector index."
+          "No sector, industry, or SIC peer set for this company. Unrelated large-caps are not shown as peers."
         );
       }
-      notes.push(
-        "Averages are the mean of the companies shown (including this one when present). Not a full sector index."
-      );
+      if (source !== "none") {
+        notes.push(
+          "Averages are the mean of the companies shown (including this one when present). Not a full sector index."
+        );
+      }
 
       const cikMap = await lookupCiks(peerTickers);
 
@@ -541,6 +623,7 @@ export const _test = {
   buildPeerScorecard,
   averageScorecards,
   sortByMarketCapProximity,
+  industryForSic,
   SECTOR_PEERS,
   INDUSTRY_PEERS,
   APPROX_MARKET_CAP,

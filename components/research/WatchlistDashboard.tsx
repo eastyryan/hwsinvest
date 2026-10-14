@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowsClockwise, LinkSimple, Star } from "@phosphor-icons/react";
+import CompanyLogo from "./CompanyLogo";
 import type { CompanyFinancials } from "@/lib/research/edgar";
 import { fmtPct, fmtValue } from "@/lib/research/format";
 import { shouldIgnoreShortcut, watchlistNavDelta } from "@/lib/research/keyboard";
@@ -605,9 +606,10 @@ export default function WatchlistDashboard({
                         <Link
                           href={`/members/research/${e.ticker.toLowerCase()}`}
                           onFocus={() => setFocusedIdx(i)}
-                          className="hover:text-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:hover:text-zinc-100 dark:focus-visible:outline-zinc-100"
+                          className="inline-flex min-w-0 items-center gap-2 hover:text-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:hover:text-zinc-100 dark:focus-visible:outline-zinc-100"
                         >
-                          {e.name}
+                          <CompanyLogo ticker={e.ticker} size={18} />
+                          <span className="truncate">{e.name}</span>
                         </Link>
                       </td>
                       <td

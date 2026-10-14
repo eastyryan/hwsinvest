@@ -147,11 +147,13 @@ export function buildDcfHistory(
     const tax = e != null && e > 0 ? e * taxRate : e != null ? 0 : null;
     const nop = e != null && tax != null ? e - tax : null;
     const dWc = wc != null && prevNwc != null ? wc - prevNwc : null;
+    const sbcRaw = lineAt(set, "sbc", p.key);
+    const sbc = sbcRaw != null ? Math.abs(sbcRaw) : 0;
     const f =
       nop != null && daV != null && cap != null && dWc != null
-        ? nop + daV - cap - dWc
+        ? nop + daV + sbc - cap - dWc
         : nop != null && daV != null && cap != null
-          ? nop + daV - cap
+          ? nop + daV + sbc - cap
           : null;
 
     ebit.push(e);
@@ -218,8 +220,15 @@ export interface Dcf {
   preferred: number | null;
   pensionDeficit: number | null;
   cashUnrestricted: number | null;
-  /** debt + leases + NCI + pref + pension − (unrestricted cash ?? cash). */
+  /** Short-term investments subtracted in the equity bridge, like cash. */
+  stInvestments: number | null;
+  /**
+   * debt + leases + NCI + pref + pension − unrestricted cash − short-term
+   * investments. Long-term investments stay out: they can be strategic stakes.
+   */
   netDebt: number;
+  /** Gordon base: year-5 FCF with growth capex and excess NWC investment removed. */
+  terminalFcf: number;
   equityValue: number;
   shares: number | null;
   perShare: number | null;
@@ -257,7 +266,8 @@ function evAtRate(
   fcf: number[],
   rate: number,
   g: number,
-  convention: DiscountConvention = "year-end"
+  convention: DiscountConvention = "year-end",
+  terminalFcf?: number
 ): number {
   const r = 1 + rate;
   let df = convention === "mid-year" ? 1 / Math.sqrt(r) : 1 / r;
@@ -266,8 +276,33 @@ function evAtRate(
     if (t > 0) df /= r;
     sum += fcf[t] * df;
   }
-  const tv = rate > g ? (fcf[fcf.length - 1] * (1 + g)) / (rate - g) : Infinity;
+  const base = terminalFcf ?? fcf[fcf.length - 1]!;
+  const tv = rate > g ? (base * (1 + g)) / (rate - g) : Infinity;
   return sum + tv * df;
+}
+
+/**
+ * FCF capitalized in the Gordon term.
+ *
+ * The explicit year still spends like a growing company (growth capex, NWC
+ * step-up). Perpetuity assumes maintenance capex equal to D&A and working
+ * capital growing at terminal g, so the excess reinvestment is added back
+ * only in this base — the year-5 present value is unchanged.
+ */
+function steadyStateFcf(
+  explicit: number,
+  capex: number,
+  depreciation: number,
+  changeNwc: number,
+  lastGrowth: number,
+  g: number
+): number {
+  const excessCapex = Math.max(0, capex - depreciation);
+  let nwcAddBack = 0;
+  if (lastGrowth > 0.005) {
+    nwcAddBack = changeNwc - changeNwc * (g / lastGrowth);
+  }
+  return explicit + excessCapex + nwcAddBack;
 }
 
 /**
@@ -373,8 +408,8 @@ export function buildDcf(
     preTaxCostOfDebt: preTaxKd,
     taxRate,
     weightEquity,
-    terminalGrowth: 0.025,
-    exitMultiple: 12,
+    terminalGrowth: betaSector?.terminalGrowth ?? 0.025,
+    exitMultiple: betaSector?.exitMultiple ?? 12,
     discountConvention: "year-end",
     ...overrides,
   };
@@ -413,7 +448,10 @@ export function buildDcf(
     const wc = p.receivables[t] + p.inventory[t] - p.payables[t];
     const wcPrev = t === 0 ? baseNwc : nwc[t - 1];
     const dWc = wc - wcPrev;
-    const f = nop + p.da[t] - p.capex[t] - dWc;
+    // SBC is already inside EBIT (opex is gross profit − operating income).
+    // Adding it back here stops the same cost from being charged again when
+    // the share count is the current diluted count.
+    const f = nop + p.da[t] + (p.sbc[t] ?? 0) - p.capex[t] - dWc;
     if (t > 0) rollingDf /= rWacc;
     const df = rollingDf;
     ebit.push(e);
@@ -432,7 +470,16 @@ export function buildDcf(
   const finalDf = discountFactor[years - 1];
   const g = inputs.terminalGrowth;
   const spread = wacc - g;
-  const terminalValue = spread > 0 ? (fcf[years - 1] * (1 + g)) / spread : 0;
+  const lastGrowth = p.assumptions.revenueGrowth[years - 1] ?? 0;
+  const terminalFcf = steadyStateFcf(
+    fcf[years - 1]!,
+    capex[years - 1]!,
+    da[years - 1]!,
+    changeNwc[years - 1]!,
+    lastGrowth,
+    g
+  );
+  const terminalValue = spread > 0 ? (terminalFcf * (1 + g)) / spread : 0;
   if (!(spread > 0)) {
     notes.push("WACC ≤ terminal growth — Gordon TV set to 0 (non-convergent).");
   }
@@ -450,15 +497,24 @@ export function buildDcf(
   const pensionDeficit = op.pensionDeficit;
   const cashUnrestricted = op.cashUnrestricted;
   const cashForBridge = cashUnrestricted ?? cash;
+  const stInvestments =
+    op.stInvestments != null && op.stInvestments > 0 ? op.stInvestments : null;
   const netDebt =
     debt +
     (leases ?? 0) +
     (nci ?? 0) +
     (preferred ?? 0) +
     (pensionDeficit ?? 0) -
-    cashForBridge;
+    cashForBridge -
+    (stInvestments ?? 0);
   const equityValue = enterpriseValue - netDebt;
-  const shares = lastValue(fin.annual, "sharesDiluted");
+  const dilutedShares = lastValue(fin.annual, "sharesDiluted");
+  const shares =
+    fin.sharesOutstanding != null && fin.sharesOutstanding > 0
+      ? fin.sharesOutstanding
+      : dilutedShares != null && dilutedShares > 0
+        ? dilutedShares
+        : null;
   const perShare = shares && shares > 0 ? equityValue / shares : null;
   const tvShareOfEv = enterpriseValue !== 0 ? pvTerminalValue / enterpriseValue : 0;
 
@@ -468,16 +524,16 @@ export function buildDcf(
   const exitPerShare =
     shares && shares > 0 ? (exitEnterpriseValue - netDebt) / shares : null;
 
-  // Sensitivity axes centred on the base case (Excel grid: WACC ±2% / 1% steps,
-  // growth ±1% / 0.5% steps). The in-UI grid uses tighter steps via dcf-sensitivity.
-  // Book debt/cash (not the fuller net-debt legs) so the Excel Horner block can
-  // stay on R.lessDebt / R.addCash without inserting rows into the grid.
+  // Sensitivity uses the same Gordon base and the same net debt as the
+  // headline, so the centre of the grid is the headline per share. cash is 0
+  // because netDebt already nets cash, leases, and short-term investments.
   const sens = buildSensitivityMatrix({
     fcf,
+    terminalFcf,
     baseWacc: wacc,
     baseGrowth: g,
-    debt,
-    cash,
+    debt: netDebt,
+    cash: 0,
     shares,
     waccDeltas: EXCEL_WACC_DELTAS,
     growthDeltas: EXCEL_GROWTH_DELTAS,
@@ -496,9 +552,15 @@ export function buildDcf(
     const marketEquity = marketPrice * shares;
     const marketEV = marketEquity + netDebt;
     // Return: circular (Gordon TV depends on the solved rate) — bisection, not closed form.
-    const ret = bisect((r) => evAtRate(fcf, r, g, convention), g + 0.005, 0.6, marketEV, false);
-    // Growth: closed-form at base WACC (matches the Excel live formula).
-    const finalFcf = fcf[fcf.length - 1]!;
+    const ret = bisect(
+      (r) => evAtRate(fcf, r, g, convention, terminalFcf),
+      g + 0.005,
+      0.6,
+      marketEV,
+      false
+    );
+    // Growth: closed-form at base WACC, on the same steady-state FCF as Gordon TV.
+    const finalFcf = terminalFcf;
     const grw = impliedGrowthClosedForm(
       marketEV,
       sumPvFcf,
@@ -548,7 +610,9 @@ export function buildDcf(
     preferred,
     pensionDeficit,
     cashUnrestricted,
+    stInvestments,
     netDebt,
+    terminalFcf,
     equityValue,
     shares,
     perShare,
@@ -591,6 +655,7 @@ const R = {
   fcf: 27,
   df: 28,
   pv: 29,
+  terminalFcf: 30,
   sumPv: 32,
   termGrowth: 33,
   termValue: 34,
@@ -800,7 +865,7 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
     d.changeNwc.map((v) => -v / M), MONEY_FMT, { indent: true });
   acrossHist(R.changeNwc, hist.changeNwc.map((v) => (v == null ? null : -v)), MONEY_FMT);
   across(R.fcf, "Unlevered free cash flow",
-    (t) => `${C(t)}${R.nopat}+${C(t)}${R.da}+${C(t)}${R.capex}+${C(t)}${R.changeNwc}`,
+    (t) => `${C(t)}${R.nopat}+${C(t)}${R.da}+${pRef(21, t)}+${C(t)}${R.capex}+${C(t)}${R.changeNwc}`,
     d.fcf.map((v) => v / M), MONEY_FMT, { bold: true });
   acrossHist(R.fcf, hist.fcf, MONEY_FMT);
   const midYear = d.inputs.discountConvention === "mid-year";
@@ -838,6 +903,12 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
   if (d.pensionDeficit != null) {
     extraLegs.push({ label: "Less: pension deficit (filed)", value: -d.pensionDeficit });
   }
+  if (d.stInvestments != null && d.stInvestments > 0) {
+    extraLegs.push({
+      label: "Add: short-term investments",
+      value: d.stInvestments,
+    });
+  }
   if (
     d.cashUnrestricted != null &&
     Number.isFinite(d.cashUnrestricted) &&
@@ -850,8 +921,8 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
   }
 
   const sheetNotes = [
-    "Free cash flow is unlevered: EBIT after cash tax, plus D&A, less capex and the increase in net working",
-    "capital. Stock-based compensation stays inside EBIT as a real cost rather than being added back.",
+    "Free cash flow is unlevered: EBIT after cash tax, plus D&A and stock-based compensation, less capex and",
+    "the increase in net working capital. SBC is added back because the diluted share count already reflects it.",
     "Historical columns (slate headers) are filed actuals rebuilt with the same unlevered FCF definition;",
     "they are not discounted. Forecast columns link to Projections / Schedules.",
     midYear
@@ -861,10 +932,10 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
     "Terminal value uses Gordon growth as the headline and the exit multiple as a cross-check; the two rarely",
     "agree exactly, and a wide gap is a signal to revisit the assumptions rather than an error.",
     extraLegs.length > 0
-      ? "Equity value is EV less a fuller net debt (debt + leases + NCI + preferred + pension − unrestricted cash)."
-      : "Equity value is enterprise value less total debt plus cash. Non-operating assets such as long-term",
+      ? "Equity value is EV less net debt (debt + leases + NCI + preferred + pension − cash − short-term investments)."
+      : "Equity value is enterprise value less total debt plus cash and short-term investments. Long-term",
     extraLegs.length > 0
-      ? "Extra filed legs are listed after these notes and folded into the equity formula; they do not shift the WACC/FCF grid."
+      ? "Extra filed legs are listed after these notes and folded into the equity formula and the sensitivity grid."
       : "investments are not added back — fold them in yourself if your definition of value includes them.",
     "Pre-tax cost of debt and tax rate are linked to Assumptions (green) — edit them there, not on this sheet.",
     "Reverse DCF — implied perpetual growth is a live closed-form formula at the base WACC and updates with",
@@ -883,8 +954,11 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
   one(R.sumPv, "Sum of PV of explicit FCF",
     `SUM(${firstPvCol}${R.pv}:${lastCol}${R.pv})`, d.sumPvFcf / M, MONEY_FMT, { bold: true });
   one(R.termGrowth, "Terminal growth rate", null, d.inputs.terminalGrowth, PCT_FMT, { input: true });
-  one(R.termValue, "Terminal value  (FCFₙ × (1+g) / (WACC − g))",
-    `IF(${SC}${R.wacc}>${SC}${R.termGrowth},${lastCol}${R.fcf}*(1+${SC}${R.termGrowth})/(${SC}${R.wacc}-${SC}${R.termGrowth}),0)`,
+  one(R.terminalFcf, "Steady-state FCF for Gordon TV", null, d.terminalFcf / M, MONEY_FMT, {
+    indent: true,
+  });
+  one(R.termValue, "Terminal value  (steady-state FCF × (1+g) / (WACC − g))",
+    `IF(${SC}${R.wacc}>${SC}${R.termGrowth},${SC}${R.terminalFcf}*(1+${SC}${R.termGrowth})/(${SC}${R.wacc}-${SC}${R.termGrowth}),0)`,
     d.terminalValue / M, MONEY_FMT);
   one(R.pvTermValue, "PV of terminal value",
     `${SC}${R.termValue}*${lastCol}${R.df}`, d.pvTerminalValue / M, MONEY_FMT);
@@ -952,13 +1026,13 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
       const firstDf = midYear ? `SQRT${r1}` : r1;
       const fcfCell = (t: number) => `$${C(t)}$${R.fcf}`;
       const n = fcastN;
-      const tv = `${fcfCell(n - 1)}*(1+${gHdr})/(${wRef}-${gHdr})`;
+      const tv = `$${SC}$${R.terminalFcf}*(1+${gHdr})/(${wRef}-${gHdr})`;
       let horner = `(${fcfCell(n - 1)}+${tv})`;
       for (let t = n - 2; t >= 0; t--) {
         horner = `(${fcfCell(t)}+${horner}/${r1})`;
       }
       const ev = `${horner}/${firstDf}`;
-      const perShare = `(${ev}+$${SC}$${R.lessDebt}+$${SC}$${R.addCash})/$${SC}$${R.shares}`;
+      const perShare = `(${ev}+$${SC}$${R.equity}-$${SC}$${R.ev})/$${SC}$${R.shares}`;
       const cell = r.getCell(j + 3);
       const shadow = d.sensitivity[i][j];
       if (d.shares && d.shares > 0) {
@@ -1011,7 +1085,7 @@ export function fillDcfSheet(ws: ExcelJS.Worksheet, fin: CompanyFinancials, d: D
       { bold: true, color: NAVY, input: true }
     );
     {
-      const A = `((${SC}${R.revMktEV}-${SC}${R.sumPv})/(${lastCol}${R.fcf}*${lastCol}${R.df}))`;
+      const A = `((${SC}${R.revMktEV}-${SC}${R.sumPv})/(${SC}${R.terminalFcf}*${lastCol}${R.df}))`;
       const gFormula = `IFERROR(MAX(-0.05,MIN(${SC}${R.wacc}-0.005,(${A}*${SC}${R.wacc}-1)/(${A}+1))),"")`;
       one(
         R.revGrowth,

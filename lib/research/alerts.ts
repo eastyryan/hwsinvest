@@ -21,7 +21,13 @@ export type AlertEvent = {
   read: boolean;
 };
 
-export type PriceSnapshot = { ticker: string; price: number; at: number };
+export type PriceSnapshot = {
+  ticker: string;
+  price: number;
+  at: number;
+  /** Quote currency after pence normalization. Omitted on older snapshots. */
+  currency?: string;
+};
 
 const ALERTS_KEY = "financeAlerts";
 const SNAPS_KEY = "financePriceSnapshots";
@@ -69,7 +75,8 @@ function isPriceSnapshot(e: unknown): e is PriceSnapshot {
     typeof o.price === "number" &&
     Number.isFinite(o.price) &&
     typeof o.at === "number" &&
-    Number.isFinite(o.at)
+    Number.isFinite(o.at) &&
+    (o.currency == null || typeof o.currency === "string")
   );
 }
 
@@ -158,6 +165,13 @@ export function diffPriceSnapshots(
 
     const p = prevBy.get(t);
     if (!p) continue;
+    if (
+      p.currency &&
+      n.currency &&
+      p.currency.toUpperCase() !== n.currency.toUpperCase()
+    ) {
+      continue;
+    }
 
     const change = (n.price - p.price) / p.price;
     if (!Number.isFinite(change) || Math.abs(change) < thr) continue;
@@ -173,7 +187,7 @@ export function diffPriceSnapshots(
       type: "price_move",
       ticker: t,
       title: `${t} ${dir} ${pctStr}%`,
-      body: `${t} moved from ${formatPrice(p.price)} to ${formatPrice(n.price)} (${change > 0 ? "+" : ""}${pct.toFixed(1)}%).`,
+      body: `${t} moved from ${formatPrice(p.price, n.currency ?? p.currency)} to ${formatPrice(n.price, n.currency ?? p.currency)} (${change > 0 ? "+" : ""}${pct.toFixed(1)}%).`,
       createdAt: Number.isFinite(n.at) ? n.at : Date.now(),
       read: false,
     });
@@ -182,10 +196,14 @@ export function diffPriceSnapshots(
   return out;
 }
 
-function formatPrice(p: number): string {
-  if (p >= 1000) return p.toLocaleString("en-US", { maximumFractionDigits: 0 });
-  if (p >= 1) return p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return p.toLocaleString("en-US", { maximumFractionDigits: 4 });
+function formatPrice(p: number, currency?: string): string {
+  const n =
+    p >= 1000
+      ? p.toLocaleString("en-US", { maximumFractionDigits: 0 })
+      : p >= 1
+        ? p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : p.toLocaleString("en-US", { maximumFractionDigits: 4 });
+  return currency ? `${n} ${currency}` : n;
 }
 
 export function loadPriceSnapshots(storage?: StorageLike): PriceSnapshot[] {

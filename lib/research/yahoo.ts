@@ -5,7 +5,10 @@
 import { fetchJson, singleFlight } from "./http";
 import { cached } from "./cache";
 import { isValidTicker } from "./validate";
-import { marketCalendarFromYahoo, type MarketCalendar } from "./catalysts";
+import {
+  marketCalendarFromYahoo,
+  type MarketCalendar,
+} from "./catalysts";
 
 export interface CompanyProfile {
   sector?: string;
@@ -14,6 +17,52 @@ export interface CompanyProfile {
   website?: string;
   marketCap?: number;
   currency?: string;
+  /** Full-time employees from Yahoo's profile, when the module returns one. */
+  employees?: number;
+  /** Officer whose title is chief executive. Never a fallback to the first officer. */
+  ceo?: string;
+  /** City and state, or country when the city is missing. */
+  headquarters?: string;
+}
+
+export interface YahooOfficer {
+  name?: string;
+  title?: string;
+}
+
+function cleanText(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+/** Strip a courtesy prefix so the overview reads "Sundar Pichai", not "Mr. Sundar Pichai". */
+function cleanPersonName(name: string): string {
+  return name.replace(/^(mr|mrs|ms|dr)\.?\s+/i, "").trim();
+}
+
+/**
+ * Chief executive only. A CFO or president listed first is not the CEO.
+ */
+export function ceoFromOfficers(officers: YahooOfficer[] | undefined): string | undefined {
+  if (!officers?.length) return undefined;
+  const ceo = officers.find((o) =>
+    /\b(chief executive officer|ceo)\b/i.test(o.title ?? "")
+  );
+  const name = cleanText(ceo?.name);
+  return name ? cleanPersonName(name) : undefined;
+}
+
+export function headquartersFromProfile(parts: {
+  city?: string;
+  state?: string;
+  country?: string;
+}): string | undefined {
+  const city = cleanText(parts.city);
+  const state = cleanText(parts.state);
+  const country = cleanText(parts.country);
+  const place = [city, state].filter(Boolean).join(", ");
+  return place || country;
 }
 
 const BROWSER_UA =
@@ -67,7 +116,7 @@ async function getCrumb(): Promise<{ cookie: string; crumb: string } | null> {
  */
 export async function getProfile(ticker: string): Promise<CompanyProfile | null> {
   if (!isValidTicker(ticker)) return null;
-  const key = `yahooprofile:v2:${ticker.toUpperCase()}`;
+  const key = `yahooprofile:v3:${ticker.toUpperCase()}`;
   try {
     return await singleFlight(key, () =>
       cached(key, { ttl: 3_600, tags: ["profile"] }, async () => {
@@ -82,6 +131,11 @@ export async function getProfile(ticker: string): Promise<CompanyProfile | null>
                 industry?: string;
                 longBusinessSummary?: string;
                 website?: string;
+                fullTimeEmployees?: number | string;
+                city?: string;
+                state?: string;
+                country?: string;
+                companyOfficers?: YahooOfficer[];
               };
               price?: { marketCap?: { raw?: number }; currency?: string };
             }[];
@@ -101,13 +155,25 @@ export async function getProfile(ticker: string): Promise<CompanyProfile | null>
 
         const result = data?.quoteSummary?.result?.[0];
         if (!result) return null;
+        const asset = result.assetProfile;
+        const employeesRaw = Number(asset?.fullTimeEmployees);
         const profile: CompanyProfile = {
-          sector: result.assetProfile?.sector,
-          industry: result.assetProfile?.industry,
-          description: result.assetProfile?.longBusinessSummary,
-          website: result.assetProfile?.website,
+          sector: cleanText(asset?.sector),
+          industry: cleanText(asset?.industry),
+          description: cleanText(asset?.longBusinessSummary),
+          website: cleanText(asset?.website),
           marketCap: result.price?.marketCap?.raw,
-          currency: result.price?.currency,
+          currency: cleanText(result.price?.currency),
+          employees:
+            Number.isFinite(employeesRaw) && employeesRaw > 0
+              ? employeesRaw
+              : undefined,
+          ceo: ceoFromOfficers(asset?.companyOfficers),
+          headquarters: headquartersFromProfile({
+            city: asset?.city,
+            state: asset?.state,
+            country: asset?.country,
+          }),
         };
         return Object.values(profile).some((v) => v != null) ? profile : null;
       })
@@ -117,7 +183,10 @@ export async function getProfile(ticker: string): Promise<CompanyProfile | null>
   }
 }
 
-/** Next earnings date and ex-dividend date. Null when Yahoo is blocked. */
+/**
+ * Next earnings date and ex-dividend date. Null when the crumb or the module fails.
+ * An estimated earnings date is flagged; it is not a company confirmation.
+ */
 export async function getMarketCalendar(ticker: string): Promise<MarketCalendar | null> {
   if (!isValidTicker(ticker)) return null;
   const key = `yahoocal:v1:${ticker.toUpperCase()}`;

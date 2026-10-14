@@ -69,7 +69,7 @@ function kindLabel(kind: SegmentTable["kind"]): string {
 }
 
 function isTotalRow(name: string): boolean {
-  return /^(net sales|total|revenue|revenues|net revenue|net revenues|total net sales|total revenue|total revenues|total sales|consolidated net sales|consolidated revenue|consolidated revenues)$/i.test(
+  return /^(net sales|total|revenue|revenues|net revenue|net revenues|total net sales|total revenue|total revenues|total sales|consolidated net sales|consolidated revenue|consolidated revenues|total external revenue|external revenue|total turnover|turnover|revenue from external customers)$/i.test(
     name
   );
 }
@@ -108,7 +108,7 @@ function chartableMembers(rows: SegmentRow[]): SegmentRow[] {
     }
     // Pure expense / P&L lines that appear in messy reportable-segment sheets
     if (
-      /^(cost of sales|cost of revenue|research and development|selling and marketing|selling, general|general and administrative|operating income|operating loss|operating expenses?)$/i.test(
+      /cost of revenue|cost of revenues|cost of sales|research and development|selling and marketing|selling, general|general and administrative|operating income|operating loss|operating expenses|long-lived assets|long lived assets/i.test(
         r.name
       )
     ) {

@@ -5,9 +5,9 @@
 // 1. Gaps / fiscal-calendar drift. Indexing `periods[years]` alone can land on
 //    the wrong year when a filer skipped a year; pure calendar matching can
 //    annualise a 4-year span as "3y". We prefer the fiscal-index match when its
-//    calendar span is near `years`, otherwise date-search with a tolerance, and
-//    always use the integer year count as the exponent when the span is close
-//    (analyst convention for "3y CAGR").
+//    calendar span is near `years`, otherwise date-search with a tolerance.
+//    The exponent is that measured span. Rounding a 2.5-year window to 3 years
+//    understates the rate. `tol` only decides whether the window counts.
 //
 // 2. Scale / unit discontinuities. Foreign filers and tag migrations sometimes
 //    produce a series that jumps by an order of magnitude (e.g. Toyota revenue
@@ -92,10 +92,10 @@ export function periodCagr(
   // Reject scale breaks between the endpoints (inclusive window, newest→oldest).
   if (hasScaleBreak(values, periods, pastEnd!, latest.end)) return null;
 
-  // Integer year count when the span is near N; otherwise the measured span so
-  // a 2.2-year window never pretends to be a 3y CAGR.
-  const exponent =
-    Math.abs(spanYears - years) <= tol ? years : spanYears;
+  // Always the measured span. Rounding a 2.5-year doubling to a 3-year
+  // exponent understates the rate. `tol` still decides whether a window is
+  // close enough to count as an N-year CAGR at all.
+  const exponent = spanYears;
   if (!(exponent > 0)) return null;
 
   return Math.pow(now / past, 1 / exponent) - 1;

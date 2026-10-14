@@ -5,7 +5,8 @@ import type { CompanyFinancials } from "@/lib/research/edgar";
 import { buildScorecard } from "@/lib/research/excel-scorecard";
 import { buildProjection, PROJECTION_YEARS } from "@/lib/research/excel-projection";
 import { buildDcf } from "@/lib/research/excel-dcf";
-import { sectorBeta } from "@/lib/research/dcf-sector";
+import { sectorBeta, sectorForecast } from "@/lib/research/dcf-sector";
+import { forecastAssumptionOverrides } from "@/lib/research/sector-forecast";
 import type { SegmentsPayload } from "@/lib/research/segments";
 import type { OwnershipPayload } from "@/lib/research/ownership";
 import type { ConfidenceReport } from "@/lib/research/confidence";
@@ -62,9 +63,19 @@ export default function TearSheet({
   const scorecard = useMemo(() => buildScorecard(fin, mode), [fin, mode]);
 
   const dcfSnap = useMemo(() => {
-    const proj = buildProjection(fin, PROJECTION_YEARS);
-    if (!proj) return null;
-    const dcf = buildDcf(fin, proj, sectorBeta(sic), marketPrice);
+    const base = buildProjection(fin, PROJECTION_YEARS);
+    if (!base) return null;
+    const seeded = forecastAssumptionOverrides({
+      fin,
+      sic,
+      years: PROJECTION_YEARS,
+      filedGross: base.actuals.grossMargin,
+      filedOpex: base.actuals.opexPctRevenue,
+      modelGross: base.assumptions.grossMargin[0] ?? 0.4,
+      modelOpex: base.assumptions.opexPctRevenue[0] ?? 0.2,
+    });
+    const proj = buildProjection(fin, PROJECTION_YEARS, seeded.assumptions) ?? base;
+    const dcf = buildDcf(fin, proj, sectorForecast(sic) ?? sectorBeta(sic), marketPrice);
     if (!dcf) return null;
     return dcf;
   }, [fin, sic, marketPrice]);
@@ -79,11 +90,17 @@ export default function TearSheet({
           }
         : null);
     if (!product) return null;
-    const members = product.rows.filter(
-      (r) =>
-        !/^(net sales|total|revenue)/i.test(r.name) &&
-        (r.values[0] ?? 0) > 0
-    );
+    const members = product.rows.filter((r) => {
+      const name = r.name.trim();
+      if (/^(net sales|total|revenue|sales|subtotal|eliminations?)/i.test(name)) return false;
+      if (/operating segments?|reportable segments?|segment information|ifrs 8/i.test(name)) {
+        return false;
+      }
+      if ((r.values[0] ?? 0) <= 0) return false;
+      const pct = r.pctOfTotal[0];
+      if (pct != null && pct > 105) return false;
+      return true;
+    });
     if (members.length === 0) return null;
     const sorted = [...members].sort(
       (a, b) => (b.values[0] ?? 0) - (a.values[0] ?? 0)
@@ -221,7 +238,7 @@ export default function TearSheet({
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                 {segmentSnap.servicesPct != null
                   ? `Services ${segmentSnap.servicesPct.toFixed(1)}%`
-                  : "No Services line"}
+                  : "Share of the product breakdown"}
                 {segmentSnap.historyYears > 1
                   ? ` · ${segmentSnap.historyYears}y mix`
                   : ""}
@@ -239,7 +256,7 @@ export default function TearSheet({
         {/* Insiders + confidence */}
         <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
           <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            Insider net ~90d
+            Insider net, latest Form 4s
           </p>
           {insiderSnap ? (
             <>

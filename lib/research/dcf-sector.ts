@@ -14,6 +14,17 @@
 export interface SectorBeta {
   sector: string;
   beta: number;
+  /** Explicit-window fade target. Separate from Gordon terminal growth. */
+  matureGrowth?: number;
+  /** Gordon growth. Kept near nominal GDP, with a small sector tilt. */
+  terminalGrowth?: number;
+  /** EV / EBITDA exit multiple for the terminal cross-check. */
+  exitMultiple?: number;
+  /**
+   * Mid-cycle operating margin. Used only when the latest filed margin is
+   * below 5%, so a loss year is not frozen for the whole forecast.
+   */
+  steadyOpMargin?: number;
 }
 
 // Ordered rules: the first whose SIC range matches wins, so specific industries
@@ -105,4 +116,58 @@ export function sectorBeta(sic: string | null | undefined): SectorBeta | null {
     if (n >= r.lo && n <= r.hi) return { sector: r.sector, beta: r.beta };
   }
   return null;
+}
+
+/**
+ * Round reference economics by the sector name `sectorBeta` returns.
+ * Mature growth is the explicit-window fade target. Terminal growth is the
+ * Gordon rate and stays inside 2–3.5%. These are starting points, not a house view.
+ */
+const SECTOR_ECONOMICS: Record<
+  string,
+  { matureGrowth: number; terminalGrowth: number; exitMultiple: number; steadyOpMargin: number }
+> = {
+  "Oil & Gas": { matureGrowth: 0.02, terminalGrowth: 0.02, exitMultiple: 6, steadyOpMargin: 0.14 },
+  "Mining & Materials": { matureGrowth: 0.025, terminalGrowth: 0.02, exitMultiple: 7, steadyOpMargin: 0.16 },
+  "Consumer Staples": { matureGrowth: 0.03, terminalGrowth: 0.02, exitMultiple: 16, steadyOpMargin: 0.16 },
+  "Household & Personal Products": { matureGrowth: 0.035, terminalGrowth: 0.025, exitMultiple: 16, steadyOpMargin: 0.18 },
+  Pharmaceuticals: { matureGrowth: 0.04, terminalGrowth: 0.025, exitMultiple: 12, steadyOpMargin: 0.22 },
+  Biotechnology: { matureGrowth: 0.06, terminalGrowth: 0.03, exitMultiple: 14, steadyOpMargin: 0.12 },
+  Chemicals: { matureGrowth: 0.03, terminalGrowth: 0.02, exitMultiple: 10, steadyOpMargin: 0.14 },
+  "Apparel & Textiles": { matureGrowth: 0.03, terminalGrowth: 0.02, exitMultiple: 10, steadyOpMargin: 0.1 },
+  "Media & Publishing": { matureGrowth: 0.03, terminalGrowth: 0.025, exitMultiple: 10, steadyOpMargin: 0.14 },
+  "Industrial Machinery": { matureGrowth: 0.035, terminalGrowth: 0.025, exitMultiple: 12, steadyOpMargin: 0.14 },
+  "Computers & Hardware": { matureGrowth: 0.05, terminalGrowth: 0.025, exitMultiple: 12, steadyOpMargin: 0.12 },
+  Semiconductors: { matureGrowth: 0.07, terminalGrowth: 0.03, exitMultiple: 16, steadyOpMargin: 0.28 },
+  "Communications Equipment": { matureGrowth: 0.05, terminalGrowth: 0.025, exitMultiple: 13, steadyOpMargin: 0.16 },
+  Electronics: { matureGrowth: 0.04, terminalGrowth: 0.025, exitMultiple: 12, steadyOpMargin: 0.12 },
+  Automobiles: { matureGrowth: 0.03, terminalGrowth: 0.02, exitMultiple: 7, steadyOpMargin: 0.08 },
+  "Aerospace & Defense": { matureGrowth: 0.035, terminalGrowth: 0.025, exitMultiple: 13, steadyOpMargin: 0.12 },
+  "Transportation Equipment": { matureGrowth: 0.03, terminalGrowth: 0.02, exitMultiple: 9, steadyOpMargin: 0.1 },
+  "Healthcare Products": { matureGrowth: 0.045, terminalGrowth: 0.025, exitMultiple: 16, steadyOpMargin: 0.18 },
+  Manufacturing: { matureGrowth: 0.03, terminalGrowth: 0.02, exitMultiple: 10, steadyOpMargin: 0.12 },
+  Construction: { matureGrowth: 0.03, terminalGrowth: 0.02, exitMultiple: 9, steadyOpMargin: 0.08 },
+  "Transportation & Logistics": { matureGrowth: 0.035, terminalGrowth: 0.025, exitMultiple: 10, steadyOpMargin: 0.1 },
+  Telecommunications: { matureGrowth: 0.02, terminalGrowth: 0.02, exitMultiple: 7, steadyOpMargin: 0.16 },
+  Utilities: { matureGrowth: 0.02, terminalGrowth: 0.02, exitMultiple: 11, steadyOpMargin: 0.18 },
+  Wholesale: { matureGrowth: 0.03, terminalGrowth: 0.02, exitMultiple: 9, steadyOpMargin: 0.04 },
+  Restaurants: { matureGrowth: 0.035, terminalGrowth: 0.025, exitMultiple: 12, steadyOpMargin: 0.12 },
+  Retail: { matureGrowth: 0.035, terminalGrowth: 0.025, exitMultiple: 11, steadyOpMargin: 0.07 },
+  Banks: { matureGrowth: 0.03, terminalGrowth: 0.02, exitMultiple: 10, steadyOpMargin: 0.25 },
+  Insurance: { matureGrowth: 0.03, terminalGrowth: 0.02, exitMultiple: 10, steadyOpMargin: 0.12 },
+  "Real Estate & REITs": { matureGrowth: 0.03, terminalGrowth: 0.02, exitMultiple: 16, steadyOpMargin: 0.35 },
+  "Financial Services": { matureGrowth: 0.04, terminalGrowth: 0.025, exitMultiple: 12, steadyOpMargin: 0.2 },
+  "Software & Internet": { matureGrowth: 0.08, terminalGrowth: 0.03, exitMultiple: 18, steadyOpMargin: 0.22 },
+  "Business Services": { matureGrowth: 0.045, terminalGrowth: 0.025, exitMultiple: 13, steadyOpMargin: 0.14 },
+  "Media & Entertainment": { matureGrowth: 0.04, terminalGrowth: 0.025, exitMultiple: 12, steadyOpMargin: 0.14 },
+  "Healthcare Services": { matureGrowth: 0.04, terminalGrowth: 0.025, exitMultiple: 11, steadyOpMargin: 0.08 },
+};
+
+/** Sector beta plus the forecast anchors for that SIC. Null when SIC does not map. */
+export function sectorForecast(sic: string | null | undefined): SectorBeta | null {
+  const base = sectorBeta(sic);
+  if (!base) return null;
+  const econ = SECTOR_ECONOMICS[base.sector];
+  if (!econ) return base;
+  return { ...base, ...econ };
 }

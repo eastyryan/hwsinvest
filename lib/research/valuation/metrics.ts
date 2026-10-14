@@ -57,7 +57,7 @@ export type CompanyOperatingMetrics = {
  * - ebit ← operatingIncome
  * - ebitda ← derived ebitda line when present, else operatingIncome + da
  * - debt ← stDebt + ltDebt (null only when both legs missing)
- * - netDebt ← debt − cash (null when both debt and cash missing)
+ * - netDebt ← debt − cash − short-term investments (null when all three are missing)
  * - shares ← diluted weighted-average first; never silently labelled as diluted
  *   when the figure is basic or NI / diluted EPS
  */
@@ -94,9 +94,11 @@ export function companyOperatingMetrics(
     debt = (st ?? 0) + (lt ?? 0);
   }
 
+  const liquidInvestments =
+    stInvestments != null && stInvestments > 0 ? stInvestments : 0;
   let netDebt: number | null = null;
-  if (debt != null || cash != null) {
-    netDebt = (debt ?? 0) - (cash ?? 0);
+  if (debt != null || cash != null || liquidInvestments > 0) {
+    netDebt = (debt ?? 0) - (cash ?? 0) - liquidInvestments;
   }
 
   let shares: number | null = null;

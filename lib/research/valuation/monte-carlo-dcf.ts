@@ -18,6 +18,8 @@ export type McDcfInputs = {
   debt: number;
   cash: number;
   shares: number | null;
+  /** Gordon base before shocks. Defaults to the last explicit FCF. */
+  terminalFcf?: number;
   /** shock stdevs */
   fcfShockStd: number; // e.g. 0.15 = 15% multiplicative shock per year independent
   waccShockStd: number; // absolute, e.g. 0.01
@@ -73,7 +75,12 @@ function clamp(n: number, lo: number, hi: number): number {
  * Enterprise value of a fixed FCF path discounted at `rate`, Gordon TV at `g`.
  * Year-end factors: 1/(1+r)^t for t = 1..n (same as excel-dcf evAtRate).
  */
-function evAtRate(fcf: number[], rate: number, g: number): number | null {
+function evAtRate(
+  fcf: number[],
+  rate: number,
+  g: number,
+  terminalBase?: number
+): number | null {
   if (!(rate > 0) || !Number.isFinite(rate)) return null;
   if (!Number.isFinite(g)) return null;
   if (fcf.length === 0) return null;
@@ -88,7 +95,7 @@ function evAtRate(fcf: number[], rate: number, g: number): number | null {
     sum += cf * df;
   }
 
-  const last = fcf[fcf.length - 1];
+  const last = terminalBase ?? fcf[fcf.length - 1];
   if (!(rate > g)) return null; // non-convergent Gordon
   const tv = (last * (1 + g)) / (rate - g);
   if (!Number.isFinite(tv)) return null;
@@ -183,7 +190,12 @@ export function runMonteCarloDcf(inputs: McDcfInputs): McDcfResult {
     }
     if (g < -0.05) g = -0.05;
 
-    const ev = evAtRate(shockedFcf, wacc, g);
+    const lastBase = baseFcf[baseFcf.length - 1]!;
+    const shockedLast = shockedFcf[shockedFcf.length - 1]!;
+    const factor = lastBase !== 0 ? shockedLast / lastBase : 1;
+    const terminalBase =
+      (isFiniteNumber(inputs.terminalFcf) ? inputs.terminalFcf : lastBase) * factor;
+    const ev = evAtRate(shockedFcf, wacc, g, terminalBase);
     if (ev == null || !Number.isFinite(ev)) {
       rejected++;
       continue;

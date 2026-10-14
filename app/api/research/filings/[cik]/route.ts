@@ -6,9 +6,9 @@ export const maxDuration = 20;
 
 export async function GET(
   _req: Request,
-  { params }: { params: {  cik: string  } }
+  { params }: { params: { cik: string } }
 ) {
-  const { cik  } = params;
+  const { cik } = params;
   if (!isValidCik(cik)) {
     return Response.json({ error: "Invalid company id." }, { status: 400 });
   }

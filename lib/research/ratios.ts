@@ -42,6 +42,14 @@ function flowGetter(set: StatementSet, key: string, ttm: boolean): Getter {
   if (!line) return () => null;
   return (i) => {
     if (!ttm) return line.values[set.periods[i]?.key] ?? null;
+    const newest = set.periods[i];
+    const oldest = set.periods[i + 3];
+    if (!newest || !oldest) return null;
+    // Four quarter-ends span about nine months. A wider gap is a missing
+    // quarter or an annual figure on the quarterly axis, not a trailing year.
+    const spanDays =
+      (new Date(newest.end).getTime() - new Date(oldest.end).getTime()) / 86400000;
+    if (spanDays < 240 || spanDays > 400) return null;
     let sum = 0;
     for (let k = i; k < i + 4; k++) {
       const p = set.periods[k];
@@ -127,12 +135,17 @@ export function buildRatios(
 
   const nopat: Getter = (i) => {
     const op = opIncome(i);
+    if (op == null) return null;
     const pt = pretax(i);
     const tx = taxes(i);
-    if (op != null && pt != null && tx != null && pt !== 0) {
-      return op * (1 - tx / pt);
+    // Same 0–45% cap as the scorecard. A negative pretax year does not
+    // produce a usable rate, so the statutory 21% stands in. Net income is
+    // not a substitute — it is after interest.
+    let rate = 0.21;
+    if (pt != null && pt > 0 && tx != null && Number.isFinite(tx)) {
+      rate = Math.min(0.45, Math.max(0, tx / pt));
     }
-    return netIncome(i);
+    return op * (1 - rate);
   };
 
   // Averaged to match ROE and ROA. Previously this used point-in-time equity and
@@ -170,18 +183,22 @@ export function buildRatios(
             key: "grossMargin",
             label: "Gross Margin",
             format: "pct" as const,
-            calc: (i: number) => div(grossProfit(i), revenue(i)),
+            calc: (i: number) => divPositive(grossProfit(i), revenue(i)),
           },
         ]
       : []),
-    { key: "opMargin", label: "Operating Margin", format: "pct", calc: (i) => div(opIncome(i), revenue(i)) },
-    { key: "netMargin", label: "Net Margin", format: "pct", calc: (i) => div(netIncome(i), revenue(i)) },
-    { key: "fcfMargin", label: "FCF Margin", format: "pct", calc: (i) => div(fcf(i), revenue(i)) },
+    { key: "opMargin", label: "Operating Margin", format: "pct", calc: (i) => divPositive(opIncome(i), revenue(i)) },
+    { key: "netMargin", label: "Net Margin", format: "pct", calc: (i) => divPositive(netIncome(i), revenue(i)) },
+    { key: "fcfMargin", label: "FCF Margin", format: "pct", calc: (i) => divPositive(fcf(i), revenue(i)) },
     {
       key: "roe",
       label: "Return on Equity",
       format: "pct",
-      calc: (i) => divPositive(netIncome(i), avgEquity(i)),
+      calc: (i) => {
+        const ending = equity(i);
+        if (ending == null || ending <= 0) return null;
+        return divPositive(netIncome(i), avgEquity(i));
+      },
       note:
         financialNote ??
         "Net income / average shareholders' equity. Not meaningful when equity is negative.",
@@ -207,13 +224,13 @@ export function buildRatios(
       key: "rdPct",
       label: "R&D % of Revenue",
       format: "pct",
-      calc: (i) => div(rd(i), revenue(i)),
+      calc: (i) => divPositive(rd(i), revenue(i)),
     },
     {
       key: "currentRatio",
       label: "Current Ratio",
       format: "x",
-      calc: (i) => div(currentAssets(i), currentLiabilities(i)),
+      calc: (i) => divPositive(currentAssets(i), currentLiabilities(i)),
       note: financial
         ? "Often unavailable or less meaningful when the balance sheet is not classified current/noncurrent."
         : undefined,

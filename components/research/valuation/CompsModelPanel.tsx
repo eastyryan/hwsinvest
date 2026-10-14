@@ -32,6 +32,7 @@ export default function CompsModelPanel({
   cik,
   sector,
   industry,
+  sic,
   marketCap,
   onBands,
 }: {
@@ -39,6 +40,7 @@ export default function CompsModelPanel({
   cik: string;
   sector: string | null;
   industry: string | null;
+  sic?: string | null;
   marketCap: number | null;
   onBands?: (bands: { pe: PerShareBand; evEbitda: PerShareBand }) => void;
 }) {
@@ -55,6 +57,7 @@ export default function CompsModelPanel({
       const qs = new URLSearchParams({ cik });
       if (sector) qs.set("sector", sector);
       if (industry) qs.set("industry", industry);
+      if (sic) qs.set("sic", sic);
       if (marketCap != null && marketCap > 0) qs.set("marketCap", String(marketCap));
       const res = await fetch(
         `/api/research/valuation/comps/${encodeURIComponent(ticker)}?${qs}`
@@ -82,7 +85,7 @@ export default function CompsModelPanel({
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load once on mount (panel mounts when expanded)
-  }, [ticker, cik]);
+  }, [ticker, cik, sic]);
 
   const summary = data
     ? `P/E ${fmtRange(impliedPerShareBand("pe", data.peerMultiples.pe, data.subject))} · EV/EBITDA ${fmtRange(impliedPerShareBand("evEbitda", data.peerMultiples.evEbitda, data.subject))}`

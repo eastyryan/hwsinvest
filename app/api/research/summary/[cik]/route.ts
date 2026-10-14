@@ -19,9 +19,9 @@ export const maxDuration = 60;
 
 export async function GET(
   req: Request,
-  { params }: { params: {  cik: string  } }
+  { params }: { params: { cik: string } }
 ) {
-  const { cik  } = params;
+  const { cik } = params;
   const rawTicker = new URL(req.url).searchParams.get("ticker") ?? "";
 
   if (!isValidCik(cik)) {

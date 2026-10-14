@@ -120,7 +120,7 @@ const TOTAL_ROW_RE =
  * Tesla uses "Revenues"; IFRS 8 / 20-F often use "External revenue" or "Turnover".
  */
 const SEGMENT_METRIC_RE =
-  /^(net sales|total net sales|revenue|revenues|net revenue|net revenues|sales|total revenue|total revenues|total sales|revenue from contract with customers|revenues from contracts with customers|external revenue|revenue from external customers|external revenues|turnover|net turnover|sales revenue|long-lived assets|long lived assets|total long-lived assets|non-current assets|noncurrent assets|total revenue)$/i;
+  /^(net sales|total net sales|revenue|revenues|net revenue|net revenues|sales|total revenue|total revenues|total sales|revenue from contract with customers|revenues from contracts with customers|external revenue|revenue from external customers|external revenues|turnover|net turnover|sales revenue|total revenue)$/i;
 
 /** Intermediate subtotals (e.g. TSLA "Total revenues from sales and services"). */
 function isSubtotalSection(name: string): boolean {
@@ -174,6 +174,14 @@ function classifyKind(title: string): SegmentKind {
     )
   ) {
     return "reportable";
+  }
+
+  // Asset rolls are not a sales geography, even when the title says geographic.
+  if (
+    /long-lived assets|long lived assets|non-current assets|noncurrent assets/.test(t) &&
+    !/revenue|sales/.test(t)
+  ) {
+    return "other";
   }
 
   // Geographic (US-GAAP 10-K + IFRS 8 entity-wide geography on 20-F)
@@ -704,7 +712,7 @@ function stitchHistoryByKind(
 export async function getSegments(cik: string): Promise<SegmentsPayload> {
   if (!isValidCik(cik)) throw new Error(`Invalid CIK: ${cik}`);
   // v6: broader IFRS 8 / 20-F title scoring + external-revenue metric names
-  const key = `segments:v6:${cik}`;
+  const key = `segments:v7:${cik}`;
 
   return singleFlight(key, () =>
     cached(key, { ttl: 21_600, tags: ["segments", `cik:${cik}`] }, async () => {

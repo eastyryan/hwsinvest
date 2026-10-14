@@ -129,11 +129,13 @@ export function defaultLboInputsFromMetrics(m: {
   const entryEbitda = m.ebitda;
   const entryMultiple = DEFAULT_ENTRY_MULTIPLE;
 
-  let leverageMultiple: number;
-  if (!isFiniteNumber(m.netDebt)) {
-    leverageMultiple = DEFAULT_LEVERAGE;
-  } else {
-    leverageMultiple = clamp(m.netDebt / entryEbitda, 0, MAX_LEVERAGE);
+  // A sponsor finances the deal. Net cash is not an all-equity buyout —
+  // that cash belongs to shareholders and is added in the equity bridge.
+  // Keep a structure that is already heavier than the 4.5× sponsor case.
+  let leverageMultiple = DEFAULT_LEVERAGE;
+  if (isFiniteNumber(m.netDebt)) {
+    const current = m.netDebt / entryEbitda;
+    leverageMultiple = clamp(Math.max(current, DEFAULT_LEVERAGE), 0, MAX_LEVERAGE);
   }
 
   const out: LboInputs = {
@@ -352,6 +354,9 @@ export function runLbo(inputs: LboInputs): LboResult | null {
 
   let termLoan = termLoan0;
   let notesBal = notes0;
+  // Cash the sweep does not use (and every dollar once the debt is gone)
+  // stays with the company. Dropping it understated exit equity.
+  let retainedCash = 0;
   const yearsOut: LboYear[] = [];
 
   for (let y = 1; y <= resolved.years; y++) {
@@ -387,6 +392,7 @@ export function runLbo(inputs: LboInputs): LboResult | null {
     const notesSweep = Math.min(remainingSweep, notesBal);
     notesBal -= notesSweep;
     optionalPaydown += notesSweep;
+    retainedCash += cashForDebt - optionalPaydown;
 
     // Numerical floor
     if (termLoan < 1e-9) termLoan = 0;
@@ -425,8 +431,8 @@ export function runLbo(inputs: LboInputs): LboResult | null {
   const exitEbitda = last.ebitda;
   const exitEv = exitEbitda * resolved.exitMultiple;
   const netDebt = last.endingDebt;
-  // Equity proceeds floored at 0 (no negative exit check written)
-  const equityProceeds = exitEv - netDebt;
+  // Unswept free cash flow accumulated over the hold is cash at exit.
+  const equityProceeds = exitEv - netDebt + retainedCash;
 
   const equityIn = sponsorEquity;
   const equityOut = equityProceeds;
@@ -471,19 +477,78 @@ export function runLbo(inputs: LboInputs): LboResult | null {
   };
 }
 
+const MULTIPLE_MIN = 3;
+const MULTIPLE_MAX = 45;
+
 /**
- * Equity value per share a buyer could pay today and still earn `irr`.
+ * Live EV / EBITDA. Enterprise value is price × shares + net debt, so net
+ * cash lowers EV. Null when the multiple is not a usable trading multiple.
+ */
+export function tradingEvEbitda(args: {
+  price: number | null;
+  shares: number | null;
+  netDebt: number | null;
+  ebitda: number | null;
+}): number | null {
+  const { price, shares, ebitda } = args;
+  if (!isFiniteNumber(price) || price <= 0) return null;
+  if (!isFiniteNumber(shares) || shares <= 0) return null;
+  if (!isFiniteNumber(ebitda) || ebitda <= 0) return null;
+  const netDebt = isFiniteNumber(args.netDebt) ? args.netDebt : 0;
+  const ev = price * shares + netDebt;
+  if (!(ev > 0)) return null;
+  const multiple = ev / ebitda;
+  if (multiple < MULTIPLE_MIN || multiple > MULTIPLE_MAX) return null;
+  return multiple;
+}
+
+export type LboMultipleSource = "trading" | "sector" | "default";
+
+/**
+ * Exit (and entry) multiple for a public-company LBO.
+ * Prefer today's EV/EBITDA so the case does not assume a multiple change.
+ * Otherwise the sector exit, otherwise 12×.
+ */
+export function suggestedLboMultiple(args: {
+  price: number | null;
+  shares: number | null;
+  netDebt: number | null;
+  ebitda: number | null;
+  sectorExit?: number | null;
+}): { multiple: number; source: LboMultipleSource } {
+  const live = tradingEvEbitda(args);
+  if (live != null) {
+    return { multiple: Math.round(live * 10) / 10, source: "trading" };
+  }
+  const sector = args.sectorExit;
+  if (
+    isFiniteNumber(sector) &&
+    sector >= MULTIPLE_MIN &&
+    sector <= MULTIPLE_MAX
+  ) {
+    return { multiple: sector, source: "sector" };
+  }
+  return { multiple: DEFAULT_ENTRY_MULTIPLE, source: "default" };
+}
+
+/**
+ * Equity value per share a buyer could pay shareholders today and still earn `irr`.
  *
- * Debt is set in turns of EBITDA, and the cash sweep pays debt rather than
- * the sponsor, so exit equity does not depend on the entry multiple. The
- * hurdle then solves for the sponsor's check. Fees sit on top of enterprise
- * value, so the figure returned is equity value (entry EV minus entry debt),
- * not the check itself.
+ * New debt is sized off EBITDA, and the cash sweep pays that debt rather than
+ * the sponsor, so exit equity does not depend on the entry price. The hurdle
+ * solves for the sponsor's check, then for the enterprise value that check
+ * supports. Shareholders receive that enterprise value minus the net debt
+ * already on the business (net cash raises the price). They do not receive
+ * less because the buyer borrowed to fund the deal.
+ *
+ * Omit `netDebt` only for the older sponsor-check figure (entry EV minus the
+ * new debt). Pass `null` when net debt is unknown; that bridges at zero.
  */
 export function lboEntryPerShare(
   result: LboResult,
   shares: number,
-  irr: number
+  irr: number,
+  netDebt?: number | null
 ): number | null {
   const equityOut = result.returns.equityOut;
   const years = result.inputs.years;
@@ -498,7 +563,13 @@ export function lboEntryPerShare(
   const debt = result.sourcesAndUses.totalDebt;
   const entryDebt = isFiniteNumber(debt) && debt > 0 ? debt : 0;
   const entryEv = (sponsorCheck + entryDebt) / (1 + fee);
-  const equityValue = entryEv - entryDebt;
+  const bridgeDebt =
+    netDebt === undefined
+      ? entryDebt
+      : isFiniteNumber(netDebt)
+        ? netDebt
+        : 0;
+  const equityValue = entryEv - bridgeDebt;
   if (!(equityValue > 0)) return null;
   return equityValue / shares;
 }
@@ -506,14 +577,15 @@ export function lboEntryPerShare(
 /** Football-field band: 25% IRR (low price), 20% (mid), 15% (high price). */
 export function lboEntryBand(
   result: LboResult,
-  shares: number | null
+  shares: number | null,
+  netDebt?: number | null
 ): { low: number | null; mid: number | null; high: number | null } {
   if (shares == null || !(shares > 0)) {
     return { low: null, mid: null, high: null };
   }
   return {
-    low: lboEntryPerShare(result, shares, 0.25),
-    mid: lboEntryPerShare(result, shares, 0.2),
-    high: lboEntryPerShare(result, shares, 0.15),
+    low: lboEntryPerShare(result, shares, 0.25, netDebt),
+    mid: lboEntryPerShare(result, shares, 0.2, netDebt),
+    high: lboEntryPerShare(result, shares, 0.15, netDebt),
   };
 }

@@ -49,7 +49,7 @@ class Lru<T> {
 // recently-viewed companies without meaningful memory pressure.
 const memory = new Lru<unknown>(24);
 
-/** Runtime Cache is unavailable outside Vercel (local dev, tests, browser stub). */
+/** Runtime Cache is unavailable outside Vercel (local dev, tests). */
 function runtimeCache(): ReturnType<typeof getCache> | null {
   try {
     return getCache();

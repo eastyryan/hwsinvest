@@ -154,6 +154,7 @@ export default function PeerStrip({
   name,
   sector,
   industry,
+  sic = null,
   marketCap = null,
   mode = "standard",
   /** When true (overview accordion), load peers without a nested expand control. */
@@ -164,6 +165,8 @@ export default function PeerStrip({
   name: string;
   sector: string | null;
   industry: string | null;
+  /** SEC SIC. Used when Yahoo has no sector or industry. */
+  sic?: string | null;
   /** Optional subject market cap for peer proximity ranking. */
   marketCap?: number | null;
   mode?: SectorMode;
@@ -194,6 +197,7 @@ export default function PeerStrip({
       qs.set("name", name);
       if (sector) qs.set("sector", sector);
       if (industry) qs.set("industry", industry);
+      if (sic) qs.set("sic", sic);
       if (marketCap != null && marketCap > 0) {
         qs.set("marketCap", String(marketCap));
       }
@@ -222,7 +226,11 @@ export default function PeerStrip({
 
   const labelBits = [industry, sector].filter(Boolean);
   const context =
-    labelBits.length > 0 ? labelBits.join(" · ") : "large-cap reference set";
+    labelBits.length > 0
+      ? labelBits.join(" · ")
+      : sic
+        ? `SIC ${sic}`
+        : "No industry classification";
 
   const showBody = embedded || open;
 
@@ -284,16 +292,18 @@ export default function PeerStrip({
 
           {data && (
             <>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {data.cards.map((c) => (
-                  <div key={c.ticker} className="min-w-[9.5rem] shrink-0">
-                    <PeerCard card={c} averages={data.averages} showGross={showGross} />
+              {data.cards.some((c) => !c.isSubject) ? (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {data.cards.map((c) => (
+                    <div key={c.ticker} className="min-w-[9.5rem] shrink-0">
+                      <PeerCard card={c} averages={data.averages} showGross={showGross} />
+                    </div>
+                  ))}
+                  <div className="min-w-[9.5rem] shrink-0">
+                    <AvgCard averages={data.averages} showGross={showGross} />
                   </div>
-                ))}
-                <div className="min-w-[9.5rem] shrink-0">
-                  <AvgCard averages={data.averages} showGross={showGross} />
                 </div>
-              </div>
+              ) : null}
               {data.notes[0] && (
                 <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
                   {data.notes[0]}{" "}

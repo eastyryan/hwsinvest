@@ -22,6 +22,7 @@ import {
  */
 export default function AlertsBanner() {
   const [events, setEvents] = useState<AlertEvent[]>([]);
+  const [capped, setCapped] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,11 +33,12 @@ export default function AlertsBanner() {
 
       const watch = getWatchlistSnapshot();
       if (watch.length === 0) return;
+      if (!cancelled) setCapped(watch.length > 12);
 
       const prev = loadPriceSnapshots();
       const next: PriceSnapshot[] = [];
 
-      // Cap concurrent free price checks
+      // Cap concurrent free price checks. The banner says when names were skipped.
       const tickers = watch.slice(0, 12);
       for (const w of tickers) {
         try {
@@ -44,12 +46,16 @@ export default function AlertsBanner() {
             `/api/research/prices/${encodeURIComponent(w.ticker)}?range=1y`
           );
           if (!res.ok) continue;
-          const json = (await res.json()) as { price?: number | null };
+          const json = (await res.json()) as {
+            price?: number | null;
+            currency?: string | null;
+          };
           if (json.price != null && Number.isFinite(json.price)) {
             next.push({
               ticker: w.ticker.toUpperCase(),
               price: json.price,
               at: Date.now(),
+              ...(json.currency ? { currency: json.currency } : {}),
             });
           }
         } catch {
@@ -81,6 +87,11 @@ export default function AlertsBanner() {
         <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-900 dark:text-amber-200">
           Watchlist alerts (local)
         </p>
+        {capped && (
+          <p className="text-[11px] text-amber-900/80 dark:text-amber-200/80">
+            Price checks cover the first 12 watchlist names.
+          </p>
+        )}
         <ul className="space-y-1">
           {events.map((e) => (
             <li

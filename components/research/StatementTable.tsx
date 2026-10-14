@@ -9,6 +9,7 @@ import { fmtValue, fmtPct } from "@/lib/research/format";
 import { periodCagr } from "@/lib/research/cagr";
 import { getLineMeta } from "@/lib/research/line-meta";
 import { currencyPrefix } from "./currency";
+import { balanceSheetPlug, statementIdentityChecks } from "@/lib/research/statement-checks";
 import { btnCompact, btnSegmentedCompact, btnSegmentedCompactItem } from "./ui/buttonStyles";
 
 const DEFAULT_COLS = 8;
@@ -195,6 +196,12 @@ export default function StatementTable({
   const [copied, setCopied] = useState(false);
   const [filings, setFilings] = useState<FilingLink[] | null>(null);
   const cols = showAll ? periods : periods.slice(0, DEFAULT_COLS);
+  const plug = useMemo(() => balanceSheetPlug(statement, periods), [statement, periods]);
+  const plugByKey = useMemo(() => {
+    const map = new Map<string, { residual: number; tied: boolean }>();
+    for (const row of plug ?? []) map.set(row.periodKey, row);
+    return map;
+  }, [plug]);
   const showCagr = !quarterly && !commonSize;
   const yoyIndex = useMemo(() => buildComparisonIndex(periods, YEAR_MS), [periods]);
   const qoqIndex = useMemo(
@@ -540,9 +547,56 @@ export default function StatementTable({
                 </tr>
               );
             })}
+            {plug && (
+              <tr className="border-t-2 border-zinc-300 bg-zinc-50/80 dark:border-zinc-600 dark:bg-zinc-900/50">
+                <th
+                  scope="row"
+                  className="sticky left-0 z-10 bg-[#f6f6f7] px-4 py-2 text-left text-xs font-semibold dark:bg-[#141416]"
+                  title="Assets minus liabilities minus equity. A tie displays as zero. A non-zero figure is a gap between the filed tags."
+                >
+                  Assets − liabilities − equity
+                </th>
+                {showCagr &&
+                  CAGR_SPANS.map((y) => (
+                    <td
+                      key={y}
+                      className="hidden border-r border-zinc-100 px-3 py-2 text-right font-mono text-[11px] text-zinc-400 md:table-cell dark:border-zinc-800/60"
+                    >
+                      —
+                    </td>
+                  ))}
+                {cols.map((p) => {
+                  const cell = plugByKey.get(p.key);
+                  const text = (() => {
+                    if (!cell) return "—";
+                    if (cell.tied) return commonSize ? "0.0%" : "0";
+                    if (commonSize) {
+                      const d = denominator?.values[p.key];
+                      if (d == null || d === 0) return "—";
+                      return ((cell.residual / d) * 100).toFixed(1) + "%";
+                    }
+                    return fmtValue(cell.residual);
+                  })();
+                  return (
+                    <td key={p.key} className="px-4 py-2 text-right">
+                      <span
+                        className={`font-mono text-[15px] font-semibold tabular-nums ${
+                          cell && !cell.tied
+                            ? "text-red-700 dark:text-red-400"
+                            : "text-zinc-800 dark:text-zinc-100"
+                        }`}
+                      >
+                        {text}
+                      </span>
+                    </td>
+                  );
+                })}
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+      <StatementTieOut statement={statement} periods={cols} />
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
         {periods.length > DEFAULT_COLS && (
           <button
@@ -565,5 +619,49 @@ export default function StatementTable({
         )}
       </div>
     </section>
+  );
+}
+
+function StatementTieOut({
+  statement,
+  periods,
+}: {
+  statement: Statement;
+  periods: PeriodCol[];
+}) {
+  const checks = useMemo(
+    () => statementIdentityChecks(statement, periods),
+    [statement, periods]
+  );
+  if (checks.length === 0) return null;
+  const problems = checks.filter((c) => c.status !== "tie");
+  const ties = checks.filter((c) => c.status === "tie");
+  const latestTies = new Map<string, (typeof ties)[number]>();
+  for (const c of ties) {
+    if (!latestTies.has(c.id)) latestTies.set(c.id, c);
+  }
+  const rows = [...problems, ...latestTies.values()];
+  return (
+    <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50/70 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+      <p className="text-[11px] font-medium text-zinc-600 dark:text-zinc-300">
+        Statement checks
+      </p>
+      <ul className="mt-1 space-y-1">
+        {rows.map((c) => (
+          <li
+            key={`${c.id}-${c.periodKey}-${c.status}`}
+            className={`text-[11px] leading-snug ${
+              c.status === "gap"
+                ? "text-red-700 dark:text-red-400"
+                : c.status === "derived"
+                  ? "text-amber-800 dark:text-amber-300"
+                  : "text-zinc-600 dark:text-zinc-400"
+            }`}
+          >
+            {c.summary}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

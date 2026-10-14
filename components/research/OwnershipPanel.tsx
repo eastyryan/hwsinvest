@@ -71,28 +71,32 @@ function SidePill({ side }: { side: Side }) {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  hint,
-  tone = "neutral",
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  tone?: "up" | "down" | "neutral";
-}) {
-  const toneClass =
-    tone === "up"
-      ? "text-emerald-700 dark:text-emerald-400"
-      : tone === "down"
-        ? "text-red-700 dark:text-red-400"
-        : "text-zinc-900 dark:text-zinc-100";
+function signedShares(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  if (n > 0) return "+" + fmtShares(n);
+  return fmtShares(n);
+}
+
+function signedMoney(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  if (n > 0) return "+" + fmtMoney(n);
+  return fmtMoney(n);
+}
+
+/** Buy share of the bar is green; the rest of the track is sells. */
+function SplitBar({ buys, sells }: { buys: number; sells: number }) {
+  const total = buys + sells;
+  if (total <= 0) return null;
+  const buyPct = (buys / total) * 100;
   return (
-    <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-      <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</p>
-      <p className={`mt-1 font-mono text-lg font-semibold tracking-tight ${toneClass}`}>{value}</p>
-      {hint && <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{hint}</p>}
+    <div
+      className="mt-3 h-1 overflow-hidden rounded-full bg-red-500 dark:bg-red-400"
+      aria-hidden
+    >
+      <div
+        className="h-full bg-emerald-600 dark:bg-emerald-400"
+        style={{ width: `${buyPct}%` }}
+      />
     </div>
   );
 }
@@ -706,15 +710,8 @@ export default function OwnershipPanel({
   if (loading) {
     return (
       <div className="space-y-4" role="status" aria-live="polite">
-        <div className="h-4 w-48 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/40"
-            />
-          ))}
-        </div>
+        <div className="h-4 w-40 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+        <div className="h-28 animate-pulse rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/40" />
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Loading shareholders and disclosures&hellip;
         </p>
@@ -738,60 +735,103 @@ export default function OwnershipPanel({
   const view = filterInsiderPayload(data, openMarketOnly);
   const { insiders, institutions, politicians } = view;
 
+  const instPct =
+    institutions.summary.totalInstitutionalPct ?? institutions.summary.latestTotalPct;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight">Ownership activity</h2>
-        <p className="mt-1 max-w-[75ch] text-xs text-zinc-500 dark:text-zinc-400">
-          Insider Form 4 trades, large institutional beneficial owners (13G/D), and
-          politician STOCK Act disclosures — with net share or estimated dollar change
-          over the last quarter (~90d) and year (~365d). Not investment advice.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Ownership</h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Institutions, insider Form 4s, and congressional disclosures.
+          </p>
+        </div>
         {data.sharesOutstanding != null && (
-          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-            Shares outstanding basis:{" "}
-            <span className="font-mono">{fmtShares(data.sharesOutstanding)}</span>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Shares outstanding{" "}
+            <span className="font-mono tabular-nums text-zinc-800 dark:text-zinc-200">
+              {fmtShares(data.sharesOutstanding)}
+            </span>
           </p>
         )}
       </div>
 
-      {/* Full-width category tabs */}
       <div
-        className="grid grid-cols-1 gap-2 sm:grid-cols-3"
+        className="grid overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 sm:grid-cols-3"
         role="tablist"
         aria-label="Ownership categories"
       >
         {(
           [
-            ["institutions", "Institutions", `≥${institutions.summary.thresholdPct ?? 1}% holders`],
-            ["insiders", "Insiders", "Form 4 activity"],
-            ["politicians", "Politicians", "STOCK Act"],
-          ] as const
-        ).map(([key, label, hint]) => {
-          const active = ownershipTab === key;
+            {
+              key: "institutions" as const,
+              kicker: "Institutions",
+              value: instPct != null ? instPct.toFixed(1) + "%" : "—",
+              detail: `${institutions.summary.filerCount} holders at or above ${institutions.summary.thresholdPct ?? 1}%`,
+              tone: "neutral" as const,
+              buys: 0,
+              sells: 0,
+              showBar: false,
+            },
+            {
+              key: "insiders" as const,
+              kicker: "Insiders · 90 days",
+              value: signedShares(insiders.summary.netShares90d),
+              detail: `${insiders.summary.buys} buys · ${insiders.summary.sells} sells`,
+              tone: toneFromNet(insiders.summary.netShares90d),
+              buys: insiders.summary.buys,
+              sells: insiders.summary.sells,
+              showBar: true,
+            },
+            {
+              key: "politicians" as const,
+              kicker: "Politicians · 90 days",
+              value: signedMoney(politicians.summary.netAmountMid90d),
+              detail: `${politicians.summary.buys} buys · ${politicians.summary.sells} sells`,
+              tone: toneFromNet(politicians.summary.netAmountMid90d),
+              buys: politicians.summary.buys,
+              sells: politicians.summary.sells,
+              showBar: true,
+            },
+          ]
+        ).map((item, index) => {
+          const active = ownershipTab === item.key;
+          const toneClass =
+            item.tone === "up"
+              ? "text-emerald-700 dark:text-emerald-400"
+              : item.tone === "down"
+                ? "text-red-700 dark:text-red-400"
+                : "text-zinc-900 dark:text-zinc-50";
           return (
             <button
-              key={key}
+              key={item.key}
               type="button"
               role="tab"
               aria-selected={active}
-              id={`ownership-tab-${key}`}
-              aria-controls={`ownership-panel-${key}`}
-              onClick={() => setOwnershipTab(key)}
-              className={`flex min-h-[4.5rem] flex-col items-start justify-center rounded-xl border-2 px-4 py-3 text-left transition-colors ${
+              id={`ownership-tab-${item.key}`}
+              aria-controls={`ownership-panel-${item.key}`}
+              onClick={() => setOwnershipTab(item.key)}
+              className={`px-4 py-4 text-left transition-colors sm:px-5 ${
+                index > 0
+                  ? "border-t border-zinc-200 dark:border-zinc-800 sm:border-t-0 sm:border-l"
+                  : ""
+              } ${
                 active
-                  ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-                  : "border-zinc-900 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                  ? "bg-zinc-50 shadow-[inset_0_-2px_0_0_#18181b] dark:bg-zinc-900 dark:shadow-[inset_0_-2px_0_0_#f4f4f5]"
+                  : "hover:bg-zinc-50/80 dark:hover:bg-zinc-900/50"
               }`}
             >
-              <span className="text-base font-semibold tracking-tight sm:text-lg">{label}</span>
-              <span
-                className={`mt-0.5 text-xs ${
-                  active ? "text-zinc-300 dark:text-zinc-600" : "text-zinc-500 dark:text-zinc-400"
-                }`}
-              >
-                {hint}
+              <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                {item.kicker}
               </span>
+              <span className={`mt-1.5 block text-2xl font-semibold tabular-nums tracking-tight ${toneClass}`}>
+                {item.value}
+              </span>
+              <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-400">
+                {item.detail}
+              </span>
+              {item.showBar && <SplitBar buys={item.buys} sells={item.sells} />}
             </button>
           );
         })}
@@ -804,45 +844,24 @@ export default function OwnershipPanel({
           aria-labelledby="ownership-tab-institutions"
           className="space-y-3"
         >
-          <p className="max-w-[75ch] text-xs text-zinc-500 dark:text-zinc-400">
-            Every institutional holder reported at or above 1% of shares outstanding, primarily from
-            13F holdings data. Δ shares / Δ % pts is the change vs the prior reported period for that
-            holder. Related funds under the same complex can appear as separate lines.
+          <p className="max-w-[75ch] text-sm text-zinc-600 dark:text-zinc-300">
+            Institutional holders at or above {institutions.summary.thresholdPct ?? 1}% of shares
+            outstanding.
+            {institutions.summary.latestTotalPct != null && (
+              <>
+                {" "}
+                Those stakes sum to {institutions.summary.latestTotalPct.toFixed(1)}%. Related funds
+                can be listed separately, so the sum can differ from the headline percentage.
+              </>
+            )}{" "}
+            Share changes are versus that holder&apos;s prior report.
           </p>
-          <ExpandableBlock title="Summary stats">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <StatCard
-                label={`Holders ≥${institutions.summary.thresholdPct ?? 1}%`}
-                value={String(institutions.summary.filerCount)}
-              />
-              <StatCard
-                label="Sum of ≥1% stakes"
-                value={
-                  institutions.summary.latestTotalPct != null
-                    ? institutions.summary.latestTotalPct.toFixed(1) + "%"
-                    : "—"
-                }
-                hint="Can double-count related entities"
-              />
-              <StatCard
-                label="Total institutional ownership"
-                value={
-                  institutions.summary.totalInstitutionalPct != null
-                    ? institutions.summary.totalInstitutionalPct.toFixed(1) + "%"
-                    : "—"
-                }
-                hint="All institutions, not just ≥1%"
-              />
-            </div>
-          </ExpandableBlock>
+          <InstitutionalTable
+            holdings={institutions.holdings}
+            emptyMessage="No institutional holders at or above 1% of shares outstanding were found for this ticker."
+          />
           <ExpandableBlock title="Position change by shareholder">
             <PeopleTable people={institutions.people} mode="shares" />
-          </ExpandableBlock>
-          <ExpandableBlock title={`Holdings ≥${institutions.summary.thresholdPct ?? 1}%`}>
-            <InstitutionalTable
-              holdings={institutions.holdings}
-              emptyMessage="No institutional holders at or above 1% of shares outstanding were found for this ticker."
-            />
           </ExpandableBlock>
           {(institutions.filings13g?.length ?? 0) > 0 && (
             <ExpandableBlock title="Schedule 13G / 13D filings">
@@ -880,6 +899,25 @@ export default function OwnershipPanel({
               now.
             </p>
           )}
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            <span className="text-zinc-500 dark:text-zinc-400">365-day net </span>
+            <span
+              className={`font-mono font-semibold tabular-nums ${sideClass(
+                (insiders.summary.netShares365d ?? 0) > 0
+                  ? "buy"
+                  : (insiders.summary.netShares365d ?? 0) < 0
+                    ? "sell"
+                    : "other"
+              )}`}
+            >
+              {signedShares(insiders.summary.netShares365d)}
+            </span>
+            {insiders.summary.pctChange365d != null && (
+              <span className="ml-2 text-xs text-zinc-500 dark:text-zinc-400">
+                {fmtPct(insiders.summary.pctChange365d)} of shares outstanding
+              </span>
+            )}
+          </p>
           <div className="flex flex-wrap items-center gap-3">
             <div
               className={btnSegmentedCompact}
@@ -907,45 +945,9 @@ export default function OwnershipPanel({
               Open market = Form 4 codes P (buy) and S (sell)
             </p>
           </div>
-          <ExpandableBlock title="Summary stats">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard
-                label="Buys"
-                value={String(insiders.summary.buys)}
-                hint="In recent Form 4 filings loaded"
-              />
-              <StatCard
-                label="Sells"
-                value={String(insiders.summary.sells)}
-                hint="In recent Form 4 filings loaded"
-              />
-              <StatCard
-                label="Net shares ~90d"
-                value={fmtShares(insiders.summary.netShares90d)}
-                hint={
-                  insiders.summary.pctChange90d != null
-                    ? `${fmtPct(insiders.summary.pctChange90d)} of shares out.`
-                    : undefined
-                }
-                tone={toneFromNet(insiders.summary.netShares90d)}
-              />
-              <StatCard
-                label="Net shares ~365d"
-                value={fmtShares(insiders.summary.netShares365d)}
-                hint={
-                  insiders.summary.pctChange365d != null
-                    ? `${fmtPct(insiders.summary.pctChange365d)} of shares out.`
-                    : undefined
-                }
-                tone={toneFromNet(insiders.summary.netShares365d)}
-              />
-            </div>
-          </ExpandableBlock>
+          <InsiderTradesTable trades={insiders.trades} />
           <ExpandableBlock title="Share change by person">
             <PeopleTable people={insiders.people} mode="shares" />
-          </ExpandableBlock>
-          <ExpandableBlock title="Recent Form 4 transactions">
-            <InsiderTradesTable trades={insiders.trades} />
           </ExpandableBlock>
         </div>
       )}
@@ -957,40 +959,27 @@ export default function OwnershipPanel({
           aria-labelledby="ownership-tab-politicians"
           className="space-y-3"
         >
-          <p className="max-w-[75ch] text-xs text-zinc-500 dark:text-zinc-400">
-            STOCK Act periodic transaction reports for members of Congress and some executive-branch
-            officials. Amounts are disclosed as ranges — net figures use the midpoint of each range as
-            an estimate, not exact share counts.
+          <p className="max-w-[75ch] text-sm text-zinc-600 dark:text-zinc-300">
+            STOCK Act reports for members of Congress. Amounts are ranges, so the net is the
+            midpoint of each range, not a share count.
           </p>
-          <ExpandableBlock title="Summary stats">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard
-                label="Buys"
-                value={String(politicians.summary.buys)}
-                hint="In loaded STOCK Act disclosures"
-              />
-              <StatCard
-                label="Sells"
-                value={String(politicians.summary.sells)}
-                hint="In loaded STOCK Act disclosures"
-              />
-              <StatCard
-                label="Est. net $ ~90d"
-                value={fmtMoney(politicians.summary.netAmountMid90d)}
-                tone={toneFromNet(politicians.summary.netAmountMid90d)}
-              />
-              <StatCard
-                label="Est. net $ ~365d"
-                value={fmtMoney(politicians.summary.netAmountMid365d)}
-                tone={toneFromNet(politicians.summary.netAmountMid365d)}
-              />
-            </div>
-          </ExpandableBlock>
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            <span className="text-zinc-500 dark:text-zinc-400">365-day net </span>
+            <span
+              className={`font-mono font-semibold tabular-nums ${sideClass(
+                (politicians.summary.netAmountMid365d ?? 0) > 0
+                  ? "buy"
+                  : (politicians.summary.netAmountMid365d ?? 0) < 0
+                    ? "sell"
+                    : "other"
+              )}`}
+            >
+              {signedMoney(politicians.summary.netAmountMid365d)}
+            </span>
+          </p>
+          <PoliticianTable trades={politicians.trades} />
           <ExpandableBlock title="Estimated activity by person">
             <PeopleTable people={politicians.people} mode="dollars" />
-          </ExpandableBlock>
-          <ExpandableBlock title="Recent disclosures">
-            <PoliticianTable trades={politicians.trades} />
           </ExpandableBlock>
         </div>
       )}

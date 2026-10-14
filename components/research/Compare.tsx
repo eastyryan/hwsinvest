@@ -18,6 +18,7 @@ import {
   Legend,
 } from "recharts";
 import { CaretDown, CaretRight } from "@phosphor-icons/react";
+import CompanyLogo from "./CompanyLogo";
 import type { CompanyFinancials, StatementSet, PeriodCol } from "@/lib/research/edgar";
 import { buildRatios, type RatioSet } from "@/lib/research/ratios";
 import { fmtValue, fmtPct } from "@/lib/research/format";
@@ -36,6 +37,7 @@ import {
 import useIsDark from "./useIsDark";
 import usePrefersReducedMotion from "./usePrefersReducedMotion";
 import { fmtMillions, fmtMoney } from "./currency";
+import { compareAxisKey, compareYoY, putAxisValue } from "@/lib/research/compare-series";
 import {
   getServerWatchlistSnapshot,
   getWatchlistSnapshot,
@@ -157,13 +159,9 @@ function statementSet(c: ComparableCompany, freq: Freq): StatementSet {
   return freq === "annual" ? c.annual : c.quarterly;
 }
 
-/** Shared chart/table axis key for a period (annual → year; quarterly → YYYY-Qn). */
+/** Shared chart/table axis key. Annual uses the FY label when the filer has one. */
 function axisKey(p: PeriodCol, freq: Freq): string {
-  const d = new Date(p.end);
-  const y = d.getUTCFullYear();
-  if (freq === "annual") return String(y);
-  const q = Math.floor(d.getUTCMonth() / 3) + 1;
-  return `${y}-Q${q}`;
+  return compareAxisKey(p, freq);
 }
 
 function axisSort(a: string, b: string): number {
@@ -193,11 +191,6 @@ function priorYearValue(
     if (!best || d < best.d) best = { d, v };
   }
   return best?.v ?? null;
-}
-
-function pctChange(cur: number | null, prev: number | null): number | null {
-  if (cur == null || prev == null || prev === 0) return null;
-  return (cur - prev) / Math.abs(prev);
 }
 
 function SegmentedControl<T extends string>({
@@ -384,7 +377,7 @@ export default function Compare({ base }: { base: ComparableCompany }) {
           if (v == null) continue;
           const ax = axisKey(p, freq);
           const row = byAxis.get(ax) ?? {};
-          row[c.ticker] = v;
+          putAxisValue(row, c.ticker, v);
           byAxis.set(ax, row);
         }
       } else {
@@ -394,12 +387,15 @@ export default function Compare({ base }: { base: ComparableCompany }) {
         if (!line) continue;
         for (const p of ratios.periods) {
           const cur = line.values[p.key] ?? null;
+          const prior = priorYearValue(ratios.periods, line.values, p.key);
           const v =
-            view === "value" ? cur : pctChange(cur, priorYearValue(ratios.periods, line.values, p.key));
+            view === "value"
+              ? cur
+              : compareYoY(cur, prior, isPct ? "pct" : isMultiple ? "x" : "value");
           if (v == null) continue;
           const ax = axisKey(p, freq);
           const row = byAxis.get(ax) ?? {};
-          row[c.ticker] = v;
+          putAxisValue(row, c.ticker, v);
           byAxis.set(ax, row);
         }
       }
@@ -407,7 +403,7 @@ export default function Compare({ base }: { base: ComparableCompany }) {
     return [...byAxis.entries()]
       .sort((a, b) => axisSort(a[0], b[0]))
       .map(([period, vals]) => ({ period, ...vals }));
-  }, [companies, metricDef, view, freq, ratiosByTicker]);
+  }, [companies, metricDef, view, freq, ratiosByTicker, isPct, isMultiple]);
 
   // Values are compared as filed, with no FX conversion, so mixing reporting
   // currencies makes the absolute-value view misleading (except pure ratios).
@@ -429,7 +425,11 @@ export default function Compare({ base }: { base: ComparableCompany }) {
             : `${currencies[0]} millions`;
 
   const periodBasisLabel = freq === "annual" ? "fiscal year" : "fiscal quarter";
-  const growthLabel = "YoY growth %";
+  const growthLabel = isPct
+    ? "YoY change, percentage points"
+    : isMultiple
+      ? "YoY change, turns"
+      : "YoY growth %";
 
   const compareChartLabel =
     data.length > 0
@@ -449,6 +449,14 @@ export default function Compare({ base }: { base: ComparableCompany }) {
     ccy: string
   ): string {
     if (v == null) return "—";
+    if (asYoy && m.format === "pct") {
+      const sign = v > 0 ? "+" : "";
+      return `${sign}${(v * 100).toFixed(1)} pp`;
+    }
+    if (asYoy && m.format === "x") {
+      const sign = v > 0 ? "+" : "";
+      return `${sign}${v.toFixed(2)}×`;
+    }
     if (asYoy) return fmtPct(v);
     // Absolute margin/return levels — no leading "+" (reserved for growth %).
     if (m.format === "pct") return (v * 100).toFixed(1) + "%";
@@ -539,6 +547,7 @@ export default function Compare({ base }: { base: ComparableCompany }) {
                 strokeDasharray={SERIES_DASH[i]}
               />
             </svg>
+            <CompanyLogo ticker={c.ticker} size={18} />
             <span className="font-mono font-bold">{c.ticker}</span>
             <span className="sr-only">{DASH_DESCRIPTION[i] ?? "solid"} line</span>
             <span className="max-w-[160px] truncate text-zinc-500 dark:text-zinc-400">

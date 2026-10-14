@@ -8,18 +8,16 @@ export const maxDuration = 30;
 
 export async function GET(
   req: Request,
-  { params }: { params: { ticker: string } }
+  { params }: { params: { cik: string } }
 ) {
-  const { ticker: tickerRaw } = params;
-  const ticker = tickerRaw.toUpperCase();
-  if (!isValidTicker(ticker)) {
-    return Response.json({ error: "Invalid ticker." }, { status: 400 });
-  }
-  const url = new URL(req.url);
-  const cik = (url.searchParams.get("cik") ?? "").trim();
+  const { cik } = params;
   if (!isValidCik(cik)) {
     return Response.json({ error: "Invalid company id." }, { status: 400 });
   }
+
+  const url = new URL(req.url);
+  const tickerRaw = (url.searchParams.get("ticker") ?? "").toUpperCase();
+  const ticker = isValidTicker(tickerRaw) ? tickerRaw : "";
   const sector = (url.searchParams.get("sector") ?? "").trim().slice(0, 80);
   const industry = (url.searchParams.get("industry") ?? "").trim().slice(0, 80);
   const sic = (url.searchParams.get("sic") ?? "").trim().slice(0, 8);

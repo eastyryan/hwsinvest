@@ -45,6 +45,16 @@ export default function FootballFieldChart({
     field.currentPrice != null && Number.isFinite(field.currentPrice)
       ? x(field.currentPrice)
       : null;
+  // Keep the axis price off the end labels. The marker above the plot still shows it.
+  const priceOnAxis = priceX != null && priceX > 16 && priceX < 84;
+  const markerShift =
+    priceX == null
+      ? "translateX(-50%)"
+      : priceX < 18
+        ? "translateX(0)"
+        : priceX > 82
+          ? "translateX(-100%)"
+          : "translateX(-50%)";
 
   const hasIllustrative = field.bars.some(
     (b) => b.provenance === "illustrative"
@@ -83,7 +93,36 @@ export default function FootballFieldChart({
         )}
       </div>
 
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-zinc-600 dark:text-zinc-300">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-6 rounded-full bg-sky-600/85 dark:bg-sky-500/80" />
+          Low to high
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-3.5 w-0.5 rounded bg-zinc-900 dark:bg-zinc-100" />
+          Midpoint
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-3.5 w-0.5 rounded bg-red-600" />
+          Market price
+        </span>
+      </div>
+
       <div className="space-y-3">
+        {priceX != null && (
+          <div className="grid grid-cols-[8.25rem_1fr_5.5rem] items-end gap-2 sm:grid-cols-[11rem_1fr_5.5rem] sm:gap-3">
+            <div />
+            <div className="relative h-6">
+              <div
+                className="absolute top-0 z-20 whitespace-nowrap rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold leading-none text-white"
+                style={{ left: `${priceX}%`, transform: markerShift }}
+              >
+                Market {fmtPerShare(field.currentPrice)}
+              </div>
+            </div>
+            <span aria-hidden />
+          </div>
+        )}
         {field.bars.map((bar) => {
           const lo = bar.low ?? bar.mid ?? bar.high;
           const hi = bar.high ?? bar.mid ?? bar.low;
@@ -96,7 +135,7 @@ export default function FootballFieldChart({
           return (
             <div
               key={bar.id}
-              className="grid grid-cols-[8.25rem_1fr_auto] items-center gap-2 sm:grid-cols-[11rem_1fr_auto] sm:gap-3"
+              className="grid grid-cols-[8.25rem_1fr_5.5rem] items-center gap-2 sm:grid-cols-[11rem_1fr_5.5rem] sm:gap-3"
             >
               <div className="text-right text-xs font-medium leading-tight text-zinc-700 dark:text-zinc-300">
                 {bar.label}
@@ -104,9 +143,9 @@ export default function FootballFieldChart({
               <div className="relative h-7 rounded-md bg-zinc-100 dark:bg-zinc-900">
                 {priceX != null && (
                   <div
-                    className="pointer-events-none absolute inset-y-0 z-10 w-px bg-red-500/80"
+                    className="pointer-events-none absolute inset-y-0 z-10 w-0.5 -translate-x-1/2 bg-red-600"
                     style={{ left: `${priceX}%` }}
-                    title={`Market ${fmtPerShare(field.currentPrice)}`}
+                    title={`Market price ${fmtPerShare(field.currentPrice)}`}
                   />
                 )}
                 <div
@@ -123,7 +162,7 @@ export default function FootballFieldChart({
               </div>
               {bar.provenance ? (
                 <span
-                  className={`inline-flex shrink-0 items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium capitalize leading-none ${provenanceChipClass(bar.provenance)}`}
+                  className={`inline-flex w-full items-center justify-center whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[10px] font-medium capitalize leading-none ${provenanceChipClass(bar.provenance)}`}
                   title={
                     bar.provenance === "illustrative"
                       ? "Illustrative — not a real deal set"
@@ -133,16 +172,28 @@ export default function FootballFieldChart({
                   {provenanceLabel(bar.provenance)}
                 </span>
               ) : (
-                <span className="w-[4.5rem]" aria-hidden />
+                <span aria-hidden />
               )}
             </div>
           );
         })}
       </div>
 
-      <div className="flex justify-between pr-[4.75rem] pl-[8.25rem] font-mono text-[10px] text-zinc-400 sm:pr-[4.75rem] sm:pl-[11rem] dark:text-zinc-500">
-        <span>{fmtPerShare(axis.min)}</span>
-        <span>{fmtPerShare(axis.max)}</span>
+      <div className="grid grid-cols-[8.25rem_1fr_5.5rem] gap-2 sm:grid-cols-[11rem_1fr_5.5rem] sm:gap-3">
+        <div />
+        <div className="relative h-4 font-mono text-[10px] text-zinc-400 dark:text-zinc-500">
+          <span className="absolute left-0">{fmtPerShare(axis.min)}</span>
+          {priceOnAxis && (
+            <span
+              className="absolute font-semibold text-red-600 dark:text-red-400"
+              style={{ left: `${priceX}%`, transform: "translateX(-50%)" }}
+            >
+              {fmtPerShare(field.currentPrice)}
+            </span>
+          )}
+          <span className="absolute right-0">{fmtPerShare(axis.max)}</span>
+        </div>
+        <span aria-hidden />
       </div>
 
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-zinc-500 dark:text-zinc-400">
@@ -173,9 +224,12 @@ export default function FootballFieldChart({
       )}
 
       <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-        Bars show low–high per method; tick is the mid. Red line is the current
-        market price when available. Not a recommendation — triangulation of
-        assumption-driven models.
+        Each bar runs from that method&apos;s low to its high. The black tick
+        is the midpoint. The red line is today&apos;s market price
+        {field.currentPrice != null
+          ? ` (${fmtPerShare(field.currentPrice)})`
+          : ""}
+        , marked above the chart and on the axis. Not a recommendation.
       </p>
       {field.notes.length > 0 && (
         <ul className="list-inside list-disc text-[11px] text-zinc-500 dark:text-zinc-400">

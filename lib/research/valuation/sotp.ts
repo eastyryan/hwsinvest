@@ -131,21 +131,54 @@ export function runSotp(args: {
   };
 }
 
+/** Dollars per reported unit. Unknown units return null so raw ints are not seeded. */
+export function segmentMoneyScale(unitNote: string | null | undefined): number | null {
+  if (unitNote == null || unitNote.trim() === "") return null;
+  const t = unitNote.toLowerCase();
+  if (/billion/.test(t)) return 1e9;
+  if (/million/.test(t)) return 1e6;
+  if (/thousand/.test(t)) return 1e3;
+  if (/\$|dollar|usd|unit/.test(t)) return 1;
+  return null;
+}
+
+function skipSotpRow(name: string): boolean {
+  const n = name.trim();
+  if (
+    /^(net sales|total net sales|revenue|revenues|net revenue|net revenues|total revenue|total revenues|total sales|total|consolidated net sales|consolidated revenue|consolidated revenues|total external revenue|external revenue|total turnover|turnover)$/i.test(
+      n
+    )
+  ) {
+    return true;
+  }
+  if (/^total\b/i.test(n)) return true;
+  if (/cost of|gross profit|operating income|depreciation|deferred/i.test(n)) return true;
+  return false;
+}
+
 /**
  * Build starter segments from product segment history if available.
  * Latest period value is treated as revenue; multipleType is always evSales.
+ *
+ * `unitNote` is the filing's scale ("$ in millions"). Without it the raw
+ * cell integers are not seeded — a millions figure treated as dollars
+ * collapses the per-share value. Callers then fall back to consolidated revenue.
  */
 export function seedSegmentsFromHistory(
   history:
     | { name: string; values: Record<string, number | null>; periods: string[] }[]
     | null,
-  defaultMultiple: number
+  defaultMultiple: number,
+  unitNote?: string | null
 ): SotPSegment[] {
   if (!history || history.length === 0) return [];
+  const scale = segmentMoneyScale(unitNote);
+  if (scale == null) return [];
 
   const multiple = isFiniteNumber(defaultMultiple) ? defaultMultiple : 1;
 
-  return history.map((row, i) => {
+  return history.flatMap((row, i) => {
+    if (skipSotpRow(row.name)) return [];
     const periods = row.periods ?? [];
     // Newest first when periods are ordered that way; otherwise last key with a value.
     let revenue: number | null = null;
@@ -171,13 +204,13 @@ export function seedSegmentsFromHistory(
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "") || `segment-${i}`;
 
-    return {
+    return [{
       id,
       name: row.name,
-      revenue,
+      revenue: revenue == null ? null : revenue * scale,
       ebitda: null,
       multiple,
       multipleType: "evSales" as const,
-    };
+    }];
   });
 }

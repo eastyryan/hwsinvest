@@ -54,7 +54,7 @@ export default function QualityOfEarnings({
   const cur = currency ?? fin.currency ?? "USD";
   const financial = mode === "bank" || mode === "insurer";
 
-  const qoe = useMemo(() => buildQualityOfEarnings(fin, freq), [fin, freq]);
+  const qoe = useMemo(() => buildQualityOfEarnings(fin, freq, mode), [fin, freq, mode]);
   const hasAdjusted = qoe.lines.some((l) => l.adjusted);
   const visibleLines =
     view === "adjusted" ? qoe.lines : qoe.lines.filter((l) => !l.adjusted);

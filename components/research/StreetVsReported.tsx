@@ -21,10 +21,9 @@ function findLine(set: StatementSet, key: string) {
   return undefined;
 }
 
-function fmtEps(n: number | null | undefined): string {
+function fmtEps(n: number | null | undefined, currency: string): string {
   if (n == null || !Number.isFinite(n)) return "—";
-  const sign = n < 0 ? "−" : "";
-  return `${sign}$${Math.abs(n).toFixed(2)}`;
+  return fmtMoney(n, currency);
 }
 
 function outcomeTone(o: EpsOutcome): string {
@@ -182,7 +181,7 @@ export default function StreetVsReported({
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
               Latest reported diluted EPS ({lastActual.label}):{" "}
               <span className="font-mono tabular-nums">
-                {fmtEps(lastActual.eps)}
+                {fmtEps(lastActual.eps, currency)}
               </span>
             </p>
           )}
@@ -195,13 +194,13 @@ export default function StreetVsReported({
             {street.disclaimer ?? STREET_DISCLAIMER}
           </p>
           {/* Context strip: last actual + price target */}
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
               <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                 Latest reported diluted EPS
               </p>
               <p className="mt-1 font-mono text-xl font-semibold tabular-nums">
-                {lastActual ? fmtEps(lastActual.eps) : "—"}
+                {lastActual ? fmtEps(lastActual.eps, currency) : "—"}
               </p>
               <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
                 {lastActual
@@ -222,26 +221,30 @@ export default function StreetVsReported({
                 {street.priceTargetLow != null &&
                 street.priceTargetHigh != null
                   ? `Range ${fmtMoney(street.priceTargetLow, currency)}–${fmtMoney(street.priceTargetHigh, currency)}`
-                  : "Consensus target"}
+                  : street.meanRating
+                    ? `Mean rating: ${street.meanRating}`
+                    : "Consensus target"}
               </p>
             </div>
-            {(street.meanRating ||
-              street.buy != null ||
+            {(street.buy != null ||
               street.hold != null ||
-              street.sell != null) && (
+              street.sell != null ||
+              street.meanRating) && (
               <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
                 <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                   Analyst sentiment
                 </p>
-                <p className="mt-1 text-xl font-semibold capitalize">
+                <p className="mt-1 font-mono text-xl font-semibold tabular-nums">
                   {street.meanRating ?? "—"}
                 </p>
-                <p className="mt-0.5 font-mono text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">
-                  {street.buy ?? 0} buy · {street.hold ?? 0} hold ·{" "}
-                  {street.sell ?? 0} sell
-                </p>
-                <p className="mt-1 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-                  Nasdaq sell-side buy, hold, and sell counts.
+                <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  {[
+                    street.buy != null ? `${street.buy} buy` : null,
+                    street.hold != null ? `${street.hold} hold` : null,
+                    street.sell != null ? `${street.sell} sell` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "Nasdaq sell-side rating"}
                 </p>
               </div>
             )}
@@ -261,11 +264,11 @@ export default function StreetVsReported({
                 <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
                   {surprises[0].fiscalPeriod}: actual{" "}
                   <span className="font-mono">
-                    {fmtEps(surprises[0].actualEps)}
+                    {fmtEps(surprises[0].actualEps, currency)}
                   </span>{" "}
                   vs est.{" "}
                   <span className="font-mono">
-                    {fmtEps(surprises[0].consensusEps)}
+                    {fmtEps(surprises[0].consensusEps, currency)}
                   </span>
                 </p>
               </div>
@@ -310,10 +313,10 @@ export default function StreetVsReported({
                         {row.dateReported ?? "—"}
                       </td>
                       <td className="px-4 py-2.5 text-right font-mono tabular-nums">
-                        {fmtEps(row.actualEps)}
+                        {fmtEps(row.actualEps, currency)}
                       </td>
                       <td className="px-4 py-2.5 text-right font-mono tabular-nums text-zinc-600 dark:text-zinc-300">
-                        {fmtEps(row.consensusEps)}
+                        {fmtEps(row.consensusEps, currency)}
                       </td>
                       <td
                         className={`px-4 py-2.5 text-right font-mono tabular-nums ${outcomeTone(row.outcome)}`}
@@ -355,13 +358,13 @@ export default function StreetVsReported({
                   </p>
                 </div>
               </div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div>
                   <p className="text-[10px] uppercase tracking-wide text-zinc-500">
                     Near year ({nearDispersion.fiscalEnd || "FY"})
                   </p>
                   <p className="mt-0.5 font-mono text-sm tabular-nums">
-                    {fmtEps(nearDispersion.consensus)}
+                    {fmtEps(nearDispersion.consensus, currency)}
                     <span className="ml-1 text-xs text-zinc-500">
                       consensus
                     </span>
@@ -373,7 +376,7 @@ export default function StreetVsReported({
                   </p>
                   <p className="mt-0.5 font-mono text-sm tabular-nums">
                     {nearDispersion.low != null || nearDispersion.high != null
-                      ? `${fmtEps(nearDispersion.low)} – ${fmtEps(nearDispersion.high)}`
+                      ? `${fmtEps(nearDispersion.low, currency)} – ${fmtEps(nearDispersion.high, currency)}`
                       : "—"}
                   </p>
                   {nearDispersion.rangePct != null && (
@@ -459,17 +462,17 @@ export default function StreetVsReported({
                           {y.fiscalEnd || "—"}
                         </td>
                         <td className="px-4 py-2 text-right font-mono tabular-nums">
-                          {fmtEps(y.consensus)}
+                          {fmtEps(y.consensus, currency)}
                         </td>
                         <td className="px-4 py-2 text-right font-mono text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                           {y.high != null || y.low != null
-                            ? `${fmtEps(y.low)} – ${fmtEps(y.high)}`
+                            ? `${fmtEps(y.low, currency)} – ${fmtEps(y.high, currency)}`
                             : "—"}
                         </td>
                         <td className="px-4 py-2 text-right font-mono tabular-nums text-zinc-600 dark:text-zinc-300">
                           {y.reportedEps != null ? (
                             <span title={y.reportedLabel ?? undefined}>
-                              {fmtEps(y.reportedEps)}
+                              {fmtEps(y.reportedEps, currency)}
                               {y.reportedLabel ? (
                                 <span className="ml-1 text-[10px] text-zinc-400">
                                   {y.reportedLabel}

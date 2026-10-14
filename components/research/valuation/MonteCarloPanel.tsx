@@ -13,6 +13,7 @@ export default function MonteCarloPanel({
   debt,
   cash,
   shares,
+  terminalFcf,
   basePerShare,
   onRange,
 }: {
@@ -22,6 +23,7 @@ export default function MonteCarloPanel({
   debt: number;
   cash: number;
   shares: number | null;
+  terminalFcf?: number;
   basePerShare: number | null;
   onRange?: (r: {
     low: number | null;
@@ -44,6 +46,7 @@ export default function MonteCarloPanel({
       debt,
       cash,
       shares,
+      terminalFcf,
       fcfShockStd: (Number(fcfShock) || 15) / 100,
       waccShockStd: (Number(waccShock) || 1) / 100,
       growthShockStd: (Number(gShock) || 0.5) / 100,
@@ -57,6 +60,7 @@ export default function MonteCarloPanel({
     debt,
     cash,
     shares,
+    terminalFcf,
     fcfShock,
     waccShock,
     gShock,

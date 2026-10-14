@@ -313,6 +313,13 @@ export default function PortfolioWeights() {
         Σ weights {fmtPct(summary.weightSum)} · metrics from latest annual SEC
         filings
       </p>
+      {summary.notes.length > 0 && (
+        <ul className="list-inside list-disc text-[11px] text-zinc-500">
+          {summary.notes.map((n) => (
+            <li key={n}>{n}</li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

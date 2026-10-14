@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import CompanyLogo from "./CompanyLogo";
 
 interface Result {
   cik: string;
@@ -222,6 +223,7 @@ export default function SearchBox({
               i === active ? "bg-zinc-100 dark:bg-zinc-800" : ""
             }`}
           >
+            <CompanyLogo ticker={r.ticker} size={32} />
             <span className="flex h-8 w-16 shrink-0 items-center justify-center rounded-md bg-zinc-900 font-mono text-xs font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
               {r.ticker}
             </span>

@@ -19,6 +19,7 @@ export default function SotpPanel({
 }: {
   fin: CompanyFinancials;
   segmentsPayload?: {
+    unitNote?: string | null;
     product?: { name: string; values: Record<string, number | null>; periods?: string[] }[] | null;
   } | null;
   onRange?: (r: { low: number | null; mid: number | null; high: number | null }) => void;
@@ -30,7 +31,7 @@ export default function SotpPanel({
       values: p.values,
       periods: p.periods ?? Object.keys(p.values),
     })) ?? null;
-    const segs = seedSegmentsFromHistory(hist, 3);
+    const segs = seedSegmentsFromHistory(hist, 3, segmentsPayload?.unitNote);
     if (segs.length > 0) return segs;
     // Fallback: single segment = total revenue
     if (metrics.revenue != null && metrics.revenue > 0) {

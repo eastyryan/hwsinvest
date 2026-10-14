@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { btnCompact } from "./ui/buttonStyles";
+import CompanyLogo from "./CompanyLogo";
 
 type ScreenerRow = {
   ticker: string;
@@ -59,8 +60,10 @@ export default function Screener({ embedded = false }: { embedded?: boolean }) {
   const [data, setData] = useState<ScreenerResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const requestGen = useRef(0);
 
   const run = useCallback(async () => {
+    const gen = ++requestGen.current;
     setLoading(true);
     setError(null);
     try {
@@ -71,17 +74,19 @@ export default function Screener({ embedded = false }: { embedded?: boolean }) {
       if (minFcf) params.set("minFcfMargin", String(Number(minFcf) / 100));
       if (q.trim()) params.set("q", q.trim());
       params.set("sortBy", sortBy);
-      params.set("sortDir", "desc");
+      params.set("sortDir", sortBy === "ticker" ? "asc" : "desc");
       params.set("limit", "40");
       const res = await fetch(`/api/research/screener?${params}`);
       const json = await res.json();
+      if (gen !== requestGen.current) return;
       if (!res.ok) throw new Error(json.error ?? "Screener failed");
       setData(json as ScreenerResult);
     } catch (e) {
+      if (gen !== requestGen.current) return;
       setError(e instanceof Error ? e.message : "Screener failed");
       setData(null);
     } finally {
-      setLoading(false);
+      if (gen === requestGen.current) setLoading(false);
     }
   }, [sector, minGm, maxDe, minFcf, sortBy, q]);
 
@@ -201,7 +206,7 @@ export default function Screener({ embedded = false }: { embedded?: boolean }) {
                   <th className="px-3 py-2 text-right">Rev YoY</th>
                   <th className="px-3 py-2 text-right">Gross</th>
                   <th className="px-3 py-2 text-right">Op</th>
-                  <th className="px-3 py-2 text-right">FCF</th>
+                  <th className="px-3 py-2 text-right">FCF margin</th>
                   <th className="px-3 py-2 text-right">ROE</th>
                   <th className="px-3 py-2 text-right">D/E</th>
                 </tr>
@@ -220,8 +225,11 @@ export default function Screener({ embedded = false }: { embedded?: boolean }) {
                         {r.ticker}
                       </Link>
                     </td>
-                    <td className="max-w-[12rem] truncate px-3 py-2 text-xs text-zinc-600 dark:text-zinc-400">
-                      {r.name}
+                    <td className="max-w-[14rem] px-3 py-2 text-xs text-zinc-600 dark:text-zinc-400">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <CompanyLogo ticker={r.ticker} size={18} />
+                        <span className="truncate">{r.name}</span>
+                      </span>
                     </td>
                     <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">
                       {fmtPct(r.metrics.revYoy)}

@@ -11,9 +11,9 @@ export const maxDuration = 60;
  */
 export async function GET(
   req: Request,
-  { params }: { params: {  ticker: string  } }
+  { params }: { params: { ticker: string } }
 ) {
-  const { ticker: rawTicker  } = params;
+  const { ticker: rawTicker } = params;
   const ticker = rawTicker.toUpperCase();
   if (!isValidTicker(ticker)) {
     return Response.json({ error: "Invalid ticker." }, { status: 400 });
@@ -22,6 +22,7 @@ export async function GET(
   const url = new URL(req.url);
   const sector = url.searchParams.get("sector");
   const industry = url.searchParams.get("industry");
+  const sic = url.searchParams.get("sic");
   let cik = url.searchParams.get("cik") ?? "";
   let name = url.searchParams.get("name") ?? ticker;
   const marketCapRaw = url.searchParams.get("marketCap");
@@ -49,6 +50,7 @@ export async function GET(
       name: subjectFin.name || name,
       sector: sector?.trim() || null,
       industry: industry?.trim() || null,
+      sic: sic?.trim() || null,
       subjectFin,
       peerLimit: 5,
       marketCap:

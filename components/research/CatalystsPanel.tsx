@@ -164,13 +164,13 @@ export default function CatalystsPanel({
   useEffect(() => {
     const ctrl = new AbortController();
     const qs = new URLSearchParams();
-    if (cik) qs.set("cik", cik);
+    if (ticker) qs.set("ticker", ticker);
     if (sector) qs.set("sector", sector);
     if (industry) qs.set("industry", industry);
     if (sic) qs.set("sic", sic);
     setData(null);
     setError(null);
-    fetch(`/api/research/catalysts/${encodeURIComponent(ticker)}?${qs.toString()}`, {
+    fetch(`/api/research/catalysts/${encodeURIComponent(cik)}?${qs.toString()}`, {
       signal: ctrl.signal,
     })
       .then(async (res) => {
@@ -244,7 +244,7 @@ export default function CatalystsPanel({
             Macro
           </h3>
           <Link
-            href="/markets#economy"
+            href="/members/research/calendar"
             className="text-xs font-medium text-sky-700 underline underline-offset-2 hover:text-sky-900 dark:text-sky-400 dark:hover:text-sky-300"
           >
             Full calendar

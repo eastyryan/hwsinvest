@@ -10,8 +10,6 @@ export interface Insight {
   text: string;
   detail?: string;
   tone: "positive" | "negative" | "neutral";
-  /** External source, when the line is a filing or a market print. */
-  href?: string;
 }
 
 export interface Insights {
@@ -111,7 +109,43 @@ export function buildInsights(
     const accelerating = yoy.length >= 3 && yoy[0] > yoy[1] && yoy[1] > yoy[2];
     const decelerating = yoy.length >= 3 && yoy[0] < yoy[1] && yoy[1] < yoy[2];
 
-    if (cur > 0 && accelerating) {
+    // A rising cost is not "growing" in the good sense. R&D is on the
+    // standard list; banks also watch cost of revenue, opex, and interest.
+    const expense =
+      key === "cogs" || key === "opex" || key === "interestExpense" || key === "rd";
+    if (expense) {
+      if (cur < 0 && (yoy.length < 3 || yoy[0] < yoy[1])) {
+        growing.push({
+          text: `${label} fell ${fmtPct(cur)} YoY`,
+          detail: `Prior quarter: ${fmtPct(prev)}`,
+          tone: "positive",
+        });
+      } else if (cur > 0 && accelerating) {
+        slowing.push({
+          text: `${label} rose faster, now ${fmtPct(cur)} YoY`,
+          detail: `Last 3 quarters YoY: ${arrows(yoy)}`,
+          tone: "negative",
+        });
+      } else if (cur > 0.05 && !decelerating) {
+        slowing.push({
+          text: `${label} rose ${fmtPct(cur)} YoY`,
+          detail: `Prior quarter: ${fmtPct(prev)}`,
+          tone: "negative",
+        });
+      } else if (cur < 0) {
+        growing.push({
+          text: `${label} fell ${fmtPct(cur)} YoY`,
+          detail: `Prior quarter: ${fmtPct(prev)}`,
+          tone: "positive",
+        });
+      } else if (decelerating) {
+        growing.push({
+          text: `${label} is rising more slowly`,
+          detail: `Last 3 quarters YoY: ${arrows(yoy)}`,
+          tone: "positive",
+        });
+      }
+    } else if (cur > 0 && accelerating) {
       growing.push({
         text: `${label} growth is accelerating`,
         detail: `Last 3 quarters YoY: ${arrows(yoy)}`,

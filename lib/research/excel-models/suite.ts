@@ -19,6 +19,7 @@ import { runPrecedents } from "@/lib/research/valuation/precedents";
 import {
   defaultLboInputsFromMetrics,
   lboEntryBand,
+  suggestedLboMultiple,
   runLbo,
 } from "@/lib/research/valuation/lbo";
 import { runMerger, type MergerInputs } from "@/lib/research/valuation/merger";
@@ -151,6 +152,16 @@ export function fillValuationSuite(
     netDebt: netDebtMm,
     revenue: revMm,
   });
+  if (lboInputs) {
+    const suggested = suggestedLboMultiple({
+      price,
+      shares: m.shares,
+      netDebt: m.netDebt,
+      ebitda: m.ebitda,
+    });
+    lboInputs.entryMultiple = suggested.multiple;
+    lboInputs.exitMultiple = suggested.multiple;
+  }
   const lbo = lboInputs ? runLbo(lboInputs) : null;
 
   const mergerInputs: MergerInputs | null =
@@ -216,7 +227,7 @@ export function fillValuationSuite(
   });
 
   const lboBand =
-    lbo && finite(sharesMm) ? lboEntryBand(lbo, sharesMm) : undefined;
+    lbo && finite(sharesMm) ? lboEntryBand(lbo, sharesMm, netDebtMm) : undefined;
 
   const field = buildFootballField({
     currentPrice: price,

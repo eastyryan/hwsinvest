@@ -81,7 +81,8 @@ function absOrNull(v: number | null): number | null {
  */
 export function buildQualityOfEarnings(
   fin: CompanyFinancials,
-  freq: "annual" | "quarterly"
+  freq: "annual" | "quarterly",
+  mode: "standard" | "bank" | "insurer" | "reit" = "standard"
 ): QualityOfEarningsSet {
   const set = freq === "annual" ? fin.annual : fin.quarterly;
   const ttm = freq === "quarterly";
@@ -194,6 +195,9 @@ export function buildQualityOfEarnings(
       label: "Days sales outstanding",
       format: "days",
       calc: (i) => {
+        // Banks tag the loan book on the receivable line. That is not trade
+        // receivables, and DSO on it prints thousands of days.
+        if (mode === "bank") return null;
         const r = divPositive(receivables(i), revenue(i));
         return r == null ? null : r * yearDays;
       },
@@ -224,7 +228,7 @@ export function buildQualityOfEarnings(
       label: "Cash conversion cycle",
       format: "days",
       calc: (i) => {
-        const dsoR = divPositive(receivables(i), revenue(i));
+        const dsoR = mode === "bank" ? null : divPositive(receivables(i), revenue(i));
         const dioR = divPositive(inventory(i), costBase(i));
         const dpoR = divPositive(payables(i), costBase(i));
         // Need at least one working-capital component; missing pieces count as 0

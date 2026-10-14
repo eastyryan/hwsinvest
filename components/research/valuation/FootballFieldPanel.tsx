@@ -79,7 +79,7 @@ export default function FootballFieldPanel({
       title="Football field"
       subtitle="52-week range, analyst targets, comp P/E, and comp EV/EBITDA, then DCF and LBO. The central estimate averages analyst targets, comps, DCF, and LBO."
       summary={summary}
-      defaultOpen={false}
+      defaultOpen
     >
       <FootballFieldChart field={field} />
       <p className="text-[11px] text-zinc-500 dark:text-zinc-400">

@@ -412,7 +412,7 @@ export function assembleValuationBars(args: {
       high: args.lbo.high,
       unit: "perShare",
       provenance: "model",
-      note: "Price a buyer could pay today. Low is a 25% IRR, high is 15%.",
+      note: "Price a buyer could pay shareholders today. Low is a 25% IRR, high is 15%.",
     });
   }
 

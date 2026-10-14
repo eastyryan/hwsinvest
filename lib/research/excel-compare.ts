@@ -381,7 +381,7 @@ export function buildCompareWorkbook(companies: CompanyFinancials[]): ExcelJS.Wo
   }
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Financial Statements";
+  wb.creator = "TrenchTick";
   wb.created = new Date();
 
   const sheetName = makeSheetNamer();

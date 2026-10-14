@@ -210,17 +210,18 @@ export function fade(start: number, end: number, years: number) {
 }
 
 /**
- * Last explicit-year growth after fading toward LONG_RUN_GROWTH.
- * Never faded *up* — a company already below the long-run rate stays there.
- * This is the forecast-window fade, not Gordon `tg`.
+ * Last explicit-year growth after fading toward `longRun`.
+ * A grower above that rate keeps FADE_RESIDUAL of the gap. A trough fades up
+ * by the same fraction. This is the forecast-window fade, not Gordon `tg`.
+ * `longRun` defaults to 3% when the caller has no sector rate.
  */
 export function fadedExplicitGrowth(
   start: number,
-  residual: number = FADE_RESIDUAL
+  residual: number = FADE_RESIDUAL,
+  longRun: number = LONG_RUN_GROWTH
 ): number {
-  return start > LONG_RUN_GROWTH
-    ? LONG_RUN_GROWTH + (start - LONG_RUN_GROWTH) * residual
-    : start;
+  const g = Number.isFinite(longRun) ? longRun : LONG_RUN_GROWTH;
+  return g + (start - g) * residual;
 }
 
 export type GrowthPathSource = "street-path" | "street-y1" | "history" | "default";
@@ -232,10 +233,11 @@ export type GrowthPathSource = "street-path" | "street-y1" | "history" | "defaul
  * revenue CAGR/YoY → 3% default. When street multi-year is available, later
  * years hold the last hop rather than forcing every filer to 3% by year 5.
  *
- * Street-y1 and history fade toward LONG_RUN_GROWTH but keep FADE_RESIDUAL of
- * the gap in the last explicit year. That landing rate is *not* the DCF
- * terminal growth (`tg` / Gordon g) — the explicit window and the terminal
- * model are separate assumptions.
+ * Street-y1 and history fade toward `longRun` (sector mature growth, or 3%
+ * when the SIC does not map) but keep FADE_RESIDUAL of the gap in the last
+ * explicit year. That landing rate is *not* the DCF terminal growth (`tg`).
+ * A filer whose own history is above 35% may start as high as 80% and then
+ * fade. The 35% cap still applies to ordinary growers.
  */
 export function buildRevenueGrowthPath(opts: {
   years: number;
@@ -245,9 +247,14 @@ export function buildRevenueGrowthPath(opts: {
   streetPath?: number[] | null;
   /** First street EPS growth hop when a full path is unavailable. */
   streetYear1?: number | null;
+  /** Sector mature growth. Defaults to LONG_RUN_GROWTH. */
+  longRun?: number | null;
 }): { path: number[]; source: GrowthPathSource } {
   const years = Math.max(1, opts.years);
-  const clampG = (g: number) => clamp(g, -0.2, 0.35, LONG_RUN_GROWTH);
+  const longRun =
+    opts.longRun != null && Number.isFinite(opts.longRun) ? opts.longRun : LONG_RUN_GROWTH;
+  const ceiling = opts.historical != null && opts.historical > 0.35 ? 0.8 : 0.35;
+  const clampG = (g: number) => clamp(g, -0.2, ceiling, longRun);
 
   const pathFrom = (hops: number[]): number[] => {
     const path: number[] = [];
@@ -264,17 +271,22 @@ export function buildRevenueGrowthPath(opts: {
 
   if (opts.streetYear1 != null && Number.isFinite(opts.streetYear1)) {
     const y1 = clampG(opts.streetYear1);
-    // Mild reversion only — keep the last explicit year nearer street than a hard 3%.
-    return { path: fade(y1, fadedExplicitGrowth(y1), years), source: "street-y1" };
+    return {
+      path: fade(y1, fadedExplicitGrowth(y1, FADE_RESIDUAL, longRun), years),
+      source: "street-y1",
+    };
   }
 
   if (opts.historical != null && Number.isFinite(opts.historical)) {
     const g = clampG(opts.historical);
-    return { path: fade(g, fadedExplicitGrowth(g), years), source: "history" };
+    return {
+      path: fade(g, fadedExplicitGrowth(g, FADE_RESIDUAL, longRun), years),
+      source: "history",
+    };
   }
 
   return {
-    path: Array.from({ length: years }, () => LONG_RUN_GROWTH),
+    path: Array.from({ length: years }, () => longRun),
     source: "default",
   };
 }

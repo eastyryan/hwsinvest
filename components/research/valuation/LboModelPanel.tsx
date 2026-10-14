@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CompanyFinancials } from "@/lib/research/edgar";
+import { sectorForecast } from "@/lib/research/dcf-sector";
 import { companyOperatingMetrics } from "@/lib/research/valuation/metrics";
 import {
   defaultLboInputsFromMetrics,
   lboEntryBand,
   runLbo,
+  suggestedLboMultiple,
   type LboInputs,
+  type LboMultipleSource,
 } from "@/lib/research/valuation/lbo";
 import ExpandableModel from "./ExpandableModel";
 import { fmtMoney, fmtMult, fmtPct, fmtPerShare } from "./fmt";
@@ -17,11 +20,26 @@ function pctStr(v: number) {
   return (v * 100).toFixed(1);
 }
 
+function multipleNote(source: LboMultipleSource, multiple: number): string {
+  const shown = fmtMult(multiple);
+  if (source === "trading") {
+    return `Entry and exit start at today's EV/EBITDA (${shown}), so the case does not assume the multiple changes.`;
+  }
+  if (source === "sector") {
+    return `No usable trading multiple, so entry and exit start at the sector EV/EBITDA (${shown}).`;
+  }
+  return `Entry and exit start at ${shown} EV/EBITDA.`;
+}
+
 export default function LboModelPanel({
   fin,
+  marketPrice,
+  sic = null,
   onRange,
 }: {
   fin: CompanyFinancials;
+  marketPrice?: number | null;
+  sic?: string | null;
   onRange?: (r: { low: number | null; mid: number | null; high: number | null }) => void;
 }) {
   const metrics = useMemo(() => companyOperatingMetrics(fin), [fin]);
@@ -29,13 +47,20 @@ export default function LboModelPanel({
     () => defaultLboInputsFromMetrics(metrics),
     [metrics]
   );
+  const suggested = useMemo(
+    () =>
+      suggestedLboMultiple({
+        price: marketPrice ?? null,
+        shares: metrics.shares,
+        netDebt: metrics.netDebt,
+        ebitda: metrics.ebitda,
+        sectorExit: sectorForecast(sic)?.exitMultiple ?? null,
+      }),
+    [marketPrice, metrics, sic]
+  );
 
-  const [entryMultiple, setEntryMultiple] = useState(
-    String(defaults?.entryMultiple ?? 12)
-  );
-  const [exitMultiple, setExitMultiple] = useState(
-    String(defaults?.exitMultiple ?? 12)
-  );
+  const [entryMultiple, setEntryMultiple] = useState(String(suggested.multiple));
+  const [exitMultiple, setExitMultiple] = useState(String(suggested.multiple));
   const [leverage, setLeverage] = useState(
     String(defaults?.leverageMultiple ?? 4.5)
   );
@@ -44,15 +69,20 @@ export default function LboModelPanel({
   );
   const [years, setYears] = useState(String(defaults?.years ?? 5));
   const [sweep, setSweep] = useState("100");
+  const userEdited = useRef(false);
 
   useEffect(() => {
-    if (!defaults) return;
-    setEntryMultiple(String(defaults.entryMultiple));
-    setExitMultiple(String(defaults.exitMultiple));
+    userEdited.current = false;
+  }, [fin.ticker]);
+
+  useEffect(() => {
+    if (!defaults || userEdited.current) return;
+    setEntryMultiple(String(suggested.multiple));
+    setExitMultiple(String(suggested.multiple));
     setLeverage(String(defaults.leverageMultiple));
     setGrowth(pctStr(defaults.ebitdaGrowth));
     setYears(String(defaults.years));
-  }, [fin.ticker]); // reset when company changes
+  }, [fin.ticker, defaults, suggested]);
 
   const result = useMemo(() => {
     if (!defaults) return null;
@@ -73,8 +103,8 @@ export default function LboModelPanel({
       onRange?.({ low: null, mid: null, high: null });
       return;
     }
-    onRange?.(lboEntryBand(result, metrics.shares));
-  }, [result, metrics.shares, onRange]);
+    onRange?.(lboEntryBand(result, metrics.shares, metrics.netDebt));
+  }, [result, metrics.shares, metrics.netDebt, onRange]);
 
   if (!defaults) {
     return (
@@ -126,7 +156,10 @@ export default function LboModelPanel({
                   type="number"
                   step="0.1"
                   value={val}
-                  onChange={(e) => set(e.target.value)}
+                  onChange={(e) => {
+                    userEdited.current = true;
+                    set(e.target.value);
+                  }}
                   className="w-full rounded-lg border border-zinc-300 bg-white px-2 py-1.5 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900"
                 />
                 {suf && <span className="text-xs text-zinc-500">{suf}</span>}
@@ -156,9 +189,13 @@ export default function LboModelPanel({
               />
             </div>
             <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-              IRR and MOIC use the entry multiple in this form. The football
-              field shows the price a buyer could pay today and still earn
-              15–25%. The low end of that bar is a 25% IRR. The high end is 15%.
+              {multipleNote(suggested.source, suggested.multiple)}{" "}
+              Leverage starts at {fmtMult(defaults.leverageMultiple)} unless
+              the company already carries more than that. IRR and MOIC use the
+              entry multiple in this form. The football field shows the price
+              a buyer could pay shareholders and still earn 15–25%. The low
+              end of that bar is a 25% IRR. The high end is 15%. Net cash
+              raises the price. Debt already on the business lowers it.
             </p>
 
             <div className="grid gap-3 md:grid-cols-2">
@@ -273,8 +310,9 @@ export default function LboModelPanel({
               className={btnCompact}
               onClick={() => {
                 if (!defaults) return;
-                setEntryMultiple(String(defaults.entryMultiple));
-                setExitMultiple(String(defaults.exitMultiple));
+                userEdited.current = false;
+                setEntryMultiple(String(suggested.multiple));
+                setExitMultiple(String(suggested.multiple));
                 setLeverage(String(defaults.leverageMultiple));
                 setGrowth(pctStr(defaults.ebitdaGrowth));
                 setYears(String(defaults.years));

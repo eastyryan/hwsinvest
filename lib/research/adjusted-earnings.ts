@@ -104,7 +104,7 @@ function filingTaxRate(
   const t = finiteNum(taxes);
   const p = finiteNum(pretaxIncome);
   if (t != null && p != null && p !== 0) {
-    const rate = t / p;
+    const rate = Math.min(0.45, Math.max(0, t / p));
     if (Number.isFinite(rate)) return { rate, source: "filings" };
   }
   return { rate: STATUTORY_TAX_FALLBACK, source: "statutory" };

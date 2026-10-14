@@ -123,6 +123,22 @@ export function findRestatements(
   return out;
 }
 
+/**
+ * Drop restatements older than `years` before the latest statement period.
+ * A 2016 equity revision is real, and it is not what a current page should lead with.
+ */
+export function restatementsSince(
+  hits: RestatementHit[] | undefined,
+  latestPeriodEnd: string | null | undefined,
+  years = 5
+): RestatementHit[] {
+  if (!hits?.length) return [];
+  if (!latestPeriodEnd || !/^\d{4}-\d{2}-\d{2}/.test(latestPeriodEnd)) return hits;
+  const cutoffYear = Number(latestPeriodEnd.slice(0, 4)) - years;
+  const cutoff = `${cutoffYear}${latestPeriodEnd.slice(4, 10)}`;
+  return hits.filter((h) => h.periodEnd >= cutoff);
+}
+
 /** Unique period-end dates that have at least one material restatement. */
 export function restatedPeriodEnds(hits: RestatementHit[]): string[] {
   const seen = new Set<string>();

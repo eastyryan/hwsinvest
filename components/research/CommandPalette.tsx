@@ -10,6 +10,7 @@ import {
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  CalendarBlank,
   ChartBar,
   House,
   MagnifyingGlass,
@@ -18,6 +19,7 @@ import {
   Sun,
 } from "@phosphor-icons/react";
 import useIsDark from "./useIsDark";
+import CompanyLogo from "./CompanyLogo";
 
 interface SearchResult {
   cik: string;
@@ -49,7 +51,7 @@ type ListItem =
   | { kind: "company"; id: string; label: string; hint: string; result: SearchResult };
 
 function companyTickerFromPath(pathname: string): string | null {
-  const m = pathname.match(/^\/members\/research\/(?!screener)([^/]+)\/?$/i);
+  const m = pathname.match(/^\/company\/([^/]+)\/?$/i);
   return m?.[1] ? decodeURIComponent(m[1]) : null;
 }
 
@@ -280,6 +282,22 @@ export default function CommandPalette() {
         id: "home",
         label: "Go to home",
         hint: "Search",
+      });
+    }
+
+    if (
+      matchesQuery("calendar", q) ||
+      matchesQuery("macro", q) ||
+      matchesQuery("cpi", q) ||
+      matchesQuery("economic", q) ||
+      !q
+    ) {
+      items.push({
+        kind: "route",
+        id: "calendar",
+        label: "Open economic calendar",
+        hint: "Expectation and last",
+        href: "/members/research/calendar",
       });
     }
 
@@ -576,6 +594,8 @@ export default function CommandPalette() {
                     )
                   ) : item.kind === "home" ? (
                     <House size={16} weight="bold" aria-hidden />
+                  ) : item.kind === "route" && item.id === "calendar" ? (
+                    <CalendarBlank size={16} weight="bold" aria-hidden />
                   ) : item.kind === "tab" && item.key === "charts" ? (
                     <ChartBar size={16} weight="bold" aria-hidden />
                   ) : (
@@ -583,8 +603,13 @@ export default function CommandPalette() {
                   )}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {item.kind === "company" ? item.result.name : item.label}
+                  <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {item.kind === "company" && (
+                      <CompanyLogo ticker={item.result.ticker} size={18} />
+                    )}
+                    <span className="truncate">
+                      {item.kind === "company" ? item.result.name : item.label}
+                    </span>
                   </span>
                   {item.kind === "company" && (
                     <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">

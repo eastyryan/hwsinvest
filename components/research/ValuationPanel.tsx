@@ -4,13 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { CompanyFinancials } from "@/lib/research/edgar";
 import {
   buildProjection,
-  buildRevenueGrowthPath,
-  historicalRevenueGrowth,
   PROJECTION_YEARS,
   type Assumptions,
 } from "@/lib/research/excel-projection";
 import { buildDcf, type DcfInputs } from "@/lib/research/excel-dcf";
-import { sectorBeta } from "@/lib/research/dcf-sector";
+import { sectorBeta, sectorForecast } from "@/lib/research/dcf-sector";
+import { forecastAssumptionOverrides } from "@/lib/research/sector-forecast";
 import {
   buildSensitivityMatrix,
   UI_GROWTH_DELTAS,
@@ -44,6 +43,7 @@ import IcMemo from "./IcMemo";
 import DataAsOf from "./DataAsOf";
 import { fmtPerShare as fmtPs } from "./valuation/fmt";
 import { rangeFromPoints } from "@/lib/research/valuation/football-field";
+import type { PerShareBand } from "@/lib/research/valuation/comps";
 
 type Preset = "history" | "street";
 
@@ -67,10 +67,6 @@ function parsePct(s: string, fallback: number): number {
   const n = Number(s);
   if (!Number.isFinite(n)) return fallback;
   return n / 100;
-}
-
-function fill(v: number, years: number) {
-  return Array.from({ length: years }, () => v);
 }
 
 function InputRow({
@@ -184,7 +180,7 @@ export default function ValuationPanel({
   marketCap?: number | null;
   loadedAt?: number | null;
 }) {
-  const betaRef = sectorBeta(sic);
+  const betaRef = sectorForecast(sic) ?? sectorBeta(sic);
   const baseProj = useMemo(() => buildProjection(fin), [fin]);
 
   const historyDefaults = useMemo(() => {
@@ -236,16 +232,8 @@ export default function ValuationPanel({
   const [opex, setOpex] = useState<string | null>(saved?.opex ?? null);
 
   // Ranges fed into the football field as each expandable model computes.
-  const [compsPe, setCompsPe] = useState<{
-    low: number | null;
-    mid: number | null;
-    high: number | null;
-  } | null>(null);
-  const [compsEvEbitda, setCompsEvEbitda] = useState<{
-    low: number | null;
-    mid: number | null;
-    high: number | null;
-  } | null>(null);
+  const [compsPe, setCompsPe] = useState<PerShareBand | null>(null);
+  const [compsEvEbitda, setCompsEvEbitda] = useState<PerShareBand | null>(null);
   const [precedentsRange, setPrecedentsRange] = useState<{
     low: number | null;
     mid: number | null;
@@ -364,37 +352,34 @@ export default function ValuationPanel({
 
   const years = PROJECTION_YEARS;
   const y1 = parsePct(y1gStr, activeDefaults.year1Growth);
-  // Prefer multi-year street hops when preset is street; otherwise history/y1.
-  // Never force every company to end the explicit horizon at a hard 3%.
+  // Street hops when that preset is on. Otherwise the company's own history,
+  // faded toward the SIC mature rate rather than one 3% path for every filer.
   const useStreetPath =
     preset === "street" &&
     streetData != null &&
     (streetData.epsGrowthPath.length > 0 || streetData.year1EpsGrowth != null);
-  const growthBuilt = buildRevenueGrowthPath({
+  const seeded = forecastAssumptionOverrides({
+    fin,
+    sic,
     years,
-    historical: historicalRevenueGrowth(fin.annual),
+    useStreet: useStreetPath,
     streetPath: useStreetPath ? streetData!.epsGrowthPath : null,
-    streetYear1: useStreetPath
-      ? (streetData!.year1EpsGrowth ?? y1)
-      : y1g != null
-        ? y1
-        : null,
+    streetYear1: useStreetPath ? (streetData!.year1EpsGrowth ?? y1) : null,
+    year1Typed:
+      y1g != null && !(useStreetPath && streetData!.epsGrowthPath.length > 0) ? y1 : null,
+    filedGross: historyDefaults.historyNotes.grossMargin,
+    filedOpex: historyDefaults.historyNotes.opexPct,
+    modelGross: activeDefaults.grossMargin,
+    modelOpex: activeDefaults.opexPct,
+    grossTyped: gm != null ? parsePct(gmStr, activeDefaults.grossMargin) : null,
+    opexTyped: opex != null ? parsePct(opexStr, activeDefaults.opexPct) : null,
   });
-  // If the user typed year-1 and we're not on multi-year street path, rebuild
-  // around that typed value (street-y1 / history fade rules).
-  const revPath =
-    y1g != null && !(useStreetPath && streetData!.epsGrowthPath.length > 0)
-      ? buildRevenueGrowthPath({
-          years,
-          historical: null,
-          streetYear1: y1,
-        }).path
-      : growthBuilt.path;
+  const revPath = seeded.assumptions.revenueGrowth ?? [];
 
   const overrides: Partial<Assumptions> = {
     revenueGrowth: revPath,
-    grossMargin: fill(parsePct(gmStr, activeDefaults.grossMargin), years),
-    opexPctRevenue: fill(parsePct(opexStr, activeDefaults.opexPct), years),
+    grossMargin: seeded.assumptions.grossMargin,
+    opexPctRevenue: seeded.assumptions.opexPctRevenue,
   };
 
   const projection = buildProjection(fin, years, overrides)!;
@@ -414,10 +399,11 @@ export default function ValuationPanel({
   // from the live FCF path so it tracks assumption edits without a download.
   const sensitivity = buildSensitivityMatrix({
     fcf: dcf.fcf,
+    terminalFcf: dcf.terminalFcf,
     baseWacc: dcf.wacc,
     baseGrowth: dcf.inputs.terminalGrowth,
-    debt: dcf.debt,
-    cash: dcf.cash,
+    debt: dcf.netDebt,
+    cash: 0,
     shares: dcf.shares,
     waccDeltas: UI_WACC_DELTAS,
     growthDeltas: UI_GROWTH_DELTAS,
@@ -489,8 +475,10 @@ export default function ValuationPanel({
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Valuation</h2>
           <p className="mt-1 max-w-[75ch] text-xs text-zinc-500 dark:text-zinc-400">
-            Football field, DCF, comps, precedents, LBO, credit, and the
-            52-week range. Not a recommendation.
+            Multi-method free suite: football field, DCF, Monte Carlo, comps,
+            precedents, LBO, credit, M&A A/D, sector packs, EV bridge, and
+            52-week range. The football field is open on this tab. The other
+            models start collapsed. Not a recommendation.
           </p>
           <DataAsOf
             className="mt-2"
@@ -674,7 +662,8 @@ export default function ValuationPanel({
                 <span className="font-mono text-zinc-700 dark:text-zinc-200">
                   {fmtPctDisplay(hn.revenueGrowth)}
                 </span>{" "}
-                (3y CAGR or last YoY, faded to ≤3%)
+                (3y CAGR or last YoY, year {revPath.length} at{" "}
+                {fmtPctDisplay(revPath[revPath.length - 1] ?? null)})
               </li>
               <li>
                 Gross margin:{" "}
@@ -987,8 +976,8 @@ export default function ValuationPanel({
             onChange={setY1g}
             hint={
               preset === "street" && streetData?.year1EpsGrowth != null
-                ? `Street EPS path → year-1 ${fmtPctDisplay(revPath[0])} · year-5 ${fmtPctDisplay(revPath[revPath.length - 1])} (not a hard 3% slam)`
-                : `History seed ${fmtPctDisplay(hn.revenueGrowth)}; path ends ~${fmtPctDisplay(revPath[revPath.length - 1])}`
+                ? `Street EPS path → year-1 ${fmtPctDisplay(revPath[0])} · year-5 ${fmtPctDisplay(revPath[revPath.length - 1])}${seeded.sector ? ` · fades toward ${seeded.sector}` : ""}`
+                : `History seed ${fmtPctDisplay(hn.revenueGrowth)}; fades toward ${seeded.sector ? `${seeded.sector} ` : ""}${fmtPctDisplay(seeded.longRun)}; year-5 ~${fmtPctDisplay(revPath[revPath.length - 1])}`
             }
           />
           <InputRow
@@ -1001,13 +990,21 @@ export default function ValuationPanel({
             label="OpEx % of revenue"
             value={opexStr}
             onChange={setOpex}
-            hint={`From filings: ${fmtPctDisplay(hn.opexPct)} (includes D&A)`}
+            hint={
+              seeded.marginFade && seeded.steadyOpMargin != null
+                ? `Filed margin is below 5%. OpEx fades toward a ${fmtPctDisplay(seeded.steadyOpMargin)} ${seeded.sector ?? "sector"} operating margin instead of holding the loss flat.`
+                : `Held at the filed ratio: ${fmtPctDisplay(hn.opexPct)} (includes D&A)`
+            }
           />
           <InputRow
             label="Terminal growth"
             value={tgStr}
             onChange={setTg}
-            hint="Gordon growth; must stay below WACC"
+            hint={
+              seeded.sector
+                ? `Gordon growth for ${seeded.sector}. Separate from the explicit fade. Must stay below WACC.`
+                : "Gordon growth; must stay below WACC. No SIC, so this starts at 2.5%."
+            }
           />
           <InputRow
             label="Beta"
@@ -1246,6 +1243,7 @@ export default function ValuationPanel({
         cik={cik}
         sector={sector}
         industry={industry}
+        sic={sic}
         marketCap={marketCap}
         onBands={({ pe, evEbitda }) => {
           setCompsPe(pe);
@@ -1257,7 +1255,12 @@ export default function ValuationPanel({
         sector={sector}
         onRange={setPrecedentsRange}
       />
-      <LboModelPanel fin={fin} onRange={setLboRange} />
+      <LboModelPanel
+        fin={fin}
+        marketPrice={marketPrice}
+        sic={sic}
+        onRange={setLboRange}
+      />
       <TradingRangePanel
         fin={fin}
         marketPrice={marketPrice}
@@ -1267,9 +1270,10 @@ export default function ValuationPanel({
         fcf={dcf.fcf}
         wacc={dcf.wacc}
         terminalGrowth={dcf.inputs.terminalGrowth}
-        debt={dcf.debt}
-        cash={dcf.cash}
+        debt={dcf.netDebt}
+        cash={0}
         shares={dcf.shares}
+        terminalFcf={dcf.terminalFcf}
         basePerShare={dcf.perShare}
         onRange={setMcRange}
       />

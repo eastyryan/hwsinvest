@@ -212,8 +212,8 @@ export type PerShareBand = {
 };
 
 /**
- * Implied price at the peer 25th / median / 75th multiple.
- * Low and high are ordered so a lower multiple always sits on the left.
+ * Implied price at the peer 25th, median, and 75th multiple.
+ * Low and high are ordered so the lower price sits on the left.
  */
 export function impliedPerShareBand(
   key: CompMultipleKey,

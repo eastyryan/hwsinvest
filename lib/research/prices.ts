@@ -48,6 +48,50 @@ export function isValidRange(key: string): boolean {
   return Object.hasOwn(YAHOO_RANGES, key);
 }
 
+/** Yahoo keeps the class hyphen (BRK-B). Twelve Data uses a dot (BRK.B). */
+export function twelveDataSymbol(ticker: string): string {
+  return ticker.replace(/-/g, ".");
+}
+
+/**
+ * Date-only "YYYY-MM-DD" is noon UTC. `new Date("2026-10-06")` is UTC midnight,
+ * and a US-eastern locale then prints the previous calendar day.
+ */
+export function parseQuoteTime(datetime: string): number {
+  const s = datetime.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return Date.parse(`${s}T12:00:00Z`);
+  return Date.parse(s);
+}
+
+/**
+ * London pence quotes (GBp, GBX) are one-hundredth of a pound. GBP is already pounds.
+ * Dividing here is the only conversion — callers must not divide again.
+ */
+export function normalizePenceQuote(
+  price: number,
+  currency: string
+): { price: number; currency: string } {
+  const raw = currency.trim();
+  const pence = raw === "GBp" || raw.toUpperCase() === "GBX";
+  if (!pence) return { price, currency: raw || "USD" };
+  return { price: price / 100, currency: "GBP" };
+}
+
+function withQuoteCurrency(series: PriceSeries): PriceSeries {
+  const probe =
+    series.points.find((p) => p.c !== 0)?.c ??
+    (series.price != null && series.price !== 0 ? series.price : 1);
+  const norm = normalizePenceQuote(probe, series.currency);
+  if (norm.price === probe && norm.currency === series.currency) return series;
+  const scale = norm.price / probe;
+  return {
+    ...series,
+    currency: norm.currency,
+    price: series.price == null ? null : series.price * scale,
+    points: series.points.map((p) => ({ t: p.t, c: p.c * scale })),
+  };
+}
+
 async function fromYahoo(ticker: string, rangeKey: string): Promise<PriceSeries> {
   const [range, interval] = lookupRange(YAHOO_RANGES, rangeKey, "5y").split("|");
   const data = await fetchJson<{
@@ -71,12 +115,12 @@ async function fromYahoo(ticker: string, rangeKey: string): Promise<PriceSeries>
     .map((t, i) => ({ t: t * 1000, c: close[i] }))
     .filter((p): p is { t: number; c: number } => p.c != null);
   if (points.length === 0) throw new Error("Yahoo returned no points");
-  return {
+  return withQuoteCurrency({
     points,
     price: result?.meta?.regularMarketPrice ?? points[points.length - 1].c,
     currency: result?.meta?.currency ?? "USD",
     source: "yahoo",
-  };
+  });
 }
 
 async function fromTwelveData(ticker: string, rangeKey: string): Promise<PriceSeries> {
@@ -94,7 +138,7 @@ async function fromTwelveData(ticker: string, rangeKey: string): Promise<PriceSe
     // are the full URL, so a query-string key is handed to any APM the moment
     // one is enabled — and it sits in the provider's access logs regardless.
     `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(
-      ticker
+      twelveDataSymbol(ticker)
     )}&interval=${interval}&outputsize=${outputsize}`,
     {
       source: "Twelve Data",
@@ -108,16 +152,16 @@ async function fromTwelveData(ticker: string, rangeKey: string): Promise<PriceSe
     throw new Error("Twelve Data returned no data");
   }
   const points = data.values
-    .map((v) => ({ t: new Date(v.datetime).getTime(), c: parseFloat(v.close) }))
+    .map((v) => ({ t: parseQuoteTime(v.datetime), c: parseFloat(v.close) }))
     .filter((p) => Number.isFinite(p.c) && Number.isFinite(p.t))
     .sort((a, b) => a.t - b.t);
   if (points.length === 0) throw new Error("Twelve Data returned no points");
-  return {
+  return withQuoteCurrency({
     points,
     price: points[points.length - 1].c,
     currency: data.meta?.currency ?? "USD",
     source: "twelvedata",
-  };
+  });
 }
 
 export async function getPriceSeries(
@@ -125,7 +169,7 @@ export async function getPriceSeries(
   rangeKey: string
 ): Promise<PriceSeries> {
   if (!isValidTicker(ticker)) throw new Error("Invalid ticker");
-  const key = `prices:v2:${ticker.toUpperCase()}:${rangeKey}`;
+  const key = `prices:v3:${ticker.toUpperCase()}:${rangeKey}`;
   return singleFlight(key, () =>
     cached(key, { ttl: 900, tags: ["prices"] }, async () => {
       let lastError: unknown = new Error("No price provider available");

@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { CaretDown } from "@phosphor-icons/react";
+import CompanyLogo from "./CompanyLogo";
 
 export interface RecentEntry {
   ticker: string;
@@ -143,8 +144,9 @@ export default function RecentCompanies({
                   <Link
                     href={`/members/research/${e.ticker.toLowerCase()}`}
                     tabIndex={expanded ? 0 : -1}
-                    className="flex min-w-0 items-baseline gap-2 py-1 text-sm hover:text-zinc-900 dark:hover:text-zinc-50"
+                    className="flex min-w-0 items-center gap-2 py-1 text-sm hover:text-zinc-900 dark:hover:text-zinc-50"
                   >
+                    <CompanyLogo ticker={e.ticker} size={18} />
                     <span className="shrink-0 font-mono text-xs font-semibold text-zinc-900 dark:text-zinc-100">
                       {e.ticker}
                     </span>

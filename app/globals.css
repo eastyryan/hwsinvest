@@ -918,6 +918,14 @@ body {
     display: block !important;
   }
 
+  /* The six open cards scroll on screen. Paper gets the full text. */
+  .overview-scroll-card,
+  .overview-scroll-body {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
   .print-sheet,
   .print-sheet * {
     box-shadow: none !important;

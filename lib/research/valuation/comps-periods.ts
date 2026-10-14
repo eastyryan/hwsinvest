@@ -209,9 +209,12 @@ export function compOperatingFromFinancials(
     debt = (st ?? 0) + (lt ?? 0);
   }
 
+  const stInvestments = lastLinePrefer(bsPrimary, bsFallback, "stInvestments");
+  const liquidInvestments =
+    stInvestments != null && stInvestments > 0 ? stInvestments : 0;
   let netDebt: number | null = null;
-  if (debt != null || cash != null) {
-    netDebt = (debt ?? 0) - (cash ?? 0);
+  if (debt != null || cash != null || liquidInvestments > 0) {
+    netDebt = (debt ?? 0) - (cash ?? 0) - liquidInvestments;
   }
 
   return {

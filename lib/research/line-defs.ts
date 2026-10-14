@@ -5,8 +5,12 @@
 // "revenue" — filers choose from dozens depending on industry, era, and their
 // accountant's preference, and they migrate between them over the years. A
 // concept resolves by trying every tag listed here and stitching the resulting
-// series together (see buildStatementSet in edgar.ts), so order within a list
-// does not matter for correctness; coverage does.
+// series together (see buildStatementSet in edgar.ts). Order matters when
+// `preferOrder` is set: the first tag is the total and wins any overlap, and
+// later tags only fill periods the preferred tag does not cover. Without
+// `preferOrder`, the tag with the freshest period wins overlaps. `combine`
+// is the other exception — short-term debt and lease liabilities are sums of
+// distinct pieces, not synonyms, so neither last-writer nor preferOrder is right.
 //
 // Kept dependency-free so scripts/tag-coverage.ts can import it directly to
 // measure how much of a real filing this map actually captures.
@@ -53,6 +57,17 @@ interface LineDef {
    * the operating-income derivation with the wrong sign.
    */
   expectPositive?: boolean;
+  /**
+   * Sum distinct concepts instead of letting one tag replace another.
+   *
+   * `short-debt`: current maturities of long-term debt plus commercial paper
+   * or short-term borrowings (the larger of those two, because one usually
+   * contains the other). A `DebtCurrent` total is used when it already covers
+   * that sum. `leases`: operating plus finance, unless a combined lease tag
+   * already covers both. Current and noncurrent pieces of the same lease are
+   * not added together.
+   */
+  combine?: "short-debt" | "leases";
 }
 
 const INCOME: LineDef[] = [
@@ -61,6 +76,11 @@ const INCOME: LineDef[] = [
     label: "Revenue",
     kind: "flow",
     style: "subtotal",
+    // ASC 606 and `Revenues` are totals. Premiums and goods-only captions are
+    // fallbacks for filers that never tag a consolidated total — they must not
+    // replace one. Progressive's premiums tag was current through the same
+    // filing as `Revenues` and was winning the overlap.
+    preferOrder: true,
     tags: [
       "RevenueFromContractWithCustomerExcludingAssessedTax",
       "RevenueFromContractWithCustomerIncludingAssessedTax",
@@ -88,6 +108,9 @@ const INCOME: LineDef[] = [
     label: "Cost of Revenue",
     kind: "flow",
     expectPositive: true,
+    // The consolidated cost tags lead. Claims and ex-depreciation pieces fill
+    // only the periods those totals do not cover.
+    preferOrder: true,
     tags: [
       "CostOfGoodsAndServicesSold",
       "CostOfRevenue",
@@ -114,6 +137,7 @@ const INCOME: LineDef[] = [
     kind: "flow",
     expectPositive: true,
     indent: true,
+    preferOrder: true,
     tags: [
       "ResearchAndDevelopmentExpense",
       "ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost",
@@ -126,6 +150,7 @@ const INCOME: LineDef[] = [
     kind: "flow",
     expectPositive: true,
     indent: true,
+    preferOrder: true,
     tags: [
       "SellingGeneralAndAdministrativeExpense",
       "OtherSellingGeneralAndAdministrativeExpense",
@@ -137,6 +162,9 @@ const INCOME: LineDef[] = [
     kind: "flow",
     expectPositive: true,
     indent: true,
+    // Advertising is a component. Microsoft files both, and the component was
+    // replacing the selling-and-marketing total.
+    preferOrder: true,
     tags: [
       "SellingAndMarketingExpense",
       "MarketingAndAdvertisingExpense",
@@ -150,6 +178,7 @@ const INCOME: LineDef[] = [
     kind: "flow",
     expectPositive: true,
     indent: true,
+    preferOrder: true,
     tags: [
       "GeneralAndAdministrativeExpense",
       "OtherGeneralAndAdministrativeExpense",
@@ -165,6 +194,9 @@ const INCOME: LineDef[] = [
     // double-counts COGS — Alphabet tags it that way, which made its operating
     // expenses read as 68% of revenue instead of 27.6%. The derivation below
     // gives the correct figure for every filer that reports the two subtotals.
+    // Operating expenses before the broader cost total and before bank
+    // noninterest expense, which is a fallback rather than a synonym.
+    preferOrder: true,
     tags: ["OperatingExpenses", "OperatingCostsAndExpenses", "NoninterestExpense"],
     derive: { plus: ["grossProfit"], minus: ["operatingIncome"] },
   },
@@ -226,12 +258,18 @@ const INCOME: LineDef[] = [
     key: "interestExpense",
     label: "Interest Expense",
     kind: "flow",
+    // Bank captions sit at the end so they fill years the general tag never
+    // covers (JPM stopped tagging InterestExpense after FY2023) without
+    // replacing a real consolidated interest expense.
+    preferOrder: true,
     tags: [
       "InterestExpense",
       "InterestExpenseNonoperating",
       "InterestAndDebtExpense",
       "InterestExpenseDebt",
       "InterestExpenseBorrowings",
+      "InterestExpenseOperating",
+      "InterestExpenseDeposits",
     ],
   },
   {
@@ -270,6 +308,7 @@ const INCOME: LineDef[] = [
     // only the domestic tag was present it stood in for the whole, understating
     // pre-tax and breaking the reconciliation to net income. Same reasoning as
     // the component debt and revenue tags removed earlier.
+    preferOrder: true,
     tags: [
       "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
       "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments",
@@ -337,6 +376,11 @@ const BALANCE: LineDef[] = [
     key: "cash",
     label: "Cash & Equivalents",
     kind: "instant",
+    // Face cash before the cash-plus-restricted total. Apple's FY2023 10-K
+    // face cash was $29,965M while the broader tag was $30,737M; on a date tie
+    // the last tag was winning. Banks that only tag CashAndDueFromBanks still
+    // fill from that fallback.
+    preferOrder: true,
     tags: [
       "CashAndCashEquivalentsAtCarryingValue",
       "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
@@ -347,6 +391,7 @@ const BALANCE: LineDef[] = [
     key: "stInvestments",
     label: "Short-Term Investments",
     kind: "instant",
+    preferOrder: true,
     tags: [
       "ShortTermInvestments",
       "MarketableSecuritiesCurrent",
@@ -360,6 +405,9 @@ const BALANCE: LineDef[] = [
     key: "receivables",
     label: "Accounts Receivable",
     kind: "instant",
+    // Trade receivables before the loan book. A bank that only tags loans
+    // still fills this line; DSO is suppressed for banks in the ratio layer.
+    preferOrder: true,
     tags: [
       "AccountsReceivableNetCurrent",
       "ReceivablesNetCurrent",
@@ -378,6 +426,7 @@ const BALANCE: LineDef[] = [
     key: "inventory",
     label: "Inventory",
     kind: "instant",
+    preferOrder: true,
     tags: ["InventoryNet", "InventoryGross", "RetailRelatedInventory", "InventoryRealEstate"],
   },
   {
@@ -391,6 +440,9 @@ const BALANCE: LineDef[] = [
     key: "ppe",
     label: "Property, Plant & Equipment",
     kind: "instant",
+    // Net PP&E before sector captions and before the finance-lease-inclusive
+    // total. A filer that only tags a later concept still fills the line.
+    preferOrder: true,
     tags: [
       "PropertyPlantAndEquipmentNet",
       "PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization",
@@ -406,6 +458,7 @@ const BALANCE: LineDef[] = [
     key: "intangibles",
     label: "Intangible Assets",
     kind: "instant",
+    preferOrder: true,
     tags: [
       "IntangibleAssetsNetExcludingGoodwill",
       "FiniteLivedIntangibleAssetsNet",
@@ -462,6 +515,10 @@ const BALANCE: LineDef[] = [
     key: "stDebt",
     label: "Short-Term Debt",
     kind: "instant",
+    // These are pieces of the same caption, not synonyms. Commercial paper was
+    // replacing current maturities of long-term debt (Apple FY2025: $7.98B
+    // paper shown, $12.35B of current term debt dropped). See combineShortDebt.
+    combine: "short-debt",
     tags: [
       "LongTermDebtCurrent",
       "DebtCurrent",
@@ -491,6 +548,7 @@ const BALANCE: LineDef[] = [
     key: "deposits",
     label: "Deposits",
     kind: "instant",
+    preferOrder: true,
     tags: [
       "Deposits",
       "InterestBearingDeposits",
@@ -515,6 +573,7 @@ const BALANCE: LineDef[] = [
     key: "retainedEarnings",
     label: "Retained Earnings",
     kind: "instant",
+    preferOrder: true,
     tags: [
       "RetainedEarningsAccumulatedDeficit",
       "RetainedEarningsAccumulatedDeficitIncludingPortionAttributableToNoncontrollingInterest",
@@ -525,6 +584,10 @@ const BALANCE: LineDef[] = [
     label: "Shareholders' Equity",
     kind: "instant",
     style: "total",
+    // Parent equity before the total that folds in noncontrolling interest,
+    // and before common-only equity. EPS and the balance-sheet identity use
+    // the parent figure.
+    preferOrder: true,
     tags: [
       "StockholdersEquity",
       "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
@@ -537,13 +600,18 @@ const BALANCE: LineDef[] = [
     key: "leaseLiability",
     label: "Lease Liabilities",
     kind: "instant",
-    // Operating + finance lease liabilities when tagged separately from
-    // interest-bearing debt. Totals and noncurrent pieces are both listed
-    // because filers pick one; they are not summed.
+    // Operating and finance leases are additive. A combined tag is used when
+    // it already covers both; otherwise the two totals are summed. Noncurrent
+    // is only a fallback when the total for that lease is absent, so current
+    // and noncurrent are not added on top of the total. Finance leases can
+    // also sit inside long-term debt at some filers; the liability is still
+    // shown in full here. See combineLeases.
+    combine: "leases",
     tags: [
       "OperatingLeaseLiability",
       "OperatingLeaseLiabilityNoncurrent",
       "FinanceLeaseLiability",
+      "FinanceLeaseLiabilityNoncurrent",
       "OperatingLeaseAndFinanceLeaseLiability",
     ],
   },
@@ -605,6 +673,7 @@ const CASHFLOW: LineDef[] = [
     label: "Operating Cash Flow",
     kind: "flow",
     style: "subtotal",
+    preferOrder: true,
     tags: [
       "NetCashProvidedByUsedInOperatingActivities",
       "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations",
@@ -615,6 +684,10 @@ const CASHFLOW: LineDef[] = [
     label: "Depreciation & Amortization",
     kind: "flow",
     indent: true,
+    // The full depreciation, depletion, and amortization tag before the
+    // depreciation-only piece. Apple files both; the piece must not replace
+    // the total just because it was filed later.
+    preferOrder: true,
     tags: [
       "DepreciationDepletionAndAmortization",
       "DepreciationAmortizationAndAccretionNet",
@@ -628,6 +701,7 @@ const CASHFLOW: LineDef[] = [
     label: "Stock-Based Compensation",
     kind: "flow",
     indent: true,
+    preferOrder: true,
     tags: [
       "ShareBasedCompensation",
       "AllocatedShareBasedCompensationExpense",
@@ -638,6 +712,9 @@ const CASHFLOW: LineDef[] = [
     label: "Capital Expenditures",
     kind: "flow",
     flipSign: true,
+    // Payments for property and equipment before sector-specific captions.
+    // A real-estate development tag was replacing a larger PPE total.
+    preferOrder: true,
     tags: [
       "PaymentsToAcquirePropertyPlantAndEquipment",
       "PaymentsToAcquireProductiveAssets",
@@ -663,6 +740,7 @@ const CASHFLOW: LineDef[] = [
     label: "Investing Cash Flow",
     kind: "flow",
     style: "subtotal",
+    preferOrder: true,
     tags: [
       "NetCashProvidedByUsedInInvestingActivities",
       "NetCashProvidedByUsedInInvestingActivitiesContinuingOperations",
@@ -685,6 +763,7 @@ const CASHFLOW: LineDef[] = [
     kind: "flow",
     flipSign: true,
     indent: true,
+    preferOrder: true,
     tags: [
       "PaymentsOfDividends",
       "PaymentsOfDividendsCommonStock",
@@ -697,19 +776,35 @@ const CASHFLOW: LineDef[] = [
     label: "Financing Cash Flow",
     kind: "flow",
     style: "subtotal",
+    preferOrder: true,
     tags: [
       "NetCashProvidedByUsedInFinancingActivities",
       "NetCashProvidedByUsedInFinancingActivitiesContinuingOperations",
     ],
   },
   {
-    // CFO + CFI + CFF. Filers do tag this, but it is also derivable, so the
-    // reported figure is preferred and the derivation fills the gaps. This is
-    // the line that ties the cash flow statement to the balance sheet's cash.
+    key: "fxEffect",
+    label: "Effect of Exchange Rates",
+    kind: "flow",
+    indent: true,
+    // The broader (restricted-cash) caption before the cash-only synonym.
+    preferOrder: true,
+    tags: [
+      "EffectOfExchangeRateOnCashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+      "EffectOfExchangeRateOnCashAndCashEquivalents",
+    ],
+  },
+  {
+    // CFO + CFI + CFF, plus FX when the tagged figure is the ex-FX total.
+    // The including-FX tag leads so it wins a date tie. When the winner is
+    // still just the three sections, buildStatementSet adds fxEffect.
+    // Deriving from the three sections fills gaps; FX is not a required
+    // derive source, or filers with no FX tag would lose the fallback.
     key: "netChangeInCash",
     label: "Net Change in Cash",
     kind: "flow",
     style: "total",
+    preferOrder: true,
     tags: [
       "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect",
       "CashAndCashEquivalentsPeriodIncreaseDecrease",

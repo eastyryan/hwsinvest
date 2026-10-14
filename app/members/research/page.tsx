@@ -30,6 +30,9 @@ export default function ResearchPage() {
           <ArrowLeft size={15} strokeWidth={2.2} /> Dashboard
         </Link>
         <div className="flex items-center gap-2">
+          <Link href="/members/research/calendar" className={homeHeaderBtn}>
+            Calendar
+          </Link>
           <Link href="/members/research/screener" className={homeHeaderBtn}>
             Screener
           </Link>

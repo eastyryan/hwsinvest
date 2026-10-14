@@ -5,25 +5,17 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Cell,
-  ReferenceLine,
   ComposedChart,
   Legend,
 } from "recharts";
 import type { CompanyFinancials } from "@/lib/research/edgar";
-import { buildRatios } from "@/lib/research/ratios";
 import { fmtValue, fmtPct } from "@/lib/research/format";
-import MetricPicker, {
-  STATEMENT_METRIC_GROUPS,
-  getStatementMetric,
-  type MetricGroup,
-} from "./MetricPicker";
+import MetricPicker, { type MetricGroup } from "./MetricPicker";
+import MultiMetricChart from "./MultiMetricChart";
 import useIsDark from "./useIsDark";
 import usePrefersReducedMotion from "./usePrefersReducedMotion";
 import { currencyPrefix, fmtMillions, fmtMoney } from "./currency";
@@ -31,7 +23,6 @@ import { btnSegmentedCompact, btnSegmentedCompactItem } from "./ui/buttonStyles"
 
 // Chart palette: one accent hue for lines/bars, semantic red for negatives.
 const ACCENT = { light: "#2563eb", dark: "#60a5fa" };
-const NEGATIVE = { light: "#dc2626", dark: "#f87171" };
 const GRID = { light: "#e4e4e7", dark: "#27272a" };
 const INK_MUTED = { light: "#71717a", dark: "#a1a1aa" };
 
@@ -200,219 +191,6 @@ function PriceChart({ ticker }: { ticker: string }) {
           </ResponsiveContainer>
         )}
       </div>
-    </section>
-  );
-}
-
-function MetricChart({ fin, currency }: { fin: CompanyFinancials; currency: string }) {
-  const dark = useIsDark();
-  const mode = dark ? "dark" : "light";
-  const animate = !usePrefersReducedMotion();
-  const [freq, setFreq] = useState<"annual" | "quarterly">("annual");
-  const [metric, setMetric] = useState("revenue");
-
-  const set = freq === "annual" ? fin.annual : fin.quarterly;
-  const ratios = useMemo(() => buildRatios(fin, freq), [fin, freq]);
-  const metricDef = getStatementMetric(metric);
-
-  // Keys present in this frequency (statement lines + ratio lines with data).
-  const allowedKeys = useMemo(() => {
-    const keys = new Set<string>();
-    for (const st of set.statements) {
-      for (const line of st.lines) keys.add(line.key);
-    }
-    for (const line of ratios.lines) {
-      if (Object.values(line.values).some((v) => v != null)) keys.add(line.key);
-    }
-    return keys;
-  }, [set, ratios]);
-
-  // Fall back when switching annual ↔ quarterly loses the current metric.
-  const activeMetric = allowedKeys.has(metric)
-    ? metric
-    : ([...allowedKeys][0] ?? metric);
-  const activeDef = getStatementMetric(activeMetric) ?? metricDef;
-  const isRatio = activeDef?.kind === "ratio";
-
-  const line = useMemo(() => {
-    if (isRatio) return null;
-    for (const st of set.statements) {
-      const l = st.lines.find((l) => l.key === activeMetric);
-      if (l) return l;
-    }
-    return null;
-  }, [set, activeMetric, isRatio]);
-
-  const ratioLine = useMemo(() => {
-    if (!isRatio) return null;
-    return ratios.lines.find((l) => l.key === activeMetric) ?? null;
-  }, [ratios, activeMetric, isRatio]);
-
-  const data = useMemo(() => {
-    if (isRatio && ratioLine) {
-      return [...ratios.periods]
-        .reverse()
-        .map((p) => ({
-          label: p.label,
-          value: ratioLine.values[p.key],
-          yoy: null as number | null,
-        }))
-        .filter((d) => d.value != null);
-    }
-    if (!line) return [];
-    return [...set.periods]
-      .reverse()
-      .map((p) => ({
-        label: p.label,
-        value: line.values[p.key],
-        yoy: line.yoy[p.key],
-      }))
-      .filter((d) => d.value != null);
-  }, [set, line, isRatio, ratioLine, ratios.periods]);
-
-  const isPerShare = !isRatio && !!line?.perShare;
-  const isShares = !isRatio && !!line?.shares;
-  const isPct = activeDef?.format === "pct";
-  const isMultiple = activeDef?.format === "x";
-  const label = activeDef?.label ?? line?.label ?? "Pick a metric";
-
-  const unitLabel = isPct
-    ? "percent"
-    : isMultiple
-      ? "multiple"
-      : isPerShare
-        ? `${currency} per share`
-        : isShares
-          ? "average shares outstanding"
-          : `${currency}, millions`;
-  const metricChartLabel =
-    data.length > 0
-      ? `Bar chart of ${label} by ${freq} period, in ${unitLabel}, ` +
-        `across ${data.length} periods from ${data[0].label} to ${data[data.length - 1].label}.`
-      : "";
-
-  return (
-    <section className="rounded-xl border border-zinc-200 p-5 dark:border-zinc-800">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            Chart the statements
-          </h2>
-          <p className="mt-1 text-lg font-semibold tracking-tight">{label}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <MetricPicker
-            value={activeMetric}
-            onChange={setMetric}
-            groups={STATEMENT_METRIC_GROUPS}
-            allowedKeys={allowedKeys}
-            ariaLabel="Metric to chart"
-          />
-          <div
-            className={btnSegmentedCompact}
-            role="group"
-            aria-label="Reporting period for this chart"
-          >
-            {(
-              [
-                ["annual", "Annual"],
-                ["quarterly", "Quarterly"],
-              ] as const
-            ).map(([f, label]) => (
-              <button
-                key={f}
-                type="button"
-                aria-pressed={freq === f}
-                onClick={() => setFreq(f)}
-                className={btnSegmentedCompactItem(freq === f)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div
-        className="mt-4 h-72"
-        role={data.length > 0 ? "img" : undefined}
-        aria-label={data.length > 0 ? metricChartLabel : undefined}
-      >
-        {data.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-              <CartesianGrid stroke={GRID[mode]} vertical={false} />
-              <XAxis
-                dataKey="label"
-                tick={{ fill: INK_MUTED[mode], fontSize: 11 }}
-                axisLine={{ stroke: GRID[mode] }}
-                tickLine={false}
-                minTickGap={20}
-              />
-              <YAxis
-                tick={{ fill: INK_MUTED[mode], fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-                width={64}
-                tickFormatter={(v) => {
-                  if (isPct) return (Number(v) * 100).toFixed(0) + "%";
-                  if (isMultiple) return Number(v).toFixed(1) + "×";
-                  return fmtValue(Number(v), { perShare: isPerShare, shares: isShares });
-                }}
-              />
-              <Tooltip
-                cursor={{ fill: dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" }}
-                contentStyle={{
-                  background: dark ? "#18181b" : "#ffffff",
-                  border: `1px solid ${GRID[mode]}`,
-                  borderRadius: 8,
-                  fontSize: 12,
-                }}
-                formatter={(v, _name, item) => {
-                  const yoy = (item?.payload as { yoy?: number | null })?.yoy;
-                  let base: string;
-                  if (isPct) base = (Number(v) * 100).toFixed(1) + "%";
-                  else if (isMultiple) base = Number(v).toFixed(2) + "×";
-                  else if (isPerShare) base = fmtMoney(Number(v), currency);
-                  else if (isShares) base = fmtValue(Number(v), { shares: true });
-                  else base = fmtMillions(Number(v), currency);
-                  return [yoy != null ? `${base}  (${fmtPct(yoy)} YoY)` : base, label];
-                }}
-              />
-              <ReferenceLine y={0} stroke={INK_MUTED[mode]} strokeWidth={1} />
-              <Bar
-                dataKey="value"
-                radius={[4, 4, 0, 0]}
-                maxBarSize={40}
-                isAnimationActive={animate}
-              >
-                {data.map((d, i) => (
-                  <Cell
-                    key={i}
-                    fill={(d.value ?? 0) < 0 ? NEGATIVE[mode] : ACCENT[mode]}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">
-            No data for this metric.
-          </div>
-        )}
-      </div>
-      <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-        {isPct
-          ? "Percent"
-          : isMultiple
-            ? "Multiple"
-            : isPerShare
-              ? `${currency} per share`
-              : isShares
-                ? "Average shares outstanding"
-                : `${currency} millions`}
-        , {freq}. Values as filed with the SEC
-        {isRatio ? " (ratios from the same statements)" : ""}.
-      </p>
     </section>
   );
 }
@@ -911,7 +689,7 @@ export default function ChartsPanel({
     <div className="space-y-8">
       <PriceChart ticker={fin.ticker} />
       <PriceVsFundamentals fin={fin} currency={currency} />
-      <MetricChart fin={fin} currency={currency} />
+      <MultiMetricChart fin={fin} currency={currency} />
     </div>
   );
 }

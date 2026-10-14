@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { getCompanyFinancials, getSecProfile, InvalidCikError, NoFactsError } from "@/lib/research/edgar";
-import { sectorBeta } from "@/lib/research/dcf-sector";
+import { sectorBeta, sectorForecast } from "@/lib/research/dcf-sector";
+import { forecastAssumptionOverrides } from "@/lib/research/sector-forecast";
 import { getLatestQuote } from "@/lib/research/prices";
 import type {
   StatementSet,
@@ -15,11 +16,9 @@ import { reconcilesExactly } from "@/lib/research/reconcile";
 import { createGate } from "@/lib/research/concurrency";
 import {
   buildProjection,
-  buildRevenueGrowthPath,
   fillAssumptionsSheet,
   fillSchedulesSheet,
   fillProjectionsSheet,
-  historicalRevenueGrowth,
   PROJECTION_YEARS,
   type Assumptions,
 } from "@/lib/research/excel-projection";
@@ -1069,9 +1068,9 @@ function parseWebAssumptions(url: URL): {
 
 export async function GET(
   req: Request,
-  { params }: { params: {  cik: string  } }
+  { params }: { params: { cik: string } }
 ) {
-  const { cik  } = params;
+  const { cik } = params;
   const reqUrl = new URL(req.url);
   const ticker = (reqUrl.searchParams.get("ticker") ?? "").toUpperCase();
   const webAssumptions = parseWebAssumptions(reqUrl);
@@ -1104,7 +1103,7 @@ export async function GET(
           quarterly: limitPeriods(full.quarterly, MAX_QUARTERLY_COLS),
         };
     const wb = new ExcelJS.Workbook();
-    wb.creator = "Financial Statements";
+    wb.creator = "TrenchTick";
     wb.created = new Date();
 
     // Cover sheet. Created first so it sits at the front, filled last so its
@@ -1172,25 +1171,12 @@ export async function GET(
     // them; nothing else can claim them because the namer saw them first.
     // Optional overrides from the web Valuation tab so Excel matches what the
     // user was looking at (growth, margins, WACC inputs, preset label).
-    // When the UI did not send a growth path, seed from free street consensus
-    // (EPS growth hops as the best free proxy for rev growth) so every filer
-    // is not forced onto a 3% tail.
+    // When the UI did not send a growth path, the projection is rebuilt after
+    // the SIC profile loads, with street hops and a sector fade.
     let projectionOverrides = webAssumptions.projection
       ? { ...webAssumptions.projection }
       : ({} as Partial<Assumptions>);
-    if (!projectionOverrides.revenueGrowth && ticker) {
-      const street = await getStreetEstimates(ticker).catch(() => null);
-      if (street) {
-        const { path } = buildRevenueGrowthPath({
-          years: PROJECTION_YEARS,
-          historical: historicalRevenueGrowth(fin.annual),
-          streetPath: street.epsGrowthPath,
-          streetYear1: street.year1EpsGrowth,
-        });
-        projectionOverrides = { ...projectionOverrides, revenueGrowth: path };
-      }
-    }
-    const projection = buildProjection(
+    let projection = buildProjection(
       fin,
       PROJECTION_YEARS,
       Object.keys(projectionOverrides).length ? projectionOverrides : undefined
@@ -1217,10 +1203,30 @@ export async function GET(
       sic: profile?.sic,
       sicDescription: profile?.sicDescription,
     });
+    if (projection && !webAssumptions.projection?.revenueGrowth) {
+      const street = ticker ? await getStreetEstimates(ticker).catch(() => null) : null;
+      const seeded = forecastAssumptionOverrides({
+        fin,
+        sic: profile?.sic ?? null,
+        years: PROJECTION_YEARS,
+        useStreet: street != null,
+        streetPath: street?.epsGrowthPath ?? null,
+        streetYear1: street?.year1EpsGrowth ?? null,
+        filedGross: projection.actuals.grossMargin,
+        filedOpex: projection.actuals.opexPctRevenue,
+        modelGross: projection.assumptions.grossMargin[0] ?? 0.4,
+        modelOpex: projection.assumptions.opexPctRevenue[0] ?? 0.2,
+      });
+      const rebuilt = buildProjection(fin, PROJECTION_YEARS, {
+        ...projectionOverrides,
+        ...seeded.assumptions,
+      });
+      if (rebuilt) projection = rebuilt;
+    }
     const dcf = buildDcf(
       fin,
       projection,
-      sectorBeta(profile?.sic),
+      sectorForecast(profile?.sic) ?? sectorBeta(profile?.sic),
       quote?.price ?? null,
       webAssumptions.dcf
     );

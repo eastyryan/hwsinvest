@@ -108,10 +108,14 @@ export function buildScorecard(
   const revValues = lineValues(a, "revenue");
   let cagr: number | null =
     revValues != null ? periodCagr(revValues, a.periods, 3) : null;
-  if (cagr == null && rev0 && rev1 && rev1 > 0) cagr = rev0 / rev1 - 1;
+  let growthMetric = revenueGrowthMetricNote(mode);
+  if (cagr == null && rev0 && rev1 && rev1 > 0) {
+    cagr = rev0 / rev1 - 1;
+    growthMetric = "1-year revenue change (3-year CAGR unavailable)";
+  }
   factors.push({
     label: revenueGrowthLabel(mode),
-    metric: revenueGrowthMetricNote(mode),
+    metric: growthMetric,
     value: cagr,
     fmt: PCT_FMT,
     score:
@@ -157,7 +161,7 @@ export function buildScorecard(
               [0.15, 85],
               [0.2, 100],
             ]),
-      band: "<5% → 45 · 10% → 65 · 15% → 85 · ≥20% → 100",
+      band: "<5% → 20 · 5% → 45 · 10% → 65 · 15% → 85 · ≥20% → 100",
     });
 
     // 3. ROA — capital/asset efficiency proxy (no CET1 without new tags).
@@ -177,7 +181,7 @@ export function buildScorecard(
               [0.015, 85],
               [0.025, 100],
             ]),
-      band: "<0.5% → 45 · 1% → 65 · 1.5% → 85 · ≥2.5% → 100",
+      band: "<0.5% → 20 · 0.5% → 45 · 1% → 65 · 1.5% → 85 · ≥2.5% → 100",
     });
   } else {
     // 2. Returns on capital — NOPAT / (debt + equity).
@@ -198,7 +202,7 @@ export function buildScorecard(
               [0.15, 85],
               [0.25, 100],
             ]),
-      band: "<5% → 45 · 10% → 65 · 15% → 85 · ≥25% → 100",
+      band: "<5% → 20 · 5% → 45 · 10% → 65 · 15% → 85 · ≥25% → 100",
     });
   }
 
@@ -207,7 +211,9 @@ export function buildScorecard(
   if (fcf == null) {
     const ocf = val(a, "ocf");
     const capex = val(a, "capex");
-    if (ocf != null) fcf = ocf - Math.abs(num(capex));
+    // Missing capex is not zero capex. Treating it as zero scored OCF/NI as
+    // if the company were free-cash-flow positive.
+    if (ocf != null && capex != null) fcf = ocf - Math.abs(capex);
   }
   const conversion = fcf != null && ni != null && ni > 0 ? fcf / ni : null;
   factors.push({
@@ -224,7 +230,7 @@ export function buildScorecard(
             [0.7, 75],
             [0.9, 100],
           ]),
-    band: "<0.4× → 50 · 0.7× → 75 · ≥0.9× → 100 (profit years only)",
+    band: "<0.4× → 20 · 0.4× → 50 · 0.7× → 75 · ≥0.9× → 100 (profit years only)",
   });
 
   if (financial) {
@@ -288,10 +294,16 @@ export function buildScorecard(
       band: "net cash → 100 · ≤1× → 90 · ≤2× → 75 · ≤3× → 55 · >4× → 15",
     });
 
-    // Interest coverage — EBIT / interest (no interest scores full).
-    const interest = Math.abs(num(val(a, "interestExpense")));
+    // Interest coverage — EBIT / interest. A missing interest tag is not
+    // "no debt": only a filed zero with no borrowings scores as uncovered.
+    const interestRaw = val(a, "interestExpense");
+    const interest = interestRaw == null ? null : Math.abs(interestRaw);
     const coverage =
-      ebit != null && interest > 0 ? ebit / interest : ebit != null ? Infinity : null;
+      ebit != null && interest != null && interest > 0
+        ? ebit / interest
+        : ebit != null && interest === 0 && debt === 0
+          ? Infinity
+          : null;
     factors.push({
       label: "Interest coverage",
       metric: "EBIT / interest expense",

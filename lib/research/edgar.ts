@@ -2,22 +2,10 @@
 // Source of truth: https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json
 // EDGAR requires a User-Agent identifying the requester.
 
+import { createHash } from "node:crypto";
 import { fetchJson, singleFlight, UpstreamError } from "./http";
 import { cached, cachedWithMeta } from "./cache";
 import { isValidCik, MAX_SEARCH_QUERY } from "./validate";
-
-/** Non-crypto fingerprint hash — avoids `node:crypto` in the client bundle. */
-function fingerprintHex(parts: string[]): string {
-  let h = 2166136261;
-  for (const part of parts) {
-    for (let i = 0; i < part.length; i++) {
-      h ^= part.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    h ^= 0xff;
-  }
-  return (h >>> 0).toString(16).padStart(8, "0");
-}
 
 const UA = "FinanceExplorer/1.0 (easton.ryan@hws.edu)";
 
@@ -55,6 +43,11 @@ function schemaFingerprint(): string {
     buildSeries,
     buildStatementSet,
     reconcileShareScale,
+    reconcileBasicShareScale,
+    combineShortDebt,
+    combineLeases,
+    addFxToNetChange,
+    attachGrowth,
     repairQuarterEqualToYear,
     sanitizeShareCounts,
     latestSharesOutstanding,
@@ -66,11 +59,12 @@ function schemaFingerprint(): string {
   ]
     .map((fn) => fn.toString())
     .join("");
-  fingerprintCache = fingerprintHex([
-    JSON.stringify(STATEMENT_DEFS),
-    JSON.stringify(IFRS_LINE_TAGS),
-    normalizerSource,
-  ]).slice(0, 12);
+  fingerprintCache = createHash("sha1")
+    .update(JSON.stringify(STATEMENT_DEFS))
+    .update(JSON.stringify(IFRS_LINE_TAGS))
+    .update(normalizerSource)
+    .digest("hex")
+    .slice(0, 12);
   return fingerprintCache;
 }
 
@@ -125,6 +119,12 @@ export interface LineValues {
   values: Record<string, number | null>; // period key -> value
   yoy: Record<string, number | null>;
   qoq: Record<string, number | null>;
+  /**
+   * Periods this line filled from other lines (gross profit, free cash flow,
+   * net change) rather than from a tag. A tie-out that uses one of these is
+   * the formula repeating itself.
+   */
+  derived?: Record<string, true>;
   style: "normal" | "subtotal" | "total";
   indent?: boolean;
   perShare?: boolean;
@@ -250,6 +250,16 @@ interface TagSeries {
 export function buildSeries(facts: Fact[], kind: Kind, q4Mode: "subtract" | "average" = "subtract"): TagSeries {
   const annual = new Map<string, number>();
   const quarterly = new Map<string, number>();
+  // A later start-group must not replace a discrete quarter that was filed
+  // more recently. Groups are visited in insertion order, which is not
+  // filing order.
+  const quarterlyFiled = new Map<string, string>();
+  const putQuarter = (end: string, val: number, filed: string) => {
+    const prevFiled = quarterlyFiled.get(end);
+    if (prevFiled != null && filed < prevFiled) return;
+    quarterly.set(end, val);
+    quarterlyFiled.set(end, filed);
+  };
 
   if (kind === "instant") {
     // Instant facts: quarterly = every reported balance date; annual = 10-K dates.
@@ -343,7 +353,7 @@ export function buildSeries(facts: Fact[], kind: Kind, q4Mode: "subtract" | "ave
       // skips a period (a missed filing) yields a 180-day segment, which is not
       // a quarter and must not be presented as one.
       if (plausible && segmentDays >= 75 && segmentDays <= 105) {
-        quarterly.set(f.end, segmentVal);
+        putQuarter(f.end, segmentVal, f.filed);
       }
 
       prevVal = f.val;
@@ -482,6 +492,136 @@ function reconcileShareScale(seriesByLine: Map<string, Map<string, number>>): vo
   }
 }
 
+/**
+ * Scale basic weighted-average shares the same way diluted shares are scaled.
+ *
+ * McDonald's files both counts in millions (basic 713.4, diluted 716.4). The
+ * diluted line is corrected from net income / diluted EPS. Basic has its own
+ * EPS check, and when that is missing it follows diluted: diluted / basic near
+ * 1e3 or 1e6 means basic was reported in the same units. A pair already in
+ * real shares (ratio near 1) is left alone.
+ */
+function reconcileBasicShareScale(seriesByLine: Map<string, Map<string, number>>): void {
+  const basic = seriesByLine.get("sharesBasic");
+  if (!basic || basic.size === 0) return;
+  const diluted = seriesByLine.get("sharesDiluted");
+  const netIncome = seriesByLine.get("netIncome");
+  const eps = seriesByLine.get("epsBasic");
+  for (const [end, reported] of basic) {
+    if (reported <= 0) continue;
+    const ni = netIncome?.get(end);
+    const e = eps?.get(end);
+    if (ni != null && e != null && Math.abs(e) >= 0.05) {
+      const factor = nearFactor(ni / e / reported);
+      if (factor) {
+        basic.set(end, reported * factor);
+        continue;
+      }
+    }
+    const dil = diluted?.get(end);
+    if (dil != null && dil > 0) {
+      const factor = nearFactor(dil / reported);
+      if (factor) basic.set(end, reported * factor);
+    }
+  }
+}
+
+/**
+ * Current maturities plus paper or other short borrowings.
+ *
+ * ShortTermBorrowings usually contains commercial paper, so the larger of the
+ * two is taken rather than the sum. DebtCurrent is used only when it already
+ * covers those pieces — it is a total, not another piece to add.
+ */
+function combineShortDebt(byTag: Map<string, Map<string, number>>): Map<string, number> {
+  const ends = new Set<string>();
+  for (const s of byTag.values()) for (const k of s.keys()) ends.add(k);
+  const out = new Map<string, number>();
+  for (const end of ends) {
+    const termCurrent = byTag.get("LongTermDebtCurrent")?.get(end);
+    const stb = byTag.get("ShortTermBorrowings")?.get(end);
+    const cp = byTag.get("CommercialPaper")?.get(end);
+    const debtCurrent = byTag.get("DebtCurrent")?.get(end);
+    const borrowings =
+      stb != null && cp != null ? Math.max(stb, cp) : (stb ?? cp);
+    const parts = (termCurrent ?? 0) + (borrowings ?? 0);
+    const hasComponent = termCurrent != null || borrowings != null;
+    if (debtCurrent != null && hasComponent && debtCurrent >= parts * 0.98) {
+      out.set(end, debtCurrent);
+    } else if (hasComponent && parts > 0) {
+      out.set(end, parts);
+    } else if (debtCurrent != null) {
+      out.set(end, debtCurrent);
+    }
+  }
+  return out;
+}
+
+/**
+ * Operating lease liability plus finance lease liability.
+ *
+ * A combined tag wins when it is at least the sum of the pieces. Noncurrent
+ * is used only when that lease's total is missing, so a total and its
+ * noncurrent piece are never both added.
+ */
+function combineLeases(byTag: Map<string, Map<string, number>>): Map<string, number> {
+  const ends = new Set<string>();
+  for (const s of byTag.values()) for (const k of s.keys()) ends.add(k);
+  const out = new Map<string, number>();
+  for (const end of ends) {
+    const combined = byTag.get("OperatingLeaseAndFinanceLeaseLiability")?.get(end);
+    const operating =
+      byTag.get("OperatingLeaseLiability")?.get(end) ??
+      byTag.get("OperatingLeaseLiabilityNoncurrent")?.get(end);
+    const finance =
+      byTag.get("FinanceLeaseLiability")?.get(end) ??
+      byTag.get("FinanceLeaseLiabilityNoncurrent")?.get(end);
+    const pieces = (operating ?? 0) + (finance ?? 0);
+    const hasPiece = operating != null || finance != null;
+    if (combined != null && (!hasPiece || combined >= pieces * 0.98)) {
+      out.set(end, combined);
+    } else if (hasPiece) {
+      out.set(end, pieces);
+    } else if (combined != null) {
+      out.set(end, combined);
+    }
+  }
+  return out;
+}
+
+/** Tagged net change is the three sections (ex-FX) when it matches within $1 or 1e-6. */
+function sectionsMatch(tagged: number, sections: number): boolean {
+  const diff = Math.abs(tagged - sections);
+  return diff <= 1 || diff <= Math.abs(tagged) * 1e-6;
+}
+
+/**
+ * Add the FX effect onto net change only when the figure on the line is still
+ * the sum of the three sections. An including-FX tag does not match that sum,
+ * so it is left alone and FX is not added twice.
+ */
+function addFxToNetChange(seriesByLine: Map<string, Map<string, number>>): Set<string> {
+  const adjusted = new Set<string>();
+  const net = seriesByLine.get("netChangeInCash");
+  const ocf = seriesByLine.get("ocf");
+  const icf = seriesByLine.get("icf");
+  const fincf = seriesByLine.get("fincf");
+  const fx = seriesByLine.get("fxEffect");
+  if (!net || !ocf || !icf || !fincf || !fx || fx.size === 0) return adjusted;
+  for (const [end, tagged] of net) {
+    const a = ocf.get(end);
+    const b = icf.get(end);
+    const c = fincf.get(end);
+    const f = fx.get(end);
+    if (a == null || b == null || c == null || f == null || f === 0) continue;
+    if (sectionsMatch(tagged, a + b + c)) {
+      net.set(end, tagged + f);
+      adjusted.add(end);
+    }
+  }
+  return adjusted;
+}
+
 function buildStatementSet(
   gaap: Record<string, { units: Record<string, Fact[]> }>,
   freq: "annual" | "quarterly",
@@ -493,6 +633,7 @@ function buildStatementSet(
 ): StatementSet {
   // Resolve each line's series first.
   const seriesByLine = new Map<string, Map<string, number>>();
+  const derivedByLine = new Map<string, Set<string>>();
   const defsByKey = new Map<string, LineDef>();
 
   for (const { lines } of STATEMENT_DEFS) {
@@ -510,7 +651,7 @@ function buildStatementSet(
       // Merge oldest-first so newer tags overwrite older ones where they
       // overlap: the live tag wins on recent periods, the retired tag supplies
       // the earlier history it alone covers.
-      const candidates: { series: Map<string, number>; latest: string; rank: number }[] = [];
+      const candidates: { series: Map<string, number>; latest: string; rank: number; tag: string }[] = [];
       for (const [rank, tag] of def.tags.entries()) {
         const entry = gaap[tag];
         if (!entry) continue;
@@ -518,8 +659,15 @@ function buildStatementSet(
         if (!picked || picked.facts.length === 0) continue;
         const cur = currencyOf(picked.unit);
         if (cur) ctx.currencies.add(cur);
+        // Take magnitudes before YTD differencing. A ladder that mixes signs
+        // (YTD capex 10, 25, 40 and a 10-K of -100) otherwise produces a
+        // quarter of -140 instead of -60. Gain-on-sale is left signed.
+        const facts =
+          def.flipSign || def.expectPositive
+            ? picked.facts.map((f) => (f.val < 0 ? { ...f, val: Math.abs(f.val) } : f))
+            : picked.facts;
         const s = buildSeries(
-          picked.facts,
+          facts,
           def.kind,
           def.shares ? "average" : "subtract"
         )[freq];
@@ -532,24 +680,32 @@ function buildStatementSet(
         // resolved to the total, and the four quarters summed to 3% of the
         // year. The tag a concept resolves to must not depend on which view
         // you are looking at.
-        const latest = picked.facts.reduce((m, f) => (f.end > m ? f.end : m), "");
-        candidates.push({ series: s, latest, rank });
+        const latest = facts.reduce((m, f) => (f.end > m ? f.end : m), "");
+        candidates.push({ series: s, latest, rank, tag });
       }
       // Applied in order, so the last writer wins an overlapping period while
       // earlier ones still supply the periods it doesn't cover. Ranked concepts
       // put the most-preferred tag last; the rest put the freshest tag last.
-      candidates.sort((a, b) =>
-        def.preferOrder
-          ? b.rank - a.rank
-          : a.latest < b.latest
-            ? -1
-            : a.latest > b.latest
-              ? 1
-              : 0
-      );
+      // Combined concepts (short-term debt, leases) skip that merge and sum
+      // the pieces instead.
       let series = new Map<string, number>();
-      for (const c of candidates) {
-        for (const [k, v] of c.series) series.set(k, v);
+      if (def.combine) {
+        const byTag = new Map<string, Map<string, number>>();
+        for (const c of candidates) byTag.set(c.tag, c.series);
+        series = def.combine === "short-debt" ? combineShortDebt(byTag) : combineLeases(byTag);
+      } else {
+        candidates.sort((a, b) =>
+          def.preferOrder
+            ? b.rank - a.rank
+            : a.latest < b.latest
+              ? -1
+              : a.latest > b.latest
+                ? 1
+                : 0
+        );
+        for (const c of candidates) {
+          for (const [k, v] of c.series) series.set(k, v);
+        }
       }
       // Impose the documented sign rather than trusting the filer's. See the
       // flipSign / expectPositive notes in line-defs.ts: both directions of
@@ -591,11 +747,23 @@ function buildStatementSet(
           val -= v;
         }
       }
-      if (ok) existing.set(end, val);
+      if (ok) {
+        existing.set(end, val);
+        const bag = derivedByLine.get(key) ?? new Set<string>();
+        bag.add(end);
+        derivedByLine.set(key, bag);
+      }
     }
   }
 
+  const fxAdjusted = addFxToNetChange(seriesByLine);
+  if (fxAdjusted.size > 0) {
+    const bag = derivedByLine.get("netChangeInCash") ?? new Set<string>();
+    for (const end of fxAdjusted) bag.add(end);
+    derivedByLine.set("netChangeInCash", bag);
+  }
   reconcileShareScale(seriesByLine);
+  reconcileBasicShareScale(seriesByLine);
 
   // Build the unified period axis from anchor lines.
   const anchorKeys = ["revenue", "netIncome", "totalAssets", "ocf"];
@@ -652,46 +820,78 @@ function buildStatementSet(
     }
   }
 
-  // Assemble statements with YoY/QoQ.
-  const yearMs = 365 * 86400000;
-  const quarterMs = 91 * 86400000;
   const statements: Statement[] = STATEMENT_DEFS.map(({ title, lines }) => ({
     title,
     lines: lines
       .map((def) => {
         const series = seriesByLine.get(def.key)!;
         if (series.size === 0) return null;
-        const keys = [...series.keys()];
         const values: Record<string, number | null> = {};
-        const yoy: Record<string, number | null> = {};
-        const qoq: Record<string, number | null> = {};
+        const derived: Record<string, true> = {};
+        const derivedEnds = derivedByLine.get(def.key);
         for (const p of periods) {
-          const cur = series.get(p.key) ?? null;
-          values[p.key] = cur;
-          const t = new Date(p.key).getTime();
-          const yoyKey = nearestKey(keys.filter((k) => k !== p.key), t - yearMs, 20);
-          yoy[p.key] = pctChange(cur, yoyKey ? series.get(yoyKey)! : null);
-          if (freq === "quarterly") {
-            const qoqKey = nearestKey(keys.filter((k) => k !== p.key), t - quarterMs, 20);
-            qoq[p.key] = pctChange(cur, qoqKey ? series.get(qoqKey)! : null);
-          }
+          values[p.key] = series.get(p.key) ?? null;
+          if (derivedEnds?.has(p.key) && values[p.key] != null) derived[p.key] = true;
         }
         return {
           key: def.key,
           label: def.label,
           values,
-          yoy,
-          qoq,
+          yoy: {},
+          qoq: {},
           style: def.style ?? "normal",
           indent: def.indent,
           perShare: def.perShare,
           shares: def.shares,
+          ...(Object.keys(derived).length > 0 ? { derived } : {}),
         } as LineValues;
       })
       .filter((l): l is LineValues => l !== null),
   }));
 
-  return { periods, statements };
+  const set: StatementSet = { periods, statements };
+  // Growth is recomputed again after quarter-equals-year repair. Computing it
+  // here keeps a StatementSet usable on its own.
+  attachGrowth(set, freq);
+  return set;
+}
+
+/**
+ * YoY and QoQ from the values actually on the statement.
+ *
+ * repairQuarterEqualToYear and sanitizeShareCounts run after the first pass
+ * and can change a cell. Growth stored before that repair keeps the broken
+ * rate (Oracle's Q4, repaired from a full-year figure down to the quarter,
+ * still showed the pre-repair jump).
+ */
+function attachGrowth(set: StatementSet, freq: "annual" | "quarterly"): void {
+  const yearMs = 365 * 86400000;
+  const quarterMs = 91 * 86400000;
+  for (const st of set.statements) {
+    for (const line of st.lines) {
+      const keys = Object.entries(line.values)
+        .filter(([, v]) => v != null)
+        .map(([k]) => k);
+      for (const p of set.periods) {
+        const cur = line.values[p.key] ?? null;
+        const t = new Date(p.key).getTime();
+        const yoyKey = nearestKey(
+          keys.filter((k) => k !== p.key),
+          t - yearMs,
+          20
+        );
+        line.yoy[p.key] = pctChange(cur, yoyKey ? (line.values[yoyKey] ?? null) : null);
+        if (freq === "quarterly") {
+          const qoqKey = nearestKey(
+            keys.filter((k) => k !== p.key),
+            t - quarterMs,
+            20
+          );
+          line.qoq[p.key] = pctChange(cur, qoqKey ? (line.values[qoqKey] ?? null) : null);
+        }
+      }
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -931,6 +1131,8 @@ export function normalize(
   // Q4 diluted count of -27 billion this way).
   sanitizeShareCounts(annual);
   sanitizeShareCounts(quarterly);
+  attachGrowth(annual, "annual");
+  attachGrowth(quarterly, "quarterly");
 
   // Prefer USD when present; otherwise report whatever the filer actually used
   // so the UI and the Excel export can label it honestly.
@@ -1007,11 +1209,38 @@ export interface SecProfile {
   stateOfIncorporation: string | null;
   fiscalYearEnd: string | null;
   website: string | null;
+  /** Business address on the SEC cover page, city and region only. */
+  headquarters: string | null;
+}
+
+function placeName(value: string | null | undefined): string | null {
+  const raw = value?.trim();
+  if (!raw) return null;
+  if (/^[A-Za-z]{2}$/.test(raw)) return raw.toUpperCase();
+  return raw.toLowerCase().replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
+}
+
+/** City and state from the filing's business address. Street and zip stay off the page. */
+export function formatSecHeadquarters(address: {
+  city?: string | null;
+  stateOrCountry?: string | null;
+  stateOrCountryDescription?: string | null;
+  country?: string | null;
+  isForeignLocation?: number | null;
+} | null | undefined): string | null {
+  if (!address) return null;
+  const city = placeName(address.city);
+  const foreign = address.isForeignLocation === 1;
+  const region = foreign
+    ? placeName(address.country)
+    : placeName(address.stateOrCountryDescription || address.stateOrCountry);
+  const parts = [city, region].filter((part): part is string => Boolean(part));
+  return parts.length > 0 ? parts.join(", ") : null;
 }
 
 export async function getSecProfile(cik: string): Promise<SecProfile | null> {
   if (!isValidCik(cik)) return null;
-  const key = `secprofile:${schemaFingerprint()}:${cik}`;
+  const key = `secprofile:hq:${schemaFingerprint()}:${cik}`;
   try {
     return await singleFlight(key, () =>
       cached(key, { ttl: 86_400, tags: ["profile", `cik:${cik}`] }, async () => {
@@ -1023,6 +1252,13 @@ export async function getSecProfile(cik: string): Promise<SecProfile | null> {
           stateOfIncorporation?: string;
           fiscalYearEnd?: string;
           website?: string;
+          addresses?: { business?: {
+            city?: string | null;
+            stateOrCountry?: string | null;
+            stateOrCountryDescription?: string | null;
+            country?: string | null;
+            isForeignLocation?: number | null;
+          } };
         }>(`https://data.sec.gov/submissions/CIK${padded}.json`, {
           source: "SEC EDGAR",
           headers: { "User-Agent": UA },
@@ -1037,6 +1273,7 @@ export async function getSecProfile(cik: string): Promise<SecProfile | null> {
           stateOfIncorporation: d.stateOfIncorporation || null,
           fiscalYearEnd: d.fiscalYearEnd || null,
           website: d.website || null,
+          headquarters: formatSecHeadquarters(d.addresses?.business),
         };
       })
     );

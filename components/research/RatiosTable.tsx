@@ -36,7 +36,7 @@ export default function RatiosTable({
 
   const basis =
     freq === "quarterly"
-      ? "Trailing-twelve-month figures at each quarter end"
+      ? "Flow ratios are trailing twelve months. Balance-sheet ratios are the quarter-end snapshot."
       : "Fiscal-year figures";
 
   return (

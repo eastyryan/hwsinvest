@@ -175,7 +175,13 @@ export function readWatchlistShareFromLocation(
     const h = hash.startsWith("#") ? hash.slice(1) : hash;
     if (h.startsWith("watch=") || h.startsWith("wl=")) {
       const value = h.slice(h.indexOf("=") + 1);
-      return parseWatchlistShareParam(decodeURIComponent(value));
+      let decoded = value;
+      try {
+        decoded = decodeURIComponent(value);
+      } catch {
+        decoded = value;
+      }
+      return parseWatchlistShareParam(decoded);
     }
     // #watch?aapl style is not supported; keep parse simple.
   }

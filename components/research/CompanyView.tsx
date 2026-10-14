@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { CompanyFinancials, StatementSet, LineValues } from "@/lib/research/edgar";
 import type { Insights } from "@/lib/research/insights";
-import CatalystsPanel from "./CatalystsPanel";
 import type { Narrative } from "@/lib/research/narrative";
 import {
   getServerWatchlistSnapshot,
@@ -15,6 +14,7 @@ import {
 import { shouldIgnoreShortcut, watchlistNavDelta } from "@/lib/research/keyboard";
 import { fmtBig, fmtMoney, isRealNumber } from "./currency";
 import LoadingScreen from "./LoadingScreen";
+import CompanyLogo from "./CompanyLogo";
 import StatementTable from "./StatementTable";
 import Summary, { type AiSummary } from "./Summary";
 import SearchBox from "./SearchBox";
@@ -37,7 +37,7 @@ import { recordRecent } from "./RecentCompanies";
 import type { OwnershipPayload } from "@/lib/research/ownership";
 import type { SegmentsPayload } from "@/lib/research/segments";
 import type { ConfidenceReport } from "@/lib/research/confidence";
-import { restatedPeriodEnds, type RestatementHit } from "@/lib/research/restatements";
+import { restatedPeriodEnds, restatementsSince, type RestatementHit } from "@/lib/research/restatements";
 import RestatementsCallout from "./RestatementsCallout";
 import { detectSectorMode, sectorModeBanner } from "@/lib/research/sector-mode";
 import {
@@ -54,6 +54,8 @@ import ResearchGuide from "./ResearchGuide";
 import DataAsOf from "./DataAsOf";
 import PeriodBasisNote from "./PeriodBasisNote";
 import OverviewSection from "./OverviewSection";
+import CatalystsPanel from "./CatalystsPanel";
+import CompanySnapshot from "./CompanySnapshot";
 
 function formatSessionTime(ms: number): string {
   try {
@@ -78,6 +80,14 @@ interface Profile {
   marketCapIsDerived: boolean;
   price: number | null;
   priceCurrency: string | null;
+  description?: string | null;
+  /** Set when the paragraph is a Wikipedia extract, so the card can attribute it. */
+  descriptionUrl?: string | null;
+  website?: string | null;
+  employees?: number | null;
+  ceo?: string | null;
+  headquarters?: string | null;
+  founded?: number | null;
 }
 
 type Payload = CompanyFinancials & {
@@ -372,8 +382,18 @@ export default function CompanyView({
   if (error) {
     return (
       <main className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-6 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Couldn&apos;t load {name}
+        <Link
+          href="/members/research"
+          className="text-[15px] font-semibold tracking-tight text-zinc-950 hover:text-zinc-600 dark:text-zinc-50 dark:hover:text-zinc-300"
+        >
+          TrenchTick
+        </Link>
+        <h1 className="flex items-center justify-center gap-2 text-2xl font-semibold tracking-tight">
+          <CompanyLogo ticker={ticker} size={32} />
+          <span>Couldn&apos;t load {name}</span>
+          <span className="rounded-md bg-zinc-900 px-2 py-1 font-mono text-xs font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
+            {ticker}
+          </span>
         </h1>
         <p className="max-w-md text-sm text-zinc-500 dark:text-zinc-400">{error}</p>
         {noFacts && (
@@ -408,7 +428,7 @@ export default function CompanyView({
     );
   }
 
-  if (!data) return <LoadingScreen name={name} />;
+  if (!data) return <LoadingScreen name={name} ticker={ticker} />;
 
   const set: StatementSet = freq === "annual" ? data.annual : data.quarterly;
   const profile = data.profile;
@@ -416,8 +436,11 @@ export default function CompanyView({
   const modeBanner = sectorModeBanner(sectorMode);
   const isStatementTab = tab === "income" || tab === "balance" || tab === "cashflow";
   const showFreqControls = isStatementTab || tab === "ratios";
-  const tabRestatements = restatementsForTab(data.restatements, tab);
-  const overviewRestatements = data.restatements ?? [];
+  const latestPeriodEnd =
+    data.annual.periods[0]?.end ?? data.quarterly.periods[0]?.end ?? null;
+  const recentRestatements = restatementsSince(data.restatements, latestPeriodEnd, 5);
+  const tabRestatements = restatementsForTab(recentRestatements, tab);
+  const overviewRestatements = recentRestatements;
 
   const denominator =
     tab === "balance" ? findLine(set, "totalAssets") : findLine(set, "revenue");
@@ -456,7 +479,17 @@ export default function CompanyView({
       <header className="no-print sticky top-0 z-20 border-b border-zinc-200 bg-white/95 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95">
         {/* Compact sticky bar: ticker stays visible on narrow screens while
             scrolling long statements. */}
-        <div className="mx-auto flex max-w-[1400px] items-center gap-2 px-4 pt-2.5 sm:gap-4 sm:px-6 sm:pt-3">
+        <div className="mx-auto flex max-w-[1400px] items-center gap-2 px-4 pt-2.5 sm:gap-3 sm:px-6 sm:pt-3">
+          <Link
+            href="/members/research"
+            className="shrink-0 text-[15px] font-semibold tracking-tight text-zinc-950 hover:text-zinc-600 dark:text-zinc-50 dark:hover:text-zinc-300"
+          >
+            TrenchTick
+          </Link>
+          <span
+            className="hidden h-4 w-px shrink-0 bg-zinc-200 sm:block dark:bg-zinc-800"
+            aria-hidden
+          />
           <Link
             href="/members/research"
             className="shrink-0 text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -464,10 +497,11 @@ export default function CompanyView({
             <span className="sm:hidden" aria-hidden>
               &larr;
             </span>
-            <span className="sr-only sm:not-sr-only sm:inline">&larr; New search</span>
+            <span className="sr-only sm:not-sr-only sm:inline">New search</span>
           </Link>
           <div className="min-w-0 flex-1 md:hidden">
             <div className="flex min-w-0 items-center gap-2">
+              <CompanyLogo ticker={ticker} website={profile.website} size={22} />
               <span className="shrink-0 rounded-md bg-zinc-900 px-1.5 py-0.5 font-mono text-[11px] font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
                 {ticker}
               </span>
@@ -510,6 +544,7 @@ export default function CompanyView({
         <div className="flex flex-wrap items-end justify-between gap-4 pt-6 sm:gap-6 sm:pt-8">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <CompanyLogo ticker={ticker} website={profile.website} size={36} />
               <h1 className="text-2xl font-semibold tracking-tighter sm:text-3xl">
                 {data.name}
               </h1>
@@ -672,9 +707,9 @@ export default function CompanyView({
           {ticker} · tear sheet · {new Date().toISOString().slice(0, 10)}
         </div>
 
-        <div className="mt-8">
+        <div className={tab === "overview" ? "mt-4" : "mt-8"}>
           {tab === "overview" && (
-            <div className="mx-auto max-w-4xl space-y-3">
+            <div className="space-y-3">
               {modeBanner && (
                 <div
                   className="no-print rounded-xl border border-sky-300/70 bg-sky-50/80 px-4 py-3 dark:border-sky-800 dark:bg-sky-950/40"
@@ -701,12 +736,21 @@ export default function CompanyView({
                 />
               )}
 
-              {/* 1 — Analyst read (open by default) */}
+              {/* About and statistics sit on top of the open pair. */}
+              <div className="grid grid-cols-1 items-stretch gap-3 print:grid-cols-1 lg:grid-cols-2">
+              <CompanySnapshot
+                fin={data}
+                name={data.name}
+                currency={currency}
+                profile={profile}
+              />
               <OverviewSection
                 title="Analyst read"
                 subtitle="Narrative from the filed numbers. Not investment advice."
                 summary={summaryLoading ? "Loading…" : undefined}
                 defaultOpen
+                scrollBody
+                className="flex flex-col"
               >
                 <Summary
                   insights={data.insights}
@@ -721,7 +765,10 @@ export default function CompanyView({
               {/* 2 — What the numbers say */}
               <OverviewSection
                 title="What the numbers say"
-                subtitle="Growth and slowdown from the filings."
+                subtitle="Growing, slowing, and catalysts from recent quarters."
+                defaultOpen
+                scrollBody
+                className="flex flex-col"
                 summary={
                   [
                     data.insights.growing.length
@@ -749,6 +796,8 @@ export default function CompanyView({
                 title="Company catalysts"
                 subtitle="Next earnings, recent filings, and short interest. Sector macro releases sit below those."
                 defaultOpen
+                scrollBody
+                className="flex flex-col"
               >
                 <CatalystsPanel
                   cik={cik}
@@ -763,6 +812,9 @@ export default function CompanyView({
               <OverviewSection
                 title="Street vs reported"
                 subtitle="Consensus estimates compared with as-filed results."
+                defaultOpen
+                scrollBody
+                className="flex flex-col"
               >
                 <div className="no-print">
                   <StreetVsReported
@@ -772,8 +824,9 @@ export default function CompanyView({
                   />
                 </div>
               </OverviewSection>
+              </div>
 
-              {/* Everything else, collapsed */}
+              {/* Everything else, collapsed, full width of the pair above */}
               <OverviewSection
                 title="Since last visit"
                 subtitle="What moved in the filings since you were here."
@@ -818,6 +871,7 @@ export default function CompanyView({
                     name={data.name}
                     sector={profile.sector}
                     industry={profile.industry}
+                    sic={profile.sic ?? null}
                     marketCap={profile.marketCap}
                     mode={sectorMode}
                     embedded
@@ -882,7 +936,14 @@ export default function CompanyView({
             /* key={tab}: showAll/commonSize must reset per statement — the
                common-size denominator differs between the balance sheet and the rest. */
             <div className="no-print space-y-3">
-              <PeriodBasisNote freq={freq} />
+              <PeriodBasisNote
+                freq={freq}
+                statement={
+                  tab === "income" || tab === "balance" || tab === "cashflow"
+                    ? tab
+                    : undefined
+                }
+              />
               <StatementTable
                 key={tab}
                 statement={set.statements[STATEMENT_INDEX[tab]]}

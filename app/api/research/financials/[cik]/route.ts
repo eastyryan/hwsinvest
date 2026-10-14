@@ -9,6 +9,8 @@ import {
 import { buildInsights } from "@/lib/research/insights";
 import { buildNarrative } from "@/lib/research/narrative";
 import { getProfile } from "@/lib/research/yahoo";
+import { getCompanyAbout } from "@/lib/research/company-about";
+import { foundedYearFromDescription } from "@/lib/research/company-logo";
 import { getLatestQuote } from "@/lib/research/prices";
 import { getRestatements } from "@/lib/research/restatements";
 import { buildConfidence } from "@/lib/research/confidence";
@@ -20,9 +22,9 @@ export const maxDuration = 30;
 
 export async function GET(
   req: Request,
-  { params }: { params: {  cik: string  } }
+  { params }: { params: { cik: string } }
 ) {
-  const { cik  } = params;
+  const { cik } = params;
   const rawTicker = new URL(req.url).searchParams.get("ticker") ?? "";
 
   // The cik is interpolated into the SEC URL downstream; padStart only prepends
@@ -43,15 +45,29 @@ export async function GET(
     // The AI summary is deliberately NOT awaited here — it lives on
     // /api/summary/[cik] so a multi-second model call can't hold up the
     // statements, ratios, and charts.
-    const [finResult, yahooProfile, secProfile, quote, restatements] =
+    const [finResult, yahooProfile, secBundle, quote, restatements] =
       await Promise.all([
         getCompanyFinancialsWithMeta(cik, ticker),
         getProfile(ticker), // unofficial; often blocked on datacenter IPs
-        getSecProfile(cik), // official; reliable
+        // SEC is the reliable identity. Wikipedia fills the paragraph, the
+        // founding year, and the CEO when Yahoo does not answer.
+        getSecProfile(cik).then(async (sec) => ({
+          sec,
+          about: sec?.name ? await getCompanyAbout(sec.name) : null,
+        })),
         getLatestQuote(ticker),
         getRestatements(cik).catch(() => []),
       ]);
     const { financials, cache: financialsCache } = finResult;
+    const secProfile = secBundle.sec;
+    const about =
+      secBundle.about ??
+      (secProfile?.name ? null : await getCompanyAbout(financials.name));
+    const description = yahooProfile?.description ?? about?.description ?? null;
+    const founded =
+      about?.founded ??
+      foundedYearFromDescription(description) ??
+      null;
 
     const profileForMode = {
       sector: yahooProfile?.sector ?? secProfile?.sicDescription ?? null,
@@ -72,7 +88,14 @@ export async function GET(
     let marketCapCurrency = yahooProfile?.currency ?? financials.currency;
     let marketCapIsDerived = false;
 
-    if (marketCap == null && quote != null && (financials.sharesOutstanding ?? 0) > 0) {
+    const filingCurrency = (financials.currency || "USD").toUpperCase();
+    const quoteCurrency = quote?.currency?.toUpperCase() ?? "";
+    if (
+      marketCap == null &&
+      quote != null &&
+      (financials.sharesOutstanding ?? 0) > 0 &&
+      quoteCurrency === filingCurrency
+    ) {
       marketCap = quote.price * (financials.sharesOutstanding as number);
       marketCapCurrency = quote.currency;
       marketCapIsDerived = true;
@@ -105,6 +128,13 @@ export async function GET(
           marketCapIsDerived,
           price: quote?.price ?? null,
           priceCurrency: quote?.currency ?? null,
+          description,
+          descriptionUrl: yahooProfile?.description ? null : about?.url ?? null,
+          website: yahooProfile?.website ?? secProfile?.website ?? null,
+          employees: yahooProfile?.employees ?? null,
+          ceo: yahooProfile?.ceo ?? about?.ceo ?? null,
+          headquarters: yahooProfile?.headquarters ?? secProfile?.headquarters ?? null,
+          founded,
         },
       },
       {

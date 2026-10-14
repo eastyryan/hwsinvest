@@ -37,9 +37,11 @@ export function valuePerShareAt(
   debt: number,
   cash: number,
   shares: number | null,
-  convention: DiscountConvention = "year-end"
+  convention: DiscountConvention = "year-end",
+  /** Gordon base. Defaults to the last explicit FCF. */
+  terminalFcf?: number
 ): number | null {
-  const equity = equityValueAt(fcf, wacc, growth, debt, cash, convention);
+  const equity = equityValueAt(fcf, wacc, growth, debt, cash, convention, terminalFcf);
   if (equity == null) return null;
   if (shares != null && shares > 0) return equity / shares;
   return null;
@@ -52,7 +54,9 @@ export function equityValueAt(
   growth: number,
   debt: number,
   cash: number,
-  convention: DiscountConvention = "year-end"
+  convention: DiscountConvention = "year-end",
+  /** Gordon base. Defaults to the last explicit FCF. */
+  terminalFcf?: number
 ): number | null {
   if (!fcf.length) return null;
   const spread = wacc - growth;
@@ -66,7 +70,8 @@ export function equityValueAt(
   for (let t = 0; t < fcf.length; t++) {
     sumPv += fcf[t] * dfs[t]!;
   }
-  const tv = (fcf[fcf.length - 1] * (1 + growth)) / spread;
+  const gordonBase = terminalFcf ?? fcf[fcf.length - 1]!;
+  const tv = (gordonBase * (1 + growth)) / spread;
   const ev = sumPv + tv * dfs[dfs.length - 1]!;
   return ev - debt + cash;
 }
@@ -101,6 +106,8 @@ export interface SensitivityMatrixInput {
   growthDeltas?: number[];
   /** Default year-end so existing grids stay put. */
   discountConvention?: DiscountConvention;
+  /** Gordon base. Defaults to the last explicit FCF. */
+  terminalFcf?: number;
 }
 
 export interface SensitivityMatrix {
@@ -141,7 +148,8 @@ export function buildSensitivityMatrix(
         input.debt,
         input.cash,
         input.shares,
-        convention
+        convention,
+        input.terminalFcf
       )
     )
   );
