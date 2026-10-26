@@ -20,6 +20,12 @@ export type RosterEntry = {
   year?: string;
   /** Board position or committee. Free text. */
   role?: string;
+  /**
+   * YYYY-MM-DD the person was added to the email list. Attendance % only
+   * counts meetings on or after this date (or their first sign-in, if that is
+   * earlier). Blank means "on the list from the start": every meeting counts.
+   */
+  joinedAt?: string;
 };
 
 /**
@@ -49,6 +55,67 @@ export function presentEmailsForMeeting(
     if (email.includes("@") && isAlwaysPresentMember(person)) set.add(email);
   }
   return [...set];
+}
+
+/** Local YYYY-MM-DD for "today", used to stamp new email-list rows. */
+export function todayLocal(now: Date = new Date()): string {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export type MemberAttendance = {
+  /** Meetings they signed in to (always-present members: every meeting). */
+  present: number;
+  /** Meetings that count toward their % (on/after their start date). */
+  eligible: number;
+  /** Rounded percentage, or null when no meeting has happened since they joined. */
+  pct: number | null;
+  /** YYYY-MM-DD of their last sign-in, or "". */
+  last: string;
+  /** YYYY-MM-DD their % starts counting from, or "" when every meeting counts. */
+  since: string;
+};
+
+/**
+ * Attendance for one roster member. Meetings before the member was added to
+ * the email list don't count against them: the denominator is the meetings
+ * dated on or after joinedAt (or their first sign-in, whichever is earlier, so
+ * a meeting they actually attended is never dropped). No joinedAt means every
+ * meeting counts. Always-present members are 100% of every meeting.
+ */
+export function memberAttendance(
+  person: { email?: string; name?: string; joinedAt?: string },
+  meetings: AttendanceMeeting[],
+  roster: Array<{ email?: string; name?: string }> = []
+): MemberAttendance {
+  const email = (person.email ?? "").trim().toLowerCase();
+  const attended = meetings.filter((m) =>
+    presentEmailsForMeeting(m.presentEmails, roster).includes(email)
+  );
+  const last = attended.reduce((acc, m) => (m.date > acc ? m.date : acc), "");
+
+  if (isAlwaysPresentMember(person)) {
+    const total = meetings.length;
+    return { present: total, eligible: total, pct: total === 0 ? 0 : 100, last, since: "" };
+  }
+
+  const joined = person.joinedAt && DAY.test(person.joinedAt) ? person.joinedAt : "";
+  const firstIn = attended.reduce((acc, m) => (!acc || m.date < acc ? m.date : acc), "");
+  const since = joined && firstIn && firstIn < joined ? firstIn : joined;
+
+  const counted = since ? meetings.filter((m) => m.date >= since) : meetings;
+  const eligible = counted.length;
+  const present = attended.filter((m) => !since || m.date >= since).length;
+  const pct = since
+    ? eligible === 0
+      ? null
+      : Math.round((present / eligible) * 100)
+    : meetings.length === 0
+      ? 0
+      : Math.round((present / meetings.length) * 100);
+  return { present, eligible, pct, last, since };
 }
 
 /** One club meeting with who signed in (matched to roster emails). */
@@ -129,6 +196,7 @@ function cleanEntry(raw: unknown, i: number): RosterEntry | null {
     email,
     year: str(r.year, 24) || undefined,
     role: str(r.role, 80) || undefined,
+    joinedAt: DAY.test(str(r.joinedAt, 10)) ? str(r.joinedAt, 10) : undefined,
   };
 }
 

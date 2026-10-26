@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import {
   isAlwaysPresentMember,
+  memberAttendance,
   presentEmailsForMeeting,
   type AttendanceMeeting,
   type RosterEntry,
@@ -76,15 +77,8 @@ export default function Attendance({
     const q = query.trim().toLowerCase();
     const list = roster.map((r) => {
       const email = r.email.toLowerCase();
-      const attended = meetings.filter((m) =>
-        presentEmailsForMeeting(m.presentEmails, roster).includes(email)
-      );
-      const present = attended.length;
-      const pct = total === 0 ? 0 : Math.round((present / total) * 100);
-      const last = attended.length
-        ? [...attended].sort((a, b) => b.date.localeCompare(a.date))[0]?.date
-        : "";
-      return { ...r, email, present, pct, last };
+      const { present, eligible, pct, last, since } = memberAttendance(r, meetings, roster);
+      return { ...r, email, present, eligible, pct, last, since };
     });
 
     const filtered = q
@@ -100,8 +94,8 @@ export default function Attendance({
     filtered.sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name);
       if (sort === "present") return b.present - a.present || a.name.localeCompare(b.name);
-      // pct ascending = absences first
-      return a.pct - b.pct || a.name.localeCompare(b.name);
+      // pct ascending = absences first; nobody-to-count-yet goes last
+      return (a.pct ?? 101) - (b.pct ?? 101) || a.name.localeCompare(b.name);
     });
     return filtered;
   }, [roster, meetings, query, sort, total]);
@@ -363,7 +357,7 @@ export default function Attendance({
         <div className="roster-scroll">
           <table className="roster-table">
             <caption className="sr-only">
-              Attendance percentage for each roster member across tracked meetings.
+              Attendance percentage for each roster member across tracked meetings held since they joined the email list.
             </caption>
             <thead>
               <tr>
@@ -383,8 +377,15 @@ export default function Attendance({
                   <td className="mono" style={{ fontSize: 12.5 }}>{r.email}</td>
                   <td style={{ color: "var(--muted)", fontSize: 13 }}>{r.year || "—"}</td>
                   <td style={{ color: "var(--muted)", fontSize: 13 }}>{r.role ?? "—"}</td>
-                  <td className="mono" style={{ fontSize: 13 }}>
-                    {r.present}/{total}
+                  <td
+                    className="mono"
+                    style={{ fontSize: 13 }}
+                    title={r.since ? `Counted from ${r.since}, when they joined the email list` : undefined}
+                  >
+                    {r.present}/{r.eligible}
+                    {r.since && r.eligible < total && (
+                      <span style={{ fontSize: 11, color: "var(--faint)" }}> since {r.since.slice(5)}</span>
+                    )}
                   </td>
                   <td>
                     <PctBadge pct={r.pct} />
@@ -402,7 +403,13 @@ export default function Attendance({
   );
 }
 
-function PctBadge({ pct }: { pct: number }) {
+function PctBadge({ pct }: { pct: number | null }) {
+  if (pct === null)
+    return (
+      <span className="mono" style={{ fontSize: 13, color: "var(--faint)" }} title="No meetings since they joined">
+        —
+      </span>
+    );
   const color =
     pct >= 80 ? "var(--green)" : pct >= 50 ? "var(--orangeText)" : "var(--down)";
   return (

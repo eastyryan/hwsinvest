@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ClipboardList, Copy, Plus, Search, Trash2, Upload } from "lucide-react";
-import type { RosterEntry } from "@/lib/club-store";
+import { todayLocal, type RosterEntry } from "@/lib/club-store";
 import { inputStyle } from "./ClubCalendar";
 
 const EMAIL_IN_LINE = /[^\s<>,;"']+@[^\s<>,;"']+\.[A-Za-z]{2,}/;
@@ -141,7 +141,7 @@ export default function Roster({
         <button
           className="ctl"
           onClick={() =>
-            setRows([...rowsRef.current, { id: `m-${Date.now().toString(36)}`, name: "", email: "" }])
+            setRows([...rowsRef.current, { id: `m-${Date.now().toString(36)}`, name: "", email: "", joinedAt: todayLocal() }])
           }
         >
           <Plus size={15} />
@@ -406,7 +406,7 @@ export function parseRoster(text: string): RosterEntry[] {
       .replace(/[,;\t]+/g, " ")
       .trim();
 
-    out.push({ id: `i-${Date.now().toString(36)}-${i}`, name, email });
+    out.push({ id: `i-${Date.now().toString(36)}-${i}`, name, email, joinedAt: todayLocal() });
   });
 
   return out;
