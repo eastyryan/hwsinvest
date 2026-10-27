@@ -11,6 +11,8 @@ A professional markets dashboard for the Hobart and William Smith Colleges Inves
 - `/careers`: Finance career paths and how the club prepares you
 - `/about`: Mission and board showcase
 - `/members`: Password-gated dashboard (learn tracks, files, research, newsletter)
+- `/newsletter`: Public newsletter archive (latest issue up top, past issues below)
+- `/newsletter/[slug]`: One public issue, built from `content/newsletter/<slug>.json`
 - `/members/newsletter`: The club newsletter, every issue, newest first
 - `/members/research`: Company research tool (synced from the finance app): SEC statements, ratios, ownership, segments, valuation suite, screener, watchlist, Excel export
 - `/admin`: Admin-only club console: calendar, email list, newsletter, file uploads
@@ -102,6 +104,27 @@ lives in that one browser and the header says so.
 
 `/newsletters/*` is listed in the middleware matcher, so issue URLs are behind
 the members login rather than public.
+
+### Publishing a public weekly issue
+
+Public issues live one file per issue in `content/newsletter/`, named
+`YYYY-MM-DD-issue-NN.json` (the filename must equal the `slug` field). Each week:
+
+1. Copy last week's JSON to a new file, for example
+   `content/newsletter/2026-11-03-issue-06.json`, and bump `no`, `slug`,
+   `date`, `dateLabel` and `window`.
+2. Rewrite the content fields: `title`, `summary`, `inShort` (3 bullets),
+   `tape`, `stories`, `earnings`, `club`, `meetings`, `weekAhead`, `sources`.
+   Every number needs a row in `sources`. Take meetings from `data/calendar.ts`.
+3. Keep `"public": false` while drafting; flip it to `true` when the issue is approved.
+4. Render the email copy and check it:
+   `node scripts/render-newsletter-email.mjs content/newsletter/<slug>.json out.html`
+   (add `--remote-images` for the copy that actually gets emailed).
+5. `npx tsc --noEmit && npm run build`, then commit and deploy as usual.
+
+`/newsletter` and `/newsletter/[slug]` are outside the middleware matcher, so
+they are public. Nothing in `content/newsletter/` is served raw; the older
+members-only HTML issues in `public/newsletters/` stay gated.
 
 ## Notes
 

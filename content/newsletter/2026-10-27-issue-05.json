@@ -1,0 +1,296 @@
+{
+  "no": 5,
+  "slug": "2026-10-27-issue-05",
+  "date": "2026-10-27",
+  "dateLabel": "Tuesday, October 27, 2026",
+  "window": "Oct 12 to Oct 26, 2026",
+  "public": true,
+  "title": "Tech sold off, oil hit $116, and bonds rallied anyway",
+  "summary": "Two weeks in one read: hot inflation, an AI selloff, a flight into Treasuries, and $116 Brent. Plus the earnings that mattered, our Bloomberg night, and what to watch this week.",
+  "topics": [
+    "CPI and PPI",
+    "AI selloff",
+    "10-year yield",
+    "Oil",
+    "Big tech earnings",
+    "Bloomberg Terminal"
+  ],
+  "inShort": [
+    "AI stocks took the hit. The Nasdaq fell 4.4% over the two weeks while the Dow rose 1.4%, as investors worried about debt-funded AI spending and higher borrowing costs.",
+    "Inflation ran hot, yet the 10-year yield fell about 26 bp to 4.99%. Money left tech and went into Treasuries for safety.",
+    "Oil kept climbing. Brent rose 10.6% to $115.81 on Houthi attacks in Saudi Arabia and fears of renewed US strikes on Iran."
+  ],
+  "tapeNote": "Closes on Mon Oct 26. Change is from the Fri Oct 9 close, the last issue's tape. Oil is front-month futures.",
+  "tape": [
+    {
+      "label": "S&P 500",
+      "value": "7,676.77",
+      "change": "-1.7%",
+      "dir": "down"
+    },
+    {
+      "label": "Nasdaq Composite",
+      "value": "26,169.38",
+      "change": "-4.4%",
+      "dir": "down"
+    },
+    {
+      "label": "Dow Jones Industrials",
+      "value": "52,361.58",
+      "change": "+1.4%",
+      "dir": "up"
+    },
+    {
+      "label": "Russell 2000",
+      "value": "2,786.42",
+      "change": "-0.7%",
+      "dir": "down"
+    },
+    {
+      "label": "10-year Treasury yield",
+      "value": "4.99%",
+      "change": "-26 bp",
+      "dir": "down"
+    },
+    {
+      "label": "Brent crude",
+      "value": "$115.81",
+      "change": "+10.6%",
+      "dir": "up"
+    },
+    {
+      "label": "WTI crude",
+      "value": "$101.57",
+      "change": "+10.6%",
+      "dir": "up"
+    },
+    {
+      "label": "Gold",
+      "value": "$4,038",
+      "change": "-4.2%",
+      "dir": "down"
+    },
+    {
+      "label": "VIX",
+      "value": "18.39",
+      "change": "from 14.84",
+      "dir": "up"
+    }
+  ],
+  "stories": [
+    {
+      "title": "Inflation came in hot",
+      "body": "September CPI rose 3.7% from a year earlier against 3.6% expected, and core rose 2.6% against 2.5%. A day later, producer prices ran at a 6.3% annual rate, the hottest since 2022. Traders lifted the odds of an October rate hike to 37% from 22%. Why it matters: the Fed already hiked in September to a 3.75% to 4.00% range, and hot prints keep another hike on the table."
+    },
+    {
+      "title": "The AI trade cracked",
+      "body": "On Oct 14 the Philadelphia chip index fell 4.3%, CoreWeave fell 15.5% and Oracle 8.8%. On Oct 16 the chip index posted its eighth straight loss and the Nasdaq 100 shed more than $1 trillion in value. Meta's report pushed it down another 6.7% on Oct 22. Over the two weeks CoreWeave lost 32.8%, Alphabet 9.9%, Broadcom 9.0% and Nvidia 5.8%. Apple went the other way, up 2.2%, and topped $5 trillion in market value for the first time on Oct 14."
+    },
+    {
+      "title": "Bonds became the safe place",
+      "body": "Hot inflation usually pushes yields up. This time fear won. On Oct 22 the 10-year yield fell 19 bp to 4.95%, its biggest one-day drop since March 2023, as investors sold tech and bought Treasuries. Remember the mechanics: when buyers pile into bonds, prices rise and yields fall. Two weeks earlier, on Oct 7, the 10-year had touched 5.36%, the highest since 2002."
+    },
+    {
+      "title": "Oil: $100 WTI again",
+      "body": "WTI closed above $100 on Oct 16 for the first time since September. Brent jumped 4% to $113.17 on Oct 22 after Houthi attacks in Saudi Arabia, then settled at $116.72 on Oct 23, its highest since April, on fears of renewed US strikes on Iran after the Nov 3 midterms. Why it matters: oil feeds inflation, and inflation feeds the Fed."
+    },
+    {
+      "title": "Monday's bounce",
+      "body": "Anthropic filed to list on the Nasdaq under the ticker ANT, showing $16.29 billion of revenue for the first half of 2026, up from $1.16 billion a year earlier. Chips rallied, the chip index rose 2.8%, and the Nasdaq gained 0.8%. The same day Meta said it may raise up to $95 billion in equity, and its stock fell 1.9%."
+    }
+  ],
+  "earningsNote": "All five met or beat on the headline numbers. Four of the five still fell the next day. Guidance and spending moved these stocks more than the beat, which was the whole point of our Oct 13 earnings night.",
+  "earnings": [
+    {
+      "company": "TSMC",
+      "when": "Oct 15",
+      "result": "Record profit of NT$763.1B, up 68.7%. Q4 revenue guide of $52.3B to $54.3B.",
+      "stock": "-1.8%",
+      "dir": "down"
+    },
+    {
+      "company": "Netflix",
+      "when": "Oct 20",
+      "result": "EPS of $0.87 vs $0.82 expected. Cut its 2026 ad revenue goal to about $2.7B from $3B.",
+      "stock": "-5.3%",
+      "dir": "down"
+    },
+    {
+      "company": "SpaceX",
+      "when": "Oct 20",
+      "result": "Revenue of $14.58B, up 161%, vs $12.72B expected.",
+      "stock": "+7.8%, then -9.1%",
+      "dir": "up"
+    },
+    {
+      "company": "Tesla",
+      "when": "Oct 21",
+      "result": "Adjusted EPS of $0.48 vs $0.43 expected. Net income fell 29% to $787M.",
+      "stock": "-3.1%",
+      "dir": "down"
+    },
+    {
+      "company": "Meta",
+      "when": "Oct 21",
+      "result": "Revenue of $64.60B vs $63.37B expected. Free cash flow of negative $2.12B. Raised the floor of its 2026 capex range to $135B.",
+      "stock": "-7.0%",
+      "dir": "down"
+    }
+  ],
+  "club": [
+    {
+      "title": "Oct 13: Earnings basics",
+      "body": "How to read a report (press release, 10-Q, call), why a beat can still sink a stock, and where the real detail hides in a 10-K. Micron was the tech example, then groups took JPMorgan, Wells Fargo, Citi and Goldman and read the bank scorecard: net interest income, CET1, ROTCE and price to tangible book."
+    },
+    {
+      "title": "Oct 22: Bloomberg Terminal intro",
+      "body": "A market recap, then the keyboard and the first functions: BPS, HELP, USER, GP, TOP, CN, BI and LLP. There are 12 Terminals in the Warren Hunting Smith Library for now. Start Bloomberg Market Concepts (type BMC <GO>): self-paced, about 8 hours, with a certificate."
+    },
+    {
+      "title": "Get ready to pitch",
+      "body": "Member stock pitches start in the coming weeks, and three pitch groups are already on the roster. Bring the business and how it makes money, your variant view, three years of numbers, one valuation method plus a cross-check, the risks and what would make us exit, and the ask. Include at least one Bloomberg screenshot (DES, FA or GP)."
+    }
+  ],
+  "meetings": [
+    {
+      "when": "Tue Oct 27",
+      "what": "Eric Stein meeting. No club recap or pitch tonight."
+    },
+    {
+      "when": "Thu Oct 29, 7:30 PM, Stern 301",
+      "what": "Financial modeling I: the three statements and how they link."
+    },
+    {
+      "when": "Tue Nov 3, 7:30 PM, Stern 301",
+      "what": "Financial modeling II: DCF."
+    }
+  ],
+  "weekAhead": [
+    {
+      "day": "Tue Oct 27",
+      "items": [
+        "Durable goods and consumer confidence"
+      ]
+    },
+    {
+      "day": "Wed Oct 28",
+      "items": [
+        "Fed decision at 2 PM, Chair Kevin Warsh speaks at 2:30 PM. Futures price about an 88% chance of a hold (CME FedWatch).",
+        "Alphabet and Microsoft report after the close"
+      ]
+    },
+    {
+      "day": "Thu Oct 29",
+      "items": [
+        "Q3 GDP and September PCE inflation at 8:30 AM",
+        "Eli Lilly and Caterpillar before the open; Amazon and Intel after the close"
+      ]
+    },
+    {
+      "day": "Fri Oct 30",
+      "items": [
+        "Employment Cost Index"
+      ]
+    },
+    {
+      "day": "Mon Nov 2",
+      "items": [
+        "Apple reports after the close"
+      ]
+    },
+    {
+      "day": "Tue Nov 3",
+      "items": [
+        "Midterm elections"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "label": "Closes: Yahoo Finance chart data, checked against FRED",
+      "url": "https://fred.stlouisfed.org/"
+    },
+    {
+      "label": "Treasury daily par yield curve, October 2026",
+      "url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/all/202610?_format=csv&field_tdr_date_value_month=202610&page=&type=daily_treasury_yield_curve"
+    },
+    {
+      "label": "Reuters via Investing.com: markets and CPI, Oct 14",
+      "url": "https://www.investing.com/news/economy-news/sp-500-dow-futures-rise-ahead-of-big-bank-results-cpi-data-4948567"
+    },
+    {
+      "label": "CNBC: market live coverage, Oct 14",
+      "url": "https://www.cnbc.com/2026/10/13/stock-market-today-live-updates-.html"
+    },
+    {
+      "label": "CNBC: Treasury yields and PPI, Oct 15",
+      "url": "https://www.cnbc.com/2026/10/15/us-treasury-yields-investors-economic-data-.html"
+    },
+    {
+      "label": "AP: markets, Oct 16",
+      "url": "https://apnews.com/article/stocks-markets-us-ai-oil-tech-warsh-d2655f64db7ec8ae450525d58f97b628"
+    },
+    {
+      "label": "NBC News: tech losses and oil, Oct 16",
+      "url": "https://www.nbcnews.com/business/energy/oil-prices-hormuz-iran-ukraine-rcna603919"
+    },
+    {
+      "label": "Reuters via Investing.com: markets, yields and oil, Oct 22",
+      "url": "https://www.investing.com/news/economy-news/asian-markets-dip-as-investors-weigh-tech-earnings-gulf-tensions-4964558"
+    },
+    {
+      "label": "CNBC: market live coverage, Oct 22",
+      "url": "https://www.cnbc.com/2026/10/21/stock-market-today-live-updates.html"
+    },
+    {
+      "label": "CNBC: Brent tops $116, Oct 23",
+      "url": "https://www.cnbc.com/2026/10/23/oil-price-brent-wti-iran-war-saudi-arabia.html"
+    },
+    {
+      "label": "CNBC: market live coverage, Oct 26",
+      "url": "https://www.cnbc.com/2026/10/25/stock-market-today-live-updates.html"
+    },
+    {
+      "label": "SEC: Anthropic S-1 registration statement",
+      "url": "https://www.sec.gov/Archives/edgar/data/2130357/000162828026067168/anthropicpbc-sx1.htm"
+    },
+    {
+      "label": "CNBC: TSMC Q3 results",
+      "url": "https://www.cnbc.com/2026/10/15/tsmc-third-quarter-profit-global-ai-.html"
+    },
+    {
+      "label": "CNBC: Netflix Q3 results",
+      "url": "https://www.cnbc.com/2026/10/20/netflix-nflx-earnings-q3-2026.html"
+    },
+    {
+      "label": "CNBC: SpaceX Q3 results",
+      "url": "https://www.cnbc.com/2026/10/20/spacex-spcx-earnings-live-updates-q3-2026html.html"
+    },
+    {
+      "label": "CNBC: Tesla Q3 results",
+      "url": "https://www.cnbc.com/2026/10/21/tesla-tsla-q3-2026-earnings-report.html"
+    },
+    {
+      "label": "Meta Q3 2026 press release",
+      "url": "https://investor.atmeta.com/investor-news/press-release-details/2026/Meta-Reports-Third-Quarter-2026-Results/default.aspx"
+    },
+    {
+      "label": "Kiplinger: this week's economic calendar",
+      "url": "https://www.kiplinger.com/investing/economy/this-weeks-economic-calendar"
+    },
+    {
+      "label": "Federal Reserve: October 2026 calendar",
+      "url": "https://www.federalreserve.gov/newsevents/2026-october.htm"
+    },
+    {
+      "label": "CNBC: earnings week ahead",
+      "url": "https://www.cnbc.com/2026/10/25/earnings-week-alphabet-microsoft-amazon.html"
+    },
+    {
+      "label": "Apple: FY26 fourth quarter results event",
+      "url": "https://investor.apple.com/investor-relations/event-details/2026/FY-26-Fourth-Quarter-Results/default.aspx"
+    }
+  ],
+  "signoff": "Hobart and William Smith Investment Club, Easton Ryan, President",
+  "disclaimer": "Written by students for an undergraduate investment club. Educational commentary, not investment advice."
+}
