@@ -115,8 +115,9 @@ Public issues live one file per issue in `content/newsletter/`, named
    `date`, `dateLabel` and `window`.
 2. Rewrite the content fields: `title`, `dek`, `summary`, `keyNumbers` (one
    row, five at most), `briefs` (headline plus one to three sentences),
-   `earningsLead`, `earnings` (one line per major name), `club`, `meetings`,
-   `weekAhead`. Take meetings from `data/calendar.ts`.
+   `earningsLead`, `earnings` (one line per major name), `weekAhead`, and
+   `coverage` for the masthead band. `club` and `meetings` are optional; leave
+   them out to drop the Club section. If used, take meetings from `data/calendar.ts`.
    Every figure needs a row in `sources`. Sources are a fact-check trail only;
    they are never rendered on the site or in the email.
 3. Keep `"public": false` while drafting; flip it to `true` when the issue is approved.

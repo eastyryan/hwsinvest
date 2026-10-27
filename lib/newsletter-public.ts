@@ -28,8 +28,9 @@ export type PublicIssue = {
   briefs: { headline: string; body: string }[];
   earningsLead: string;
   earnings: { company: string; line: string }[];
-  club: { title: string; body: string }[];
-  meetings: { when: string; what: string }[];
+  /** Optional. Omit both (or leave empty) to drop the Club section. */
+  club?: { title: string; body: string }[];
+  meetings?: { when: string; what: string }[];
   weekAhead: { day: string; items: string[] }[];
   signoff: string;
   disclaimer: string;

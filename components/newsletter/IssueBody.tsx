@@ -35,6 +35,8 @@ function Line({ lead, text }: { lead: string; text: string }) {
 }
 
 export default function IssueBody({ issue }: { issue: PublicIssue }) {
+  const club = issue.club ?? [];
+  const meetings = issue.meetings ?? [];
   return (
     <article style={{ marginTop: 28 }}>
       <header style={{ paddingBottom: 28 }}>
@@ -82,15 +84,17 @@ export default function IssueBody({ issue }: { issue: PublicIssue }) {
         ))}
       </Block>
 
-      <Block label="Club">
-        {issue.club.map((c) => (
-          <Line key={c.title} lead={`${c.title}.`} text={c.body} />
-        ))}
-        <div style={{ height: 8 }} />
-        {issue.meetings.map((m) => (
-          <Line key={m.when} lead={m.when} text={m.what} />
-        ))}
-      </Block>
+      {(club.length > 0 || meetings.length > 0) && (
+        <Block label="Club">
+          {club.map((c) => (
+            <Line key={c.title} lead={`${c.title}.`} text={c.body} />
+          ))}
+          {club.length > 0 && meetings.length > 0 && <div style={{ height: 8 }} />}
+          {meetings.map((m) => (
+            <Line key={m.when} lead={m.when} text={m.what} />
+          ))}
+        </Block>
+      )}
 
       <Block label="The week ahead">
         {issue.weekAhead.map((w) => (

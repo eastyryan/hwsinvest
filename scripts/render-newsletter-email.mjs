@@ -53,6 +53,9 @@ const briefs = d.briefs
   )
   .join("");
 
+const club = d.club ?? [];
+const meetings = d.meetings ?? [];
+
 const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -97,11 +100,11 @@ ${row(`${label("Earnings")}
   <p style="margin:0 0 14px 0;font-family:${SANS};font-size:15px;line-height:1.55;color:${INK};">${esc(d.earningsLead)}</p>
   ${d.earnings.map((e, i) => line(e.company, e.line, i === d.earnings.length - 1)).join("\n  ")}`)}
 ${rule}
-${row(`${label("Club")}
-  ${d.club.map((c) => line(c.title + ".", c.body, false)).join("\n  ")}
-  <div style="height:8px;font-size:0;line-height:0;">&nbsp;</div>
-  ${d.meetings.map((m, i) => line(m.when, m.what, i === d.meetings.length - 1)).join("\n  ")}`)}
-${rule}
+${club.length || meetings.length ? `${row(`${label("Club")}
+  ${club.map((c) => line(c.title + ".", c.body, false)).join("\n  ")}
+  ${club.length && meetings.length ? `<div style="height:8px;font-size:0;line-height:0;">&nbsp;</div>` : ""}
+  ${meetings.map((m, i) => line(m.when, m.what, i === meetings.length - 1)).join("\n  ")}`)}
+${rule}` : ""}
 ${row(`${label("The week ahead")}
   ${d.weekAhead.map((w, i) => line(w.day, w.items.join(" "), i === d.weekAhead.length - 1)).join("\n  ")}
   <p style="margin:10px 0 0 0;font-family:${SANS};font-size:12px;color:${GREY};">Times Eastern.</p>`)}
