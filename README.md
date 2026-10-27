@@ -113,13 +113,15 @@ Public issues live one file per issue in `content/newsletter/`, named
 1. Copy last week's JSON to a new file, for example
    `content/newsletter/2026-11-03-issue-06.json`, and bump `no`, `slug`,
    `date`, `dateLabel` and `window`.
-2. Rewrite the content fields: `title`, `summary`, `inShort` (3 bullets),
-   `tape`, `stories`, `earnings`, `club`, `meetings`, `weekAhead`, `sources`.
-   Every number needs a row in `sources`. Take meetings from `data/calendar.ts`.
+2. Rewrite the content fields: `title`, `dek`, `summary`, `keyNumbers` (one
+   row, five at most), `briefs` (headline plus one to three sentences),
+   `earningsLead`, `earnings` (one line per major name), `club`, `meetings`,
+   `weekAhead`. Take meetings from `data/calendar.ts`.
+   Every figure needs a row in `sources`. Sources are a fact-check trail only;
+   they are never rendered on the site or in the email.
 3. Keep `"public": false` while drafting; flip it to `true` when the issue is approved.
 4. Render the email copy and check it:
    `node scripts/render-newsletter-email.mjs content/newsletter/<slug>.json out.html`
-   (add `--remote-images` for the copy that actually gets emailed).
 5. `npx tsc --noEmit && npm run build`, then commit and deploy as usual.
 
 `/newsletter` and `/newsletter/[slug]` are outside the middleware matcher, so

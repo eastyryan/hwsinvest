@@ -10,8 +10,6 @@ import path from "node:path";
  * public/newsletters) stay behind the members login and are not read here.
  */
 
-export type Dir = "up" | "down" | "flat";
-
 export type PublicIssue = {
   no: number;
   slug: string;
@@ -20,20 +18,21 @@ export type PublicIssue = {
   window: string;
   public: boolean; // false keeps a draft off the site
   title: string;
+  dek: string;
   summary: string;
   topics: string[];
-  inShort: string[];
-  tapeNote: string;
-  tape: { label: string; value: string; change: string; dir: Dir }[];
-  stories: { title: string; body: string }[];
-  earningsNote: string;
-  earnings: { company: string; when: string; result: string; stock: string; dir: Dir }[];
+  keyNumbersNote: string;
+  keyNumbers: { label: string; value: string; change: string }[];
+  briefs: { headline: string; body: string }[];
+  earningsLead: string;
+  earnings: { company: string; line: string }[];
   club: { title: string; body: string }[];
   meetings: { when: string; what: string }[];
   weekAhead: { day: string; items: string[] }[];
-  sources: { label: string; url: string }[];
   signoff: string;
   disclaimer: string;
+  /** Fact-check trail. Kept in the file, never rendered. */
+  sources: { label: string; url: string }[];
 };
 
 const DIR = path.join(process.cwd(), "content", "newsletter");

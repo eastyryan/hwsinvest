@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { publicIssues, publicIssueBySlug, issueNo } from "@/lib/newsletter-public";
-import IssueBody from "@/components/newsletter/IssueBody";
+import IssueBody, { SANS } from "@/components/newsletter/IssueBody";
 
 export const dynamicParams = false;
 
@@ -23,8 +23,8 @@ export default function NewsletterIssuePage({ params }: { params: { slug: string
   if (!issue) notFound();
 
   return (
-    <main className="container-x" style={{ padding: "clamp(28px,4vh,48px) 0 40px", maxWidth: 820, margin: "0 auto" }}>
-      <Link href="/newsletter" className="ctl">← All issues</Link>
+    <main className="container-x" style={{ padding: "clamp(28px,4vh,48px) 0 40px", maxWidth: 760, margin: "0 auto" }}>
+      <Link href="/newsletter" style={{ fontFamily: SANS, fontSize: 14, color: "var(--brand)" }}>All issues</Link>
       <IssueBody issue={issue} />
     </main>
   );

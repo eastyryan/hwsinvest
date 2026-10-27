@@ -5,8 +5,9 @@
   "dateLabel": "Tuesday, October 27, 2026",
   "window": "Oct 12 to Oct 26, 2026",
   "public": true,
-  "title": "Tech sold off, oil hit $116, and bonds rallied anyway",
-  "summary": "Two weeks in one read: hot inflation, an AI selloff, a flight into Treasuries, and $116 Brent. Plus the earnings that mattered, our Bloomberg night, and what to watch this week.",
+  "title": "Tech sold off, oil hit $116 and bonds rallied anyway",
+  "dek": "The Nasdaq fell 4.4% in two weeks while the Dow rose 1.4%. Inflation ran hot, yet investors fled AI stocks for Treasuries and pushed yields down.",
+  "summary": "Hot inflation, an AI selloff, a flight into Treasuries and $116 Brent. Plus earnings, club news and the week ahead.",
   "topics": [
     "CPI and PPI",
     "AI selloff",
@@ -15,196 +16,145 @@
     "Big tech earnings",
     "Bloomberg Terminal"
   ],
-  "inShort": [
-    "AI stocks took the hit. The Nasdaq fell 4.4% over the two weeks while the Dow rose 1.4%, as investors worried about debt-funded AI spending and higher borrowing costs.",
-    "Inflation ran hot, yet the 10-year yield fell about 26 bp to 4.99%. Money left tech and went into Treasuries for safety.",
-    "Oil kept climbing. Brent rose 10.6% to $115.81 on Houthi attacks in Saudi Arabia and fears of renewed US strikes on Iran."
-  ],
-  "tapeNote": "Closes on Mon Oct 26. Change is from the Fri Oct 9 close, the last issue's tape. Oil is front-month futures.",
-  "tape": [
+  "keyNumbersNote": "Oct 26 close, change since Oct 9",
+  "keyNumbers": [
     {
       "label": "S&P 500",
       "value": "7,676.77",
-      "change": "-1.7%",
-      "dir": "down"
+      "change": "-1.7%"
     },
     {
-      "label": "Nasdaq Composite",
+      "label": "Nasdaq",
       "value": "26,169.38",
-      "change": "-4.4%",
-      "dir": "down"
+      "change": "-4.4%"
     },
     {
-      "label": "Dow Jones Industrials",
+      "label": "Dow",
       "value": "52,361.58",
-      "change": "+1.4%",
-      "dir": "up"
+      "change": "+1.4%"
     },
     {
-      "label": "Russell 2000",
-      "value": "2,786.42",
-      "change": "-0.7%",
-      "dir": "down"
-    },
-    {
-      "label": "10-year Treasury yield",
+      "label": "10-yr",
       "value": "4.99%",
-      "change": "-26 bp",
-      "dir": "down"
+      "change": "-26 bp"
     },
     {
-      "label": "Brent crude",
+      "label": "Brent",
       "value": "$115.81",
-      "change": "+10.6%",
-      "dir": "up"
-    },
-    {
-      "label": "WTI crude",
-      "value": "$101.57",
-      "change": "+10.6%",
-      "dir": "up"
-    },
-    {
-      "label": "Gold",
-      "value": "$4,038",
-      "change": "-4.2%",
-      "dir": "down"
-    },
-    {
-      "label": "VIX",
-      "value": "18.39",
-      "change": "from 14.84",
-      "dir": "up"
+      "change": "+10.6%"
     }
   ],
-  "stories": [
+  "briefs": [
     {
-      "title": "Inflation came in hot",
-      "body": "September CPI rose 3.7% from a year earlier against 3.6% expected, and core rose 2.6% against 2.5%. A day later, producer prices ran at a 6.3% annual rate, the hottest since 2022. Traders lifted the odds of an October rate hike to 37% from 22%. Why it matters: the Fed already hiked in September to a 3.75% to 4.00% range, and hot prints keep another hike on the table."
+      "headline": "Inflation runs hot",
+      "body": "September CPI rose 3.7% from a year earlier, above the 3.6% forecast. Producer prices ran at a 6.3% annual rate, the hottest since 2022, and traders lifted the odds of an October rate hike to 37% from 22%."
     },
     {
-      "title": "The AI trade cracked",
-      "body": "On Oct 14 the Philadelphia chip index fell 4.3%, CoreWeave fell 15.5% and Oracle 8.8%. On Oct 16 the chip index posted its eighth straight loss and the Nasdaq 100 shed more than $1 trillion in value. Meta's report pushed it down another 6.7% on Oct 22. Over the two weeks CoreWeave lost 32.8%, Alphabet 9.9%, Broadcom 9.0% and Nvidia 5.8%. Apple went the other way, up 2.2%, and topped $5 trillion in market value for the first time on Oct 14."
+      "headline": "AI stocks crack",
+      "body": "The chip index fell for an eighth straight session on Oct 16, the day the Nasdaq 100 shed more than $1 trillion in value. Over the two weeks CoreWeave lost 32.8%, Alphabet 9.9% and Nvidia 5.8%."
     },
     {
-      "title": "Bonds became the safe place",
-      "body": "Hot inflation usually pushes yields up. This time fear won. On Oct 22 the 10-year yield fell 19 bp to 4.95%, its biggest one-day drop since March 2023, as investors sold tech and bought Treasuries. Remember the mechanics: when buyers pile into bonds, prices rise and yields fall. Two weeks earlier, on Oct 7, the 10-year had touched 5.36%, the highest since 2002."
+      "headline": "Bonds win the scare",
+      "body": "On Oct 22 the 10-year yield fell 19 bp to 4.95%, its biggest one-day drop since March 2023, as investors sold tech and bought Treasuries. On Oct 7 it had touched 5.36%, the highest since 2002."
     },
     {
-      "title": "Oil: $100 WTI again",
-      "body": "WTI closed above $100 on Oct 16 for the first time since September. Brent jumped 4% to $113.17 on Oct 22 after Houthi attacks in Saudi Arabia, then settled at $116.72 on Oct 23, its highest since April, on fears of renewed US strikes on Iran after the Nov 3 midterms. Why it matters: oil feeds inflation, and inflation feeds the Fed."
+      "headline": "Brent tops $116",
+      "body": "Brent settled at $116.72 on Oct 23, its highest since April, after Houthi attacks in Saudi Arabia and on fears of renewed US strikes on Iran after the Nov 3 midterms. WTI is back above $100."
     },
     {
-      "title": "Monday's bounce",
-      "body": "Anthropic filed to list on the Nasdaq under the ticker ANT, showing $16.29 billion of revenue for the first half of 2026, up from $1.16 billion a year earlier. Chips rallied, the chip index rose 2.8%, and the Nasdaq gained 0.8%. The same day Meta said it may raise up to $95 billion in equity, and its stock fell 1.9%."
+      "headline": "Anthropic files to go public",
+      "body": "Anthropic filed to list on the Nasdaq as ANT, showing $16.29 billion of first-half revenue, up from $1.16 billion a year earlier. The chip index bounced 2.8% on Monday."
+    },
+    {
+      "headline": "Apple crosses $5 trillion",
+      "body": "Apple went the other way, up 2.2% over the two weeks, and topped $5 trillion in market value for the first time on Oct 14."
     }
   ],
-  "earningsNote": "All five met or beat on the headline numbers. Four of the five still fell the next day. Guidance and spending moved these stocks more than the beat, which was the whole point of our Oct 13 earnings night.",
+  "earningsLead": "Beats did not save the stocks. Four of these five fell the day after reporting.",
   "earnings": [
     {
-      "company": "TSMC",
-      "when": "Oct 15",
-      "result": "Record profit of NT$763.1B, up 68.7%. Q4 revenue guide of $52.3B to $54.3B.",
-      "stock": "-1.8%",
-      "dir": "down"
+      "company": "Meta",
+      "line": "Revenue beat at $64.60B, but free cash flow went negative, -$2.12B, as capex outran operating cash flow. Stock -7.0%."
     },
     {
       "company": "Netflix",
-      "when": "Oct 20",
-      "result": "EPS of $0.87 vs $0.82 expected. Cut its 2026 ad revenue goal to about $2.7B from $3B.",
-      "stock": "-5.3%",
-      "dir": "down"
-    },
-    {
-      "company": "SpaceX",
-      "when": "Oct 20",
-      "result": "Revenue of $14.58B, up 161%, vs $12.72B expected.",
-      "stock": "+7.8%, then -9.1%",
-      "dir": "up"
+      "line": "EPS beat at $0.87, but it cut its 2026 ad revenue goal to about $2.7B from $3B. Stock -5.3%."
     },
     {
       "company": "Tesla",
-      "when": "Oct 21",
-      "result": "Adjusted EPS of $0.48 vs $0.43 expected. Net income fell 29% to $787M.",
-      "stock": "-3.1%",
-      "dir": "down"
+      "line": "Adjusted EPS of $0.48 beat $0.43; net income fell 29%. Stock -3.1%."
     },
     {
-      "company": "Meta",
-      "when": "Oct 21",
-      "result": "Revenue of $64.60B vs $63.37B expected. Free cash flow of negative $2.12B. Raised the floor of its 2026 capex range to $135B.",
-      "stock": "-7.0%",
-      "dir": "down"
+      "company": "SpaceX",
+      "line": "Revenue rose 161% to $14.58B, well above the $12.72B expected. Stock +7.8%, then -9.1% the next day."
+    },
+    {
+      "company": "TSMC",
+      "line": "A sixth straight record profit, NT$763.1B, up 68.7%. Stock -1.8%."
     }
   ],
   "club": [
     {
-      "title": "Oct 13: Earnings basics",
-      "body": "How to read a report (press release, 10-Q, call), why a beat can still sink a stock, and where the real detail hides in a 10-K. Micron was the tech example, then groups took JPMorgan, Wells Fargo, Citi and Goldman and read the bank scorecard: net interest income, CET1, ROTCE and price to tangible book."
+      "title": "Oct 13, earnings basics",
+      "body": "How to read the release, the 10-Q and the call, then bank scorecards for JPMorgan, Wells Fargo, Citi and Goldman."
     },
     {
-      "title": "Oct 22: Bloomberg Terminal intro",
-      "body": "A market recap, then the keyboard and the first functions: BPS, HELP, USER, GP, TOP, CN, BI and LLP. There are 12 Terminals in the Warren Hunting Smith Library for now. Start Bloomberg Market Concepts (type BMC <GO>): self-paced, about 8 hours, with a certificate."
+      "title": "Oct 22, Bloomberg intro",
+      "body": "There are 12 Terminals in the Warren Hunting Smith Library. Start Bloomberg Market Concepts (BMC <GO>): about 8 hours, with a certificate."
     },
     {
-      "title": "Get ready to pitch",
-      "body": "Member stock pitches start in the coming weeks, and three pitch groups are already on the roster. Bring the business and how it makes money, your variant view, three years of numbers, one valuation method plus a cross-check, the risks and what would make us exit, and the ask. Include at least one Bloomberg screenshot (DES, FA or GP)."
+      "title": "Pitches are next",
+      "body": "Member pitches start in the coming weeks and three groups are on the roster. Bring a variant view, three years of numbers, one valuation plus a cross-check, risks, an exit condition, the ask and at least one Bloomberg screenshot."
     }
   ],
   "meetings": [
     {
-      "when": "Tue Oct 27",
-      "what": "Eric Stein meeting. No club recap or pitch tonight."
+      "when": "Tonight",
+      "what": "Eric Stein meeting. No club recap."
     },
     {
-      "when": "Thu Oct 29, 7:30 PM, Stern 301",
-      "what": "Financial modeling I: the three statements and how they link."
+      "when": "Thu Oct 29",
+      "what": "Financial modeling I, 7:30 PM, Stern 301"
     },
     {
-      "when": "Tue Nov 3, 7:30 PM, Stern 301",
-      "what": "Financial modeling II: DCF."
+      "when": "Tue Nov 3",
+      "what": "Financial modeling II: DCF"
     }
   ],
   "weekAhead": [
     {
-      "day": "Tue Oct 27",
-      "items": [
-        "Durable goods and consumer confidence"
-      ]
-    },
-    {
       "day": "Wed Oct 28",
       "items": [
-        "Fed decision at 2 PM, Chair Kevin Warsh speaks at 2:30 PM. Futures price about an 88% chance of a hold (CME FedWatch).",
-        "Alphabet and Microsoft report after the close"
+        "Fed decision at 2 PM; markets price about an 88% chance of a hold. Alphabet and Microsoft report after the close."
       ]
     },
     {
       "day": "Thu Oct 29",
       "items": [
-        "Q3 GDP and September PCE inflation at 8:30 AM",
-        "Eli Lilly and Caterpillar before the open; Amazon and Intel after the close"
+        "Q3 GDP and September PCE inflation. Amazon reports after the close."
       ]
     },
     {
       "day": "Fri Oct 30",
       "items": [
-        "Employment Cost Index"
+        "Employment Cost Index."
       ]
     },
     {
       "day": "Mon Nov 2",
       "items": [
-        "Apple reports after the close"
+        "Apple reports after the close."
       ]
     },
     {
       "day": "Tue Nov 3",
       "items": [
-        "Midterm elections"
+        "Midterm elections."
       ]
     }
   ],
+  "signoff": "Easton Ryan, Co-President and CFO",
+  "disclaimer": "Written by students for an undergraduate investment club. Educational commentary, not investment advice.",
   "sources": [
     {
       "label": "Closes: Yahoo Finance chart data, checked against FRED",
@@ -290,7 +240,5 @@
       "label": "Apple: FY26 fourth quarter results event",
       "url": "https://investor.apple.com/investor-relations/event-details/2026/FY-26-Fourth-Quarter-Results/default.aspx"
     }
-  ],
-  "signoff": "Hobart and William Smith Investment Club, Easton Ryan, President",
-  "disclaimer": "Written by students for an undergraduate investment club. Educational commentary, not investment advice."
+  ]
 }
