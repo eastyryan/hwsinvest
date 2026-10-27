@@ -19,8 +19,12 @@ const INK = "#111111";
 const BODY = "#333333";
 const GREY = "#6b6b6b";
 const RULE = "#e4e4e4";
-const ACCENT = "#4b2e83"; // club purple: one thin rule only
+const ACCENT = "#4b2e83"; // club purple
+const ORANGE = "#e87722";
+const GREEN = "#00693e";
 const SERIF = "Newsreader, 'Iowan Old Style', Charter, 'Palatino Linotype', Palatino, serif";
+const MONO = "'IBM Plex Mono', 'SFMono-Regular', Menlo, Consolas, 'Courier New', monospace";
+const SHIELDS = "https://raw.githubusercontent.com/eastyryan/hwsinvest/main/public/hws-shield.png";
 const SANS = "Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 
 const esc = (s) =>
@@ -28,7 +32,7 @@ const esc = (s) =>
 const pad = (n) => String(n).padStart(2, "0");
 
 const label = (t) =>
-  `<div style="font-family:${SANS};font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:${GREY};margin:0 0 14px 0;">${esc(t)}</div>`;
+  `<div style="font-family:${MONO};font-size:11px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:${GREY};margin:0 0 14px 0;">${esc(t)}</div>`;
 const rule = `<tr><td style="padding:0 28px;"><div style="border-top:1px solid ${RULE};font-size:0;line-height:0;">&nbsp;</div></td></tr>`;
 const row = (inner, pad = "30px 28px") => `<tr><td style="padding:${pad};">${inner}</td></tr>`;
 const line = (lead, text, last) =>
@@ -55,7 +59,7 @@ const html = `<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HWS Investment Club, Issue ${pad(d.no)}: ${esc(d.title)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
 <style>@media only screen and (max-width:620px){ .wrap{width:100% !important;} }</style>
 </head>
 <body style="margin:0;padding:0;background:#ffffff;">
@@ -64,18 +68,24 @@ const html = `<!DOCTYPE html>
 <tr><td align="center" style="padding:28px 8px 40px 8px;">
 <table role="presentation" class="wrap" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:#ffffff;">
 
-<tr><td style="padding:0 28px 12px 28px;">
+<tr><td style="padding:0;font-size:0;line-height:0;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td style="font-family:${SANS};font-size:14px;font-weight:700;letter-spacing:-.01em;color:${INK};">HWS Investment Club</td>
-    <td align="right" style="font-family:${SANS};font-size:12px;color:${GREY};">Issue ${pad(d.no)}</td>
+    <td width="50%" style="background:${ACCENT};height:4px;line-height:4px;font-size:0;">&nbsp;</td>
+    <td width="20%" style="background:${ORANGE};height:4px;line-height:4px;font-size:0;">&nbsp;</td>
+    <td width="30%" style="background:${GREEN};height:4px;line-height:4px;font-size:0;">&nbsp;</td>
   </tr></table>
 </td></tr>
-<tr><td style="padding:0 28px;"><div style="border-top:2px solid ${ACCENT};font-size:0;line-height:0;">&nbsp;</div></td></tr>
+<tr><td style="padding:28px 28px 0 28px;">
+  <img src="${SHIELDS}" width="104" alt="HWS Investment Club" style="display:block;width:104px;max-width:104px;height:auto;border:0;margin:0 0 18px 0;">
+  <div style="font-family:${SERIF};font-size:36px;line-height:1.05;font-weight:500;letter-spacing:-.02em;color:${INK};">Investment Club Newsletter</div>
+</td></tr>
+<tr><td style="padding:20px 28px 0 28px;">
+  <div style="border-top:1px solid ${RULE};border-bottom:1px solid ${RULE};padding:10px 0;font-family:${MONO};font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:${GREY};">Covering <strong style="color:${INK};font-weight:600;">${esc(d.coverage)}</strong> &nbsp;&middot;&nbsp; Issue ${pad(d.no)}</div>
+</td></tr>
 
 ${row(`
-  <div style="font-family:${SANS};font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:${GREY};margin:0 0 14px 0;">Geneva, N.Y. &nbsp;|&nbsp; ${esc(d.dateLabel)}</div>
-  <h1 style="margin:0 0 14px 0;font-family:${SERIF};font-weight:600;font-size:32px;line-height:1.15;letter-spacing:-.01em;color:${INK};">${esc(d.title)}</h1>
-  <p style="margin:0;font-family:${SANS};font-size:17px;line-height:1.55;color:${BODY};">${esc(d.dek)}</p>`, "26px 28px 22px 28px")}
+  <h1 style="margin:0 0 14px 0;font-family:${SERIF};font-weight:600;font-size:30px;line-height:1.16;letter-spacing:-.012em;color:${INK};">${esc(d.title)}</h1>
+  <p style="margin:0;font-family:${SANS};font-size:17px;line-height:1.55;color:${BODY};">${esc(d.dek)}</p>`, "30px 28px 22px 28px")}
 
 ${row(`
   <div style="font-family:${SANS};font-size:13px;line-height:1.5;">${numbers}</div>

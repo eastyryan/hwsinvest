@@ -4,6 +4,7 @@ import { issueNo } from "@/lib/newsletter-public";
 
 // Minimal brief: dark text on white, one thin purple rule, no boxes or colour panels.
 // `issue.sources` is intentionally not rendered.
+export const MONO = "var(--font-mono), 'IBM Plex Mono', 'SFMono-Regular', Menlo, Consolas, 'Courier New', monospace";
 export const SANS = "Inter, -apple-system, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const INK = "var(--text)";
 const BODY = "#333";
@@ -16,7 +17,7 @@ function Block({ label, children }: { label?: string; children: ReactNode }) {
   return (
     <section style={{ borderTop: RULE, padding: "32px 0" }}>
       {label && (
-        <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: GREY, marginBottom: 16 }}>
+        <div style={{ fontFamily: MONO, fontSize: 11.5, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase", color: GREY, marginBottom: 16 }}>
           {label}
         </div>
       )}
@@ -37,10 +38,20 @@ export default function IssueBody({ issue }: { issue: PublicIssue }) {
   return (
     <article style={{ marginTop: 28 }}>
       <header style={{ paddingBottom: 28 }}>
-        <div style={{ fontFamily: SANS, fontSize: 12.5, letterSpacing: "0.06em", textTransform: "uppercase", color: GREY }}>
-          Issue {issueNo(issue.no)} &nbsp;|&nbsp; Geneva, N.Y. &nbsp;|&nbsp; {issue.dateLabel}
+        <div style={{ display: "flex", height: 4 }} aria-hidden>
+          <span style={{ flex: 5, background: "#4b2e83" }} />
+          <span style={{ flex: 2, background: "#e87722" }} />
+          <span style={{ flex: 3, background: "#00693e" }} />
         </div>
-        <h1 style={{ fontWeight: 600, fontSize: "clamp(32px,4.6vw,46px)", lineHeight: 1.1, letterSpacing: "-0.015em", margin: "14px 0 0", color: INK }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/hws-shield.png" alt="HWS Investment Club" width={120} height={61} style={{ display: "block", width: 120, height: "auto", margin: "32px 0 20px" }} />
+        <div style={{ fontFamily: "var(--font-serif), Newsreader, Charter, Georgia, serif", fontWeight: 500, fontSize: "clamp(34px,5vw,48px)", lineHeight: 1.05, letterSpacing: "-0.02em", color: INK }}>
+          Investment Club Newsletter
+        </div>
+        <div style={{ borderTop: RULE, borderBottom: RULE, padding: "11px 0", marginTop: 22, fontFamily: MONO, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: GREY }}>
+          Covering <strong style={{ color: INK, fontWeight: 600 }}>{issue.coverage}</strong> &nbsp;&middot;&nbsp; Issue {issueNo(issue.no)}
+        </div>
+        <h1 style={{ fontWeight: 600, fontSize: "clamp(28px,3.8vw,38px)", lineHeight: 1.14, letterSpacing: "-0.012em", margin: "34px 0 0", color: INK }}>
           {issue.title}
         </h1>
         <p style={{ ...body, fontSize: 18.5, marginTop: 16, maxWidth: "62ch" }}>{issue.dek}</p>

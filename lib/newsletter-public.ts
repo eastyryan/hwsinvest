@@ -15,6 +15,8 @@ export type PublicIssue = {
   slug: string;
   date: string; // YYYY-MM-DD, used for sorting
   dateLabel: string;
+  /** Masthead band, e.g. "October 12 to 26, 2026". */
+  coverage: string;
   window: string;
   public: boolean; // false keeps a draft off the site
   title: string;
