@@ -32,7 +32,8 @@ export type PublicIssue = {
   club?: { title: string; body: string }[];
   meetings?: { when: string; what: string }[];
   weekAhead: { day: string; items: string[] }[];
-  signoff: string;
+  /** Optional. Omit for no sign-off (the default); the disclaimer still shows. */
+  signoff?: string;
   disclaimer: string;
   /** Fact-check trail. Kept in the file, never rendered. */
   sources: { label: string; url: string }[];

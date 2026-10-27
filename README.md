@@ -118,6 +118,8 @@ Public issues live one file per issue in `content/newsletter/`, named
    `earningsLead`, `earnings` (one line per major name), `weekAhead`, and
    `coverage` for the masthead band. `club` and `meetings` are optional; leave
    them out to drop the Club section. If used, take meetings from `data/calendar.ts`.
+   `signoff` is optional and off by default; leave it out for no sign-off.
+   The `disclaimer` line always shows at the bottom.
    Every figure needs a row in `sources`. Sources are a fact-check trail only;
    they are never rendered on the site or in the email.
 3. Keep `"public": false` while drafting; flip it to `true` when the issue is approved.

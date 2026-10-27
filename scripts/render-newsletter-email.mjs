@@ -110,9 +110,9 @@ ${row(`${label("The week ahead")}
   <p style="margin:10px 0 0 0;font-family:${SANS};font-size:12px;color:${GREY};">Times Eastern.</p>`)}
 ${rule}
 ${row(`
-  <p style="margin:0;font-family:${SANS};font-size:15px;color:${INK};">${esc(d.signoff)}</p>
-  <p style="margin:2px 0 0 0;font-family:${SANS};font-size:14px;color:${GREY};">HWS Investment Club</p>
-  <p style="margin:18px 0 0 0;font-family:${SANS};font-size:12px;line-height:1.5;color:${GREY};">${esc(d.disclaimer)}</p>`, "24px 28px 0 28px")}
+  ${d.signoff ? `<p style="margin:0;font-family:${SANS};font-size:15px;color:${INK};">${esc(d.signoff)}</p>
+  <p style="margin:2px 0 18px 0;font-family:${SANS};font-size:14px;color:${GREY};">HWS Investment Club</p>` : ""}
+  <p style="margin:0;font-family:${SANS};font-size:12px;line-height:1.5;color:${GREY};">${esc(d.disclaimer)}</p>`, "24px 28px 0 28px")}
 
 </table>
 </td></tr>

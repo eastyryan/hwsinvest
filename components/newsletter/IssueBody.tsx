@@ -104,9 +104,13 @@ export default function IssueBody({ issue }: { issue: PublicIssue }) {
       </Block>
 
       <footer style={{ borderTop: RULE, paddingTop: 24 }}>
-        <p style={{ ...body, color: INK, fontSize: 15.5 }}>{issue.signoff}</p>
-        <p style={{ ...body, color: GREY, fontSize: 14 }}>HWS Investment Club</p>
-        <p style={{ ...body, color: GREY, fontSize: 12.5, marginTop: 16 }}>{issue.disclaimer}</p>
+        {issue.signoff && (
+          <>
+            <p style={{ ...body, color: INK, fontSize: 15.5 }}>{issue.signoff}</p>
+            <p style={{ ...body, color: GREY, fontSize: 14, marginBottom: 16 }}>HWS Investment Club</p>
+          </>
+        )}
+        <p style={{ ...body, color: GREY, fontSize: 12.5 }}>{issue.disclaimer}</p>
       </footer>
     </article>
   );
