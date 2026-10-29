@@ -6,10 +6,10 @@ import { Folder, ArrowRight, LineChart, Newspaper } from "lucide-react";
 import { TRACKS } from "@/data/learn";
 import { TRACK_ICON } from "./icons";
 import { loadProgress, trackCompletion, type Progress } from "@/lib/progress";
-import { latestIssue } from "@/data/newsletters";
+import type { Newsletter } from "@/data/newsletters";
 import { dayLabel, timeLabel, toDay, weeklyMeetings } from "@/data/calendar";
 
-export default function Dashboard({ admin }: { admin: boolean }) {
+export default function Dashboard({ admin, latest }: { admin: boolean; latest: Newsletter | null }) {
   const [p, setP] = useState<Progress | null>(null);
   // Resolved on the client so the server render doesn't bake in a UTC "today".
   const [next, setNext] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export default function Dashboard({ admin }: { admin: boolean }) {
     );
   }, []);
 
-  const issue = latestIssue();
+  const issue = latest;
 
   return (
     <main className="container-x" style={{ padding: "clamp(32px,5vh,56px) 0 80px", maxWidth: 960, margin: "0 auto" }}>
@@ -69,7 +69,7 @@ export default function Dashboard({ admin }: { admin: boolean }) {
       <div style={{ display: "grid", gap: 14, margin: "clamp(20px,3vh,28px) 0 36px" }}>
         {issue && (
           <Link
-            href={`/members/newsletter/${issue.slug}`}
+            href={issue.href ?? `/members/newsletter/${issue.slug}`}
             data-reveal
             className="card lift card-hover-brand"
             style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}
@@ -83,7 +83,7 @@ export default function Dashboard({ admin }: { admin: boolean }) {
                 </span>
               </div>
               <p style={{ fontSize: 14, color: "var(--muted)", margin: "4px 0 0", lineHeight: 1.5 }}>
-                {issue.title}. The week&apos;s tape, the curve, three stories worth your time, and a glossary you can click into.
+                {issue.title}. The latest weekly read on what moved and why.
               </p>
             </div>
             <ArrowRight size={20} color="var(--brand)" />

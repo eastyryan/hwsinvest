@@ -72,7 +72,7 @@ export default function IssueList({
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
             <Link
-              href={`/members/newsletter/${issue.slug}`}
+              href={issue.href ?? `/members/newsletter/${issue.slug}`}
               className="ctl"
               style={{ color: "var(--brand)", borderColor: "var(--brand)" }}
             >
@@ -80,9 +80,11 @@ export default function IssueList({
               Read issue
               <ArrowRight size={15} strokeWidth={2} />
             </Link>
-            <a href={issue.file} target="_blank" rel="noreferrer" className="ctl">
-              Open in new tab
-            </a>
+            {issue.file && (
+              <a href={issue.file} target="_blank" rel="noreferrer" className="ctl">
+                Open in new tab
+              </a>
+            )}
             <span style={{ flex: 1 }} />
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {issue.topics.map((t) => (

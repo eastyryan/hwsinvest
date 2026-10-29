@@ -14,8 +14,10 @@ export type Newsletter = {
   no: number;
   /** URL segment used by /members/newsletter/<slug>. */
   slug: string;
-  /** Public path to the issue's HTML document. */
-  file: string;
+  /** Public path to the issue's HTML document (members-only issues). */
+  file?: string;
+  /** Where "Read issue" goes. Defaults to /members/newsletter/<slug>. */
+  href?: string;
   /** Headline of the issue. */
   title: string;
   /** The week the issue covers, as written on the dateline. */

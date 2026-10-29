@@ -11,9 +11,7 @@ A professional markets dashboard for the Hobart and William Smith Colleges Inves
 - `/careers`: Finance career paths and how the club prepares you
 - `/about`: Mission and board showcase
 - `/members`: Password-gated dashboard (learn tracks, files, research, newsletter)
-- `/newsletter`: Public newsletter archive (latest issue up top, past issues below)
-- `/newsletter/[slug]`: One public issue, built from `content/newsletter/<slug>.json`
-- `/members/newsletter`: The club newsletter, every issue, newest first
+- `/members/newsletter`: The club newsletter (members-only), every issue, newest first. `/newsletter` redirects here.
 - `/members/research`: Company research tool (synced from the finance app): SEC statements, ratios, ownership, segments, valuation suite, screener, watchlist, Excel export
 - `/admin`: Admin-only club console: calendar, email list, newsletter, file uploads
 
@@ -105,9 +103,9 @@ lives in that one browser and the header says so.
 `/newsletters/*` is listed in the middleware matcher, so issue URLs are behind
 the members login rather than public.
 
-### Publishing a public weekly issue
+### Publishing a weekly issue (members-only)
 
-Public issues live one file per issue in `content/newsletter/`, named
+Weekly issues live one file per issue in `content/newsletter/`, named
 `YYYY-MM-DD-issue-NN.json` (the filename must equal the `slug` field). Each week:
 
 1. Copy last week's JSON to a new file, for example
@@ -122,14 +120,18 @@ Public issues live one file per issue in `content/newsletter/`, named
    The `disclaimer` line always shows at the bottom.
    Every figure needs a row in `sources`. Sources are a fact-check trail only;
    they are never rendered on the site or in the email.
-3. Keep `"public": false` while drafting; flip it to `true` when the issue is approved.
+3. Keep `"public": false` while drafting; flip it to `true` when the issue is approved. `true`
+   publishes it to members only; nothing is public.
 4. Render the email copy and check it:
    `node scripts/render-newsletter-email.mjs content/newsletter/<slug>.json out.html`
 5. `npx tsc --noEmit && npm run build`, then commit and deploy as usual.
 
-`/newsletter` and `/newsletter/[slug]` are outside the middleware matcher, so
-they are public. Nothing in `content/newsletter/` is served raw; the older
-members-only HTML issues in `public/newsletters/` stay gated.
+Published issues render at `/members/newsletter/<slug>` and appear, newest
+first, in the members newsletter list, the dashboard's latest-issue card and
+the admin console (merged with the older issues by `lib/newsletter-all.ts`).
+All of these sit behind the members login. There is no public newsletter page:
+`/newsletter` and `/newsletter/<slug>` redirect into `/members/newsletter`, and
+nothing in `content/newsletter/` is served raw.
 
 ## Notes
 

@@ -6,6 +6,24 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // The newsletter is members-only. Old public URLs go to the members area,
+  // which middleware sends to the login page when signed out.
+  async redirects() {
+    return [
+      { source: "/newsletter", destination: "/members/newsletter", permanent: false },
+      { source: "/newsletter/:slug", destination: "/members/newsletter/:slug", permanent: false },
+    ];
+  },
+  experimental: {
+    // lib/newsletter-public.ts reads these JSON files at request time on the
+    // dynamic members and admin pages, so ship them with those functions.
+    outputFileTracingIncludes: {
+      "/members": ["./content/newsletter/**"],
+      "/members/newsletter": ["./content/newsletter/**"],
+      "/members/newsletter/[slug]": ["./content/newsletter/**"],
+      "/admin": ["./content/newsletter/**"],
+    },
+  },
   webpack: (config, { isServer, webpack }) => {
     // Research client components import shared lib modules that also use
     // `@vercel/functions` on the server. Stub that package in the browser

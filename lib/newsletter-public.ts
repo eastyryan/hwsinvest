@@ -2,12 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 
 /**
- * Public newsletter issues. One JSON file per issue lives in
- * content/newsletter/<YYYY-MM-DD>-issue-<NN>.json. Drop a new file in that
- * folder and the archive and the issue page pick it up at build time.
- *
- * The older members-only issues (data/newsletters.ts and the raw HTML in
- * public/newsletters) stay behind the members login and are not read here.
+ * Newsletter issues written as JSON, one file per issue in
+ * content/newsletter/<YYYY-MM-DD>-issue-<NN>.json. They are members-only:
+ * they render at /members/newsletter/<slug> behind the members login, next to
+ * the older HTML issues in data/newsletters.ts. lib/newsletter-all.ts merges
+ * both lists. Drop a new file in the folder and it shows up on the next build.
  */
 
 export type PublicIssue = {
@@ -18,7 +17,7 @@ export type PublicIssue = {
   /** Masthead band, e.g. "October 12 to 26, 2026". */
   coverage: string;
   window: string;
-  public: boolean; // false keeps a draft off the site
+  public: boolean; // published to members; false keeps a draft hidden
   title: string;
   dek: string;
   summary: string;

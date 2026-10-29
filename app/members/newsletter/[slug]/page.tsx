@@ -1,14 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ISSUES, issueBySlug } from "@/data/newsletters";
+import { publicIssues, publicIssueBySlug } from "@/lib/newsletter-public";
+import IssueBody, { SANS } from "@/components/newsletter/IssueBody";
 
 type Params = { params: { slug: string } };
 
 export function generateStaticParams() {
-  return ISSUES.map((i) => ({ slug: i.slug }));
+  return [...publicIssues(), ...ISSUES].map((i) => ({ slug: i.slug }));
 }
 
 export function generateMetadata({ params }: Params) {
+  const json = publicIssueBySlug(params.slug);
+  if (json) return { title: `${json.title} · Newsletter` };
   const issue = issueBySlug(params.slug);
   return {
     title: issue ? `${issue.title} · Newsletter` : "Newsletter · HWS Investment Club",
@@ -16,8 +20,17 @@ export function generateMetadata({ params }: Params) {
 }
 
 export default function IssuePage({ params }: Params) {
+  const json = publicIssueBySlug(params.slug);
+  if (json) {
+    return (
+      <main className="container-x" style={{ padding: "clamp(28px,4vh,48px) 0 40px", maxWidth: 760, margin: "0 auto" }}>
+        <Link href="/members/newsletter" style={{ fontFamily: SANS, fontSize: 14, color: "var(--brand)" }}>All issues</Link>
+        <IssueBody issue={json} />
+      </main>
+    );
+  }
   const issue = issueBySlug(params.slug);
-  if (!issue) notFound();
+  if (!issue || !issue.file) notFound();
 
   return (
     <main style={{ padding: "clamp(24px,4vh,40px) 0 64px" }}>

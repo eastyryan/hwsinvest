@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ISSUES } from "@/data/newsletters";
+import { allIssues } from "@/lib/newsletter-all";
 import IssueList from "@/components/club/IssueList";
 
 export const metadata = { title: "Newsletter · HWS Investment Club" };
@@ -19,7 +19,7 @@ export default function NewsletterIndexPage() {
         <Link href="/members" className="ctl">← Dashboard</Link>
       </div>
 
-      <IssueList issues={ISSUES} />
+      <IssueList issues={allIssues()} />
     </main>
   );
 }
