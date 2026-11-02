@@ -73,9 +73,12 @@ export default function Attendance({
 
   const total = meetings.length;
 
+  // Removed members stay out of the attendance table entirely.
+  const activeRoster = useMemo(() => roster.filter((r) => !r.removed), [roster]);
+
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = roster.map((r) => {
+    const list = activeRoster.map((r) => {
       const email = r.email.toLowerCase();
       const { present, eligible, pct, last, since } = memberAttendance(r, meetings, roster);
       return { ...r, email, present, eligible, pct, last, since };
@@ -98,7 +101,7 @@ export default function Attendance({
       return (a.pct ?? 101) - (b.pct ?? 101) || a.name.localeCompare(b.name);
     });
     return filtered;
-  }, [roster, meetings, query, sort, total]);
+  }, [activeRoster, meetings, query, sort, total]);
 
   const selected = meetings.find((m) => m.id === selectedId) ?? null;
 
@@ -121,7 +124,7 @@ export default function Attendance({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           text: draft.text,
-          roster: roster.map((r) => ({ name: r.name, email: r.email })),
+          roster: activeRoster.map((r) => ({ name: r.name, email: r.email })),
         }),
       });
       const json = await res.json();

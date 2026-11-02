@@ -26,7 +26,25 @@ export type RosterEntry = {
    * earlier). Blank means "on the list from the start": every meeting counts.
    */
   joinedAt?: string;
+  /**
+   * Removed from the active club: excluded from the email list copy bar and
+   * from the attendance table, but kept in the data and shown in the
+   * admin console's Removed section so the move is reversible.
+   */
+  removed?: boolean;
+  /** YYYY-MM-DD the person was moved to Removed, if applicable. */
+  removedAt?: string;
 };
+
+/** Roster members still active: everyone not flagged removed. */
+export function activeRoster(roster: RosterEntry[]): RosterEntry[] {
+  return roster.filter((r) => !r.removed);
+}
+
+/** Roster members moved to Removed. */
+export function removedRoster(roster: RosterEntry[]): RosterEntry[] {
+  return roster.filter((r) => r.removed);
+}
 
 /**
  * Counted present at every meeting, whether or not that week's sign-in sheet
@@ -197,6 +215,8 @@ function cleanEntry(raw: unknown, i: number): RosterEntry | null {
     year: str(r.year, 24) || undefined,
     role: str(r.role, 80) || undefined,
     joinedAt: DAY.test(str(r.joinedAt, 10)) ? str(r.joinedAt, 10) : undefined,
+    removed: r.removed === true ? true : undefined,
+    removedAt: DAY.test(str(r.removedAt, 10)) ? str(r.removedAt, 10) : undefined,
   };
 }
 

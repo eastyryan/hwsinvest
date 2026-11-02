@@ -47,21 +47,38 @@ export default function Roster({
     onChange(persistable);
   }
 
+  // Removed members are kept in the data but kept out of the active list,
+  // the email copy bar, and attendance. They live in their own section below.
+  const activeRows = useMemo(() => rows.filter((r) => !r.removed), [rows]);
+  const removedRows = useMemo(() => rows.filter((r) => r.removed), [rows]);
+
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(
+    if (!q) return activeRows;
+    return activeRows.filter(
       (r) =>
         r.name.toLowerCase().includes(q) ||
         r.email.toLowerCase().includes(q) ||
         (r.role ?? "").toLowerCase().includes(q) ||
         (r.year ?? "").toLowerCase().includes(q)
     );
-  }, [rows, query]);
+  }, [activeRows, query]);
+
+  const visibleRemoved = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return removedRows;
+    return removedRows.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        r.email.toLowerCase().includes(q) ||
+        (r.role ?? "").toLowerCase().includes(q) ||
+        (r.year ?? "").toLowerCase().includes(q)
+    );
+  }, [removedRows, query]);
 
   const emails = useMemo(
-    () => rows.map((r) => r.email.trim()).filter((e) => VALID_EMAIL.test(e)),
-    [rows]
+    () => activeRows.map((r) => r.email.trim()).filter((e) => VALID_EMAIL.test(e)),
+    [activeRows]
   );
   const duplicates = useMemo(() => {
     const seen = new Set<string>();
@@ -74,7 +91,7 @@ export default function Roster({
     return dupes;
   }, [emails]);
 
-  const problems = rows.filter((r) => r.email.trim() && !VALID_EMAIL.test(r.email.trim())).length;
+  const problems = activeRows.filter((r) => r.email.trim() && !VALID_EMAIL.test(r.email.trim())).length;
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
@@ -93,7 +110,7 @@ export default function Roster({
               <CopyButton label="Copy semicolon-separated" text={emails.join("; ")} />
               <CopyButton
                 label="Copy Name <email>"
-                text={rows
+                text={activeRows
                   .filter((r) => VALID_EMAIL.test(r.email.trim()))
                   .map((r) => (r.name ? `${r.name} <${r.email.trim()}>` : r.email.trim()))
                   .join(", ")}
@@ -101,11 +118,11 @@ export default function Roster({
               <CopyButton
                 label="Copy as CSV"
                 text={
-                  rows.length === 0
+                  activeRows.length === 0
                     ? ""
                     : [
                         "Name,Email,Year,Role",
-                        ...rows.map((r) =>
+                        ...activeRows.map((r) =>
                           [r.name, r.email, r.year ?? "", r.role ?? ""].map(csvCell).join(",")
                         ),
                       ].join("\n")
@@ -153,7 +170,8 @@ export default function Roster({
         </button>
         <span style={{ flex: 1 }} />
         <span className="mono" style={{ fontSize: 12, color: "var(--faint)", letterSpacing: "0.04em" }}>
-          {rows.length} on the list
+          {activeRows.length} on the list
+          {removedRows.length > 0 && ` · ${removedRows.length} removed`}
           {query && ` · ${visible.length} shown`}
         </span>
       </div>
@@ -169,7 +187,7 @@ export default function Roster({
       )}
 
       {/* ── The list ── */}
-      {rows.length === 0 ? (
+      {activeRows.length === 0 ? (
         <p style={{ fontSize: 14, color: "var(--muted)", margin: 0 }}>
           Nobody on the list yet. Add members one at a time, or paste a block of names and addresses.
         </p>
@@ -233,7 +251,14 @@ export default function Roster({
                         className="ctl"
                         style={{ padding: "5px 7px" }}
                         aria-label={`Remove ${row.name || row.email || "this row"}`}
-                        onClick={() => commit(rows.filter((r) => r.id !== row.id))}
+                        title="Move to Removed"
+                        onClick={() =>
+                          commit(
+                            rows.map((r) =>
+                              r.id === row.id ? { ...r, removed: true, removedAt: todayLocal() } : r
+                            )
+                          )
+                        }
                       >
                         <Trash2 size={13} />
                       </button>
@@ -244,6 +269,47 @@ export default function Roster({
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* ── Removed ── */}
+      {removedRows.length > 0 && (
+        <section className="card" style={{ padding: 18 }}>
+          <h3 className="h-sub" style={{ fontSize: 17 }}>Removed</h3>
+          <p style={{ fontSize: 13.5, color: "var(--muted)", margin: "5px 0 12px", lineHeight: 1.55, maxWidth: "68ch" }}>
+            Members moved off the email list and out of attendance. They are not deleted, so a move here can be
+            undone. Nothing in this section is included in the copied email list.
+          </p>
+          <div style={{ display: "grid", gap: 8 }}>
+            {visibleRemoved.map((row) => (
+              <div key={row.id} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <span style={{ fontSize: 14, flex: "1 1 220px" }}>
+                  {row.name || row.email}
+                  {row.email && row.name ? ` · ${row.email}` : ""}
+                  {row.removedAt ? ` · removed ${row.removedAt}` : ""}
+                </span>
+                <button
+                  className="ctl"
+                  onClick={() =>
+                    commit(rows.map((r) => (r.id === row.id ? { ...r, removed: undefined, removedAt: undefined } : r)))
+                  }
+                >
+                  Restore
+                </button>
+                <button
+                  className="ctl"
+                  aria-label={`Delete ${row.name || row.email || "this row"} permanently`}
+                  title="Delete permanently"
+                  onClick={() => commit(rows.filter((r) => r.id !== row.id))}
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            ))}
+            {visibleRemoved.length === 0 && (
+              <p style={{ fontSize: 13.5, color: "var(--muted)", margin: 0 }}>No removed members match the search.</p>
+            )}
+          </div>
+        </section>
       )}
     </div>
   );
