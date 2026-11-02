@@ -1,0 +1,135 @@
+{
+  "no": 6,
+  "slug": "2026-11-01-issue-06",
+  "date": "2026-11-01",
+  "dateLabel": "Sunday, November 1, 2026",
+  "coverage": "October 26 to 30, 2026",
+  "window": "Oct 26 to Oct 30, 2026",
+  "public": true,
+  "title": "Alphabet had its worst day ever and Intel lost 29%",
+  "dek": "Big tech's cash burn finally hit the stocks. The Nasdaq fell 2.0% on the week as oil climbed to a six-month high and the Fed held.",
+  "summary": "Alphabet's worst day ever, Intel down 29%, and the cash burn story behind both. Plus earnings, the Fed holding, oil at a six-month high, and the week ahead.",
+  "topics": [
+    "Alphabet",
+    "Intel",
+    "Cash burn",
+    "Fed",
+    "Oil",
+    "Big tech earnings"
+  ],
+  "keyNumbersNote": "Oct 30 close, change since Oct 23 close",
+  "keyNumbers": [
+    {
+      "label": "S&P 500",
+      "value": "7,580.07",
+      "change": "-0.6%"
+    },
+    {
+      "label": "Nasdaq",
+      "value": "25,437.00",
+      "change": "-2.0%"
+    },
+    {
+      "label": "Dow",
+      "value": "51,770.31",
+      "change": "-0.9%"
+    },
+    {
+      "label": "10-yr",
+      "value": "4.94%",
+      "change": "-6 bp"
+    },
+    {
+      "label": "Brent",
+      "value": "$117.64",
+      "change": "+0.8%"
+    }
+  ],
+  "briefs": [
+    {
+      "headline": "Alphabet's worst day ever",
+      "body": "Alphabet fell 12.6% on Thursday, its biggest one-day drop on record, erasing about $500 billion in value. It missed on revenue and earnings for the first time in nearly four years, and free cash flow came in at negative $9.07 billion against about negative $2.7 billion expected."
+    },
+    {
+      "headline": "Intel crashes, chips follow",
+      "body": "Intel lost 28.6% on Friday, its worst day since the 1970s, after guiding fourth-quarter revenue to $15 billion to $16 billion against $17.1 billion expected. AMD fell 10.9%, Qualcomm 11.1% and Nvidia 4.2%, and the chip index dropped 7.2%."
+    },
+    {
+      "headline": "Cash burn is the story",
+      "body": "Amazon became the third hyperscaler, after Alphabet and Meta, to report negative free cash flow. The S&P 500 fell 1.8% on Friday, its worst day since June, and posted a third straight losing week, while the Russell 2000 rose 1.3%."
+    },
+    {
+      "headline": "Fed holds, two want a hike",
+      "body": "The Fed kept rates at 3.75% to 4.00% in a 10 to 2 vote, with Lisa Cook and Beth Hammack dissenting in favor of a quarter-point hike. \"Inflation remains elevated,\" the statement said."
+    },
+    {
+      "headline": "Economy runs hot, yields slip",
+      "body": "Third-quarter GDP grew at a 3.4% annual rate, up from 2.2%. The 10-year yield touched 5.05% on Fed day but ended the week at 4.94%, down 6 bp, and the 2-year fell 13 bp to 4.56%."
+    },
+    {
+      "headline": "Oil at a six-month high",
+      "body": "Brent settled at $117.64 on Friday and WTI at $104.12, both up about 2% on the day, after a tanker was mined in the Strait of Hormuz. Brent rose 13.6% in October and WTI 15.2%."
+    }
+  ],
+  "earningsLead": "Cash flow beat the headlines. Microsoft held up, Alphabet and Intel were crushed.",
+  "earnings": [
+    {
+      "company": "Microsoft",
+      "line": "Azure grew 48% to $33.17B, above estimates, and it guided 49% to 50% next quarter. Stock -0.2%."
+    },
+    {
+      "company": "Alphabet",
+      "line": "Revenue $127.58B vs $128.22B expected, EPS $2.67 vs $3.02. Kept 2026 capex at $195B to $205B. Stock -12.6%."
+    },
+    {
+      "company": "Amazon",
+      "line": "Missed on revenue and EPS; AWS grew 39%, its fastest in nearly five years. Stock -1.4%."
+    },
+    {
+      "company": "Intel",
+      "line": "EPS beat at $0.52 vs $0.40, but a weak fourth-quarter guide. Stock -28.6%."
+    },
+    {
+      "company": "Eli Lilly",
+      "line": "Revenue $24.40B vs $22.61B; raised 2026 sales guide to $91B to $92B. Stock +6.6%."
+    },
+    {
+      "company": "Caterpillar",
+      "line": "EPS beat at $7.20, but it kept its 2026 sales outlook below forecasts. Stock -9.3%."
+    }
+  ],
+  "weekAhead": [
+    {
+      "day": "Mon Nov 2",
+      "items": [
+        "ISM manufacturing. Apple and Palantir report after the close."
+      ]
+    },
+    {
+      "day": "Tue Nov 3",
+      "items": [
+        "Midterm elections. JOLTS job openings. AMD reports after the close."
+      ]
+    },
+    {
+      "day": "Wed Nov 4",
+      "items": [
+        "ADP employment and ISM services. Qualcomm, Uber and McDonald's report."
+      ]
+    },
+    {
+      "day": "Thu Nov 5",
+      "items": [
+        "Jobless claims and third-quarter productivity."
+      ]
+    },
+    {
+      "day": "Fri Nov 6",
+      "items": [
+        "October jobs report at 8:30 AM. Forecast: 55,000 jobs, unemployment 4.2%."
+      ]
+    }
+  ],
+  "disclaimer": "Written by students for an undergraduate investment club. Educational commentary, not investment advice.",
+  "sources": []
+}
