@@ -36,6 +36,9 @@ export default function ResearchPage() {
           <Link href="/members/research/screener" className={homeHeaderBtn}>
             Screener
           </Link>
+          <Link href="/members/research/trenchtick" className={homeHeaderBtn}>
+            TrenchTick
+          </Link>
           <kbd
             className={`${homeHeaderBtn} hidden min-w-9 px-2.5 font-mono text-[11px] text-zinc-500 sm:inline-flex dark:text-zinc-400`}
             title="Open command palette"
