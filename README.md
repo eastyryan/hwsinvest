@@ -12,7 +12,7 @@ A professional markets dashboard for the Hobart and William Smith Colleges Inves
 - `/about`: Mission and board showcase
 - `/members`: Password-gated dashboard (learn tracks, files, research, newsletter)
 - `/members/newsletter`: The club newsletter (members-only), every issue, newest first. `/newsletter` redirects here.
-- `/members/research`: Company research tool (synced from the finance app): SEC statements, ratios, ownership, segments, valuation suite, screener, watchlist, Excel export
+- `/members/research`: redirects to TrenchTick (https://finance-dnrapp.vercel.app)
 - `/admin`: Admin-only club console: calendar, email list, newsletter, file uploads
 
 ## Local setup

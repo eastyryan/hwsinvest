@@ -90,7 +90,7 @@ export default function Dashboard({ admin, latest }: { admin: boolean; latest: N
           </Link>
         )}
 
-        <Link href="/members/research" data-reveal className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
+        <a href="https://finance-dnrapp.vercel.app" data-reveal className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
           <span style={iconBadge}><LineChart size={20} strokeWidth={1.9} /></span>
           <div style={{ flex: 1 }}>
             <div className="h-sub" style={{ fontSize: 18 }}>Company Research</div>
@@ -99,7 +99,7 @@ export default function Dashboard({ admin, latest }: { admin: boolean; latest: N
             </p>
           </div>
           <ArrowRight size={20} color="var(--brand)" />
-        </Link>
+        </a>
 
         <Link href="/members/files" data-reveal className="card lift card-hover-brand" style={{ display: "flex", alignItems: "center", gap: 18, padding: 20, textDecoration: "none" }}>
           <span style={iconBadge}><Folder size={20} strokeWidth={1.9} /></span>

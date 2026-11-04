@@ -64,9 +64,7 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Protect the members area, the admin uploader, and the research API the
-  // members-only company pages read from (those routes live outside /members,
-  // so they need to be listed explicitly or they'd be publicly callable).
+  // Protect the members area and the admin uploader.
   //
   // /newsletters/* is the raw HTML of each issue, served straight out of
   // /public. Middleware runs ahead of the static handler, so listing it here
@@ -74,7 +72,6 @@ export const config = {
   matcher: [
     "/members/:path*",
     "/admin/:path*",
-    "/api/research/:path*",
     "/api/club/:path*",
     "/newsletters/:path*",
   ],
