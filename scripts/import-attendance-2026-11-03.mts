@@ -1,6 +1,6 @@
 // One-off: import the 2026-11-03 meeting rows (15 sign-ins from "Investment Club Weekly Attendance (Responses)").
 // DRY RUN by default. Run: npx tsx scripts/import-attendance-2026-11-03.mts [--write]   (needs .env.local with DROPBOX_*)
-// Do NOT pass --write until Easton approves. Never changes existing roster emails; adds no new members.
+// Do NOT pass --write until Easton approves. Never changes existing roster emails; adds Mady Nolan + Meredith Montgomery (approved by Easton Nov 4).
 import { readFileSync, writeFileSync } from "fs";
 import { parseAttendanceSheet, applyYearsToRoster } from "../lib/attendance-match";
 import { loadClubData, saveClubData, presentEmailsForMeeting, ALWAYS_PRESENT_EMAILS } from "../lib/club-store";
@@ -12,6 +12,14 @@ const DATE = "2026-11-03";
 const csv = readFileSync("/workspace/att-1103.csv", "utf8");
 const data = await loadClubData();
 const orig = JSON.parse(JSON.stringify(data));
+// New members approved by Easton. Meredith has no email (attendance is email-keyed, so she can be on the roster but not counted).
+const ADD = [
+  { name: "Mady Nolan", email: "mady.nolan@hws.edu", year: "Freshman" },
+  { name: "Meredith Montgomery", email: "", year: "Senior" },
+];
+for (const n of ADD)
+  if (!data.roster.some((r) => (n.email && r.email === n.email) || r.name.toLowerCase() === n.name.toLowerCase()))
+    data.roster = [...data.roster, { id: `m-${Date.now().toString(36)}-${n.name.split(" ")[0].toLowerCase()}`, ...n, role: "member", joinedAt: DATE } as any];
 const roster = data.roster.map((r) => ({ name: r.name, email: r.email }));
 const res = await parseAttendanceSheet(csv, roster);
 const prior = data.attendance.find((m) => m.date === DATE);

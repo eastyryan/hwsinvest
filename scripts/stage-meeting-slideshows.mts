@@ -12,8 +12,8 @@ const RENAMES: Record<string, string> = {
   "Inv club Sept 24.pptx": "IC Sep 24 2026 Stock Basics, PE Multiples and Rates.pptx",
   "Inv club oct 8.pptx": "IC Oct 8 2026 Pitching and Valuation Basics.pptx",
   "Inv club oct 13.pptx": "IC Oct 13 2026 Earnings Basics.pptx",
-  // Undated club overview deck (board, meeting formats, website). Date to be confirmed by Easton.
-  "HWS_Investment_Club_Deck.pptx": "IC Club Overview and Meet the Board.pptx",
+  // Undated club overview deck (board, meeting formats, website). Date confirmed by Easton: Sep 8.
+  "HWS_Investment_Club_Deck.pptx": "IC Sep 8 2026 Club Overview and Meet the Board.pptx",
 };
 const IN = "/workspace/investment-club/incoming-decks";
 const UPLOADS = [
