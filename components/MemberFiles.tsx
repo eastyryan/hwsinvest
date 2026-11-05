@@ -13,6 +13,19 @@ function pinRank(e: { type: string; name: string }): number {
 function isPinned(e: { type: string; name: string }): boolean {
   return pinRank(e) >= 0;
 }
+// "IC Nov 3 2026 ..." -> timestamp, or NaN when the name has no date.
+const MONTHS = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+function deckDate(name: string): number {
+  const m = name.match(/^IC\s+([A-Za-z]{3})[a-z]*\.?\s+(\d{1,2})\s+(\d{4})\b/i);
+  const mi = m ? MONTHS.indexOf(m[1].toLowerCase()) : -1;
+  return m && mi >= 0 ? Date.UTC(+m[3], mi, +m[2]) : NaN;
+}
+// Meeting Slideshows only: newest deck first (filename date, else modified time). Other folders keep API order.
+function sortForFolder<T extends { type: string; name: string; modified?: string }>(dir: string, list: T[]): T[] {
+  if (!/\/meeting slideshows$/i.test(dir.replace(/\/+$/, ""))) return list;
+  const key = (e: T) => { const d = deckDate(e.name); return Number.isNaN(d) ? (e.modified ? Date.parse(e.modified) || 0 : 0) : d; };
+  return [...list].sort((a, b) => (a.type === b.type ? key(b) - key(a) : a.type === "folder" ? -1 : 1));
+}
 function sortPinned<T extends { type: string; name: string }>(list: T[]): T[] {
   const pinned = list.filter(isPinned).sort((a, b) => pinRank(a) - pinRank(b));
   return [...pinned, ...list.filter((e) => !isPinned(e))];
@@ -314,7 +327,7 @@ export default function MemberFiles({
       />
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {sortPinned(entries).map((e) => {
+        {sortForFolder(path, sortPinned(entries)).map((e) => {
           const pinned = isPinned(e);
           const isDropTarget = admin && e.type === "folder";
           return (
