@@ -3,6 +3,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fileSize } from "@/lib/format";
+import { Pin } from "lucide-react";
+
+// Folders Easton wants always at the top of the members file browser, in this order.
+const PINNED_FOLDERS = ["meeting slideshows", "financial modeling", "financial modelling"];
+function pinRank(e: { type: string; name: string }): number {
+  return e.type === "folder" ? PINNED_FOLDERS.indexOf(e.name.trim().toLowerCase()) : -1;
+}
+function isPinned(e: { type: string; name: string }): boolean {
+  return pinRank(e) >= 0;
+}
+function sortPinned<T extends { type: string; name: string }>(list: T[]): T[] {
+  const pinned = list.filter(isPinned).sort((a, b) => pinRank(a) - pinRank(b));
+  return [...pinned, ...list.filter((e) => !isPinned(e))];
+}
 import { previewKind, type PreviewKind } from "@/lib/preview";
 
 type Entry = {
@@ -300,7 +314,8 @@ export default function MemberFiles({
       />
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {entries.map((e) => {
+        {sortPinned(entries).map((e) => {
+          const pinned = isPinned(e);
           const isDropTarget = admin && e.type === "folder";
           return (
           <div
@@ -331,7 +346,9 @@ export default function MemberFiles({
               <div style={rowName}>{e.name}</div>
               <div style={{ fontSize: 12.5, color: "var(--faint)", marginTop: 2 }}>
                 {e.type === "folder"
-                  ? "Folder"
+                  ? pinned
+                    ? <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--brandSolid)", fontWeight: 600 }}><Pin size={12} /> Pinned folder</span>
+                    : "Folder"
                   : `${fileSize(e.size)}${e.modified ? ` · ${new Date(e.modified).toLocaleDateString()}` : ""}`}
               </div>
             </button>

@@ -225,6 +225,12 @@ export async function ensureFolder(path: string): Promise<void> {
   }
 }
 
+/** Rename/move a file. Fails on collision (no autorename). */
+export async function movePath(from: string, to: string): Promise<void> {
+  const res = await rpc("files/move_v2", { from_path: from, to_path: to, autorename: false });
+  if (!res.ok) throw new Error(`Dropbox move failed (${res.status}): ${await res.text()}`);
+}
+
 // Upload bytes into a folder. Name collisions → Dropbox autorenames.
 export async function uploadFile(
   dir: string,
