@@ -38,9 +38,9 @@ export const TRACKS: Track[] = [
             q: "What does “alpha” measure?",
             choices: [
               "Return above what an investment was expected to deliver",
-              "The total fees a fund charges per year",
-              "How quickly an asset can be sold for cash",
-              "A stock's sensitivity to the overall market",
+              "The total yearly fees a fund charges as a share of assets",
+              "How quickly an asset can be sold for cash at a fair price",
+              "How strongly a stock moves relative to the overall market",
             ],
             answer: 0,
             explain:
@@ -50,10 +50,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "“Asset allocation” refers to…",
             choices: [
-              "Picking a single best-performing stock",
-              "Dividing investments across cash, income, and growth to balance risk and reward",
-              "Borrowing money to buy more securities",
-              "Selling losers to offset taxes",
+              "Picking the single best-performing stock and holding only that",
+              "Dividing investments across cash, income, and growth to balance risk",
+              "Borrowing money from a broker to buy more securities than you could",
+              "Selling losing positions to offset capital gains taxes",
             ],
             answer: 1,
             explain:
@@ -76,7 +76,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "The “annualized rate of return” is also known as the…",
-            choices: ["Coupon rate", "Compound growth rate", "Dividend yield", "Expense ratio"],
+            choices: ["Current yield", "Compound growth rate", "Coupon reinvestment rate", "Average dividend yield"],
             answer: 1,
             explain:
               "Annualized return averages performance over multiple years while accounting for compounding, also called the compound growth rate.",
@@ -85,10 +85,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "“Diversification” reduces risk by…",
             choices: [
-              "Concentrating in your single best idea",
+              "Concentrating all capital in your single highest-conviction idea",
               "Spreading capital across many uncorrelated investments",
-              "Using leverage to amplify returns",
-              "Timing the market perfectly",
+              "Using borrowed money to amplify the returns on each position",
+              "Moving in and out of the market ahead of major turning points",
             ],
             answer: 1,
             explain:
@@ -104,10 +104,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "A “bond” is best described as…",
             choices: [
-              "Ownership in a company",
+              "A share of ownership in a company that may pay dividends",
               "A loan to a company or government that pays interest",
-              "A pool of many investors' stocks",
-              "A bet that a stock will fall",
+              "A pooled fund holding many investors' stocks and bonds",
+              "A contract that profits when a stock's price falls",
             ],
             answer: 1,
             explain:
@@ -117,10 +117,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "“Liquidity” describes…",
             choices: [
-              "How profitable a company is",
-              "How easily an asset can be converted to cash without moving its price",
-              "How much debt a company carries",
-              "How volatile a stock is",
+              "How profitable a company is relative to its sales and assets",
+              "How easily an asset can be turned into cash without moving its price",
+              "How much debt a company carries compared with its equity",
+              "How widely a stock's price swings from day to day",
             ],
             answer: 1,
             explain:
@@ -130,10 +130,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "A “dividend” is…",
             choices: [
-              "Interest paid on a bond",
+              "The interest a bond pays its holders on a fixed schedule",
               "A portion of profits paid out to shareholders",
-              "The fee a broker charges",
-              "A company's total revenue",
+              "The commission a broker charges on each trade you place",
+              "The total revenue a company reports for the quarter",
             ],
             answer: 1,
             explain: "Dividends distribute a slice of company profits to equity holders, usually quarterly.",
@@ -141,7 +141,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "A prolonged period of rising prices and optimism is a…",
-            choices: ["Bear market", "Bull market", "Correction", "Recession"],
+            choices: ["Bear market", "Bull market", "Correction rally", "Recession"],
             answer: 1,
             explain:
               "A bull market trends up with optimism; a bear market is a sustained decline (often −20% or more).",
@@ -171,10 +171,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "“Beta” measures a stock's…",
             choices: [
-              "Total return last year",
-              "Sensitivity/volatility relative to the overall market",
-              "Dividend payout ratio",
-              "Credit quality",
+              "Total return over the last twelve months",
+              "Sensitivity relative to the overall market",
+              "Share of earnings paid out as dividends",
+              "Credit quality as judged by rating agencies",
             ],
             answer: 1,
             explain:
@@ -184,10 +184,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "Which risk can be reduced through diversification?",
             choices: [
-              "Systematic (market) risk",
+              "Systematic (market-wide) risk",
               "Unsystematic (company-specific) risk",
-              "Interest-rate risk for all assets",
-              "Inflation risk",
+              "Interest-rate risk shared by all bonds",
+              "Inflation risk that erodes all returns",
             ],
             answer: 1,
             explain:
@@ -198,9 +198,9 @@ export const TRACKS: Track[] = [
             q: "The Sharpe ratio measures…",
             choices: [
               "Return per unit of risk (volatility)",
-              "A company's debt load",
-              "Dividend growth",
-              "Trading volume",
+              "How much debt a company carries vs. equity",
+              "How fast a stock's dividend grows each year",
+              "The average daily trading volume of a stock",
             ],
             answer: 0,
             explain:
@@ -217,10 +217,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "Two assets with a correlation of −1 are…",
             choices: [
-              "Perfectly positively related",
-              "Perfectly inversely related (they move in opposite directions)",
-              "Completely unrelated",
-              "Identical",
+              "Perfectly positively related (they move together)",
+              "Perfectly inversely related (they move oppositely)",
+              "Completely unrelated (no linear relationship)",
+              "Identical assets with exactly the same returns",
             ],
             answer: 1,
             explain:
@@ -229,7 +229,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "“Standard deviation” of returns is commonly used as a measure of…",
-            choices: ["Liquidity", "Volatility / risk", "Profitability", "Valuation"],
+            choices: ["Liquidity of a market", "Volatility / risk", "Profitability over time", "Relative valuation level"],
             answer: 1,
             explain:
               "Standard deviation quantifies how much returns swing around their average, a standard proxy for volatility/risk.",
@@ -251,10 +251,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "A bond's “coupon” is…",
             choices: [
-              "Its current market price",
+              "Its current market price as a percent of par",
               "The fixed interest payment it makes to holders",
-              "The discount to face value",
-              "The issuer's credit rating",
+              "The discount to face value at which it was sold",
+              "The credit rating assigned to the bond's issuer",
             ],
             answer: 1,
             explain:
@@ -264,10 +264,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "“Yield to maturity” (YTM) is…",
             choices: [
-              "The coupon rate only",
-              "The total annualized return if the bond is held to maturity",
-              "The bond's face value",
-              "The time until the bond matures",
+              "The coupon rate divided by the bond's face value",
+              "The total annualized return if held to maturity",
+              "The price at which the issuer can call the bond",
+              "The number of years left until the bond matures",
             ],
             answer: 1,
             explain:
@@ -277,10 +277,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "“Duration” primarily measures a bond's…",
             choices: [
-              "Years until maturity exactly",
-              "Sensitivity of its price to interest-rate changes",
-              "Credit risk",
-              "Coupon size",
+              "Exact number of years left until maturity",
+              "Price sensitivity to interest-rate changes",
+              "Likelihood that the issuer will default",
+              "Size of its coupon relative to face value",
             ],
             answer: 1,
             explain:
@@ -289,7 +289,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "A bond rated below investment grade (e.g., BB or lower) is often called a…",
-            choices: ["Treasury", "Junk / high-yield bond", "Municipal bond", "Zero-coupon bond"],
+            choices: ["Treasury note", "Junk / high-yield bond", "Municipal revenue bond", "Zero-coupon bond"],
             answer: 1,
             explain:
               "Below-investment-grade bonds carry higher default risk, so they pay higher yields, hence “high-yield” or “junk.”",
@@ -311,10 +311,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "An ETF (exchange-traded fund) differs from a mutual fund mainly because it…",
             choices: [
-              "Can only be bought once per day at NAV",
+              "Can only be bought once per day at the closing NAV",
               "Trades on an exchange throughout the day like a stock",
-              "Never holds more than one security",
-              "Is always actively managed",
+              "Is not allowed to hold more than one type of security",
+              "Is always actively managed by a team of stock pickers",
             ],
             answer: 1,
             explain:
@@ -324,10 +324,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "A fund's “expense ratio” is…",
             choices: [
-              "Its annual return",
+              "Its average annual return over the last five years",
               "The yearly cost to own it, as a % of assets",
-              "The number of holdings",
-              "The manager's salary",
+              "The share of the portfolio replaced each year",
+              "The ratio of the manager's pay to fund assets",
             ],
             answer: 1,
             explain:
@@ -350,10 +350,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "An “index fund” aims to…",
             choices: [
-              "Beat the market through active stock picking",
+              "Beat the market through active stock picking and timing",
               "Match the return of a market index like the S&P 500",
-              "Invest only in bonds",
-              "Use leverage to double returns",
+              "Invest only in government bonds to minimize risk",
+              "Use leverage to deliver twice the market's daily return",
             ],
             answer: 1,
             explain:
@@ -407,10 +407,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "The balance sheet must always satisfy which equation?",
             choices: [
-              "Assets = Liabilities − Equity",
+              "Assets = Liabilities − Shareholders' Equity",
               "Assets = Liabilities + Shareholders' Equity",
-              "Revenue = Expenses + Profit",
-              "Cash = Assets − Liabilities",
+              "Revenue = Expenses + Net Profit for the year",
+              "Cash = Total Assets − Total Liabilities",
             ],
             answer: 1,
             explain: "Assets = Liabilities + Shareholders' Equity, and it must always balance.",
@@ -455,10 +455,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "Net income flows into the balance sheet through…",
             choices: [
-              "Accounts Payable",
+              "Accounts Payable (within Current Liabilities)",
               "Retained Earnings (within Shareholders' Equity)",
-              "Inventory",
-              "Goodwill",
+              "Inventory (within Current Assets)",
+              "Goodwill (within Long-Term Assets)",
             ],
             answer: 1,
             explain:
@@ -468,10 +468,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "Under accrual accounting, revenue is recognized when…",
             choices: [
-              "Cash is received",
-              "It is earned, regardless of when cash changes hands",
-              "The fiscal year ends",
-              "Management approves it",
+              "Cash from the customer is actually received",
+              "It is earned, regardless of when cash moves",
+              "The fiscal year ends and the books are closed",
+              "Management formally approves the sales figures",
             ],
             answer: 1,
             explain:
@@ -481,10 +481,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "“Goodwill” typically arises when a company…",
             choices: [
-              "Is very profitable",
-              "Pays more than the fair value of another company's net assets in an acquisition",
-              "Issues new stock",
-              "Writes down inventory",
+              "Earns profits well above the average for its industry",
+              "Pays more than fair value for another company's net assets",
+              "Issues new stock at a price above its book value per share",
+              "Writes down inventory that has become obsolete or damaged",
             ],
             answer: 1,
             explain: "Goodwill captures the premium paid above the acquired company's identifiable net asset value.",
@@ -499,7 +499,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "If the three statements are linked, which is the best single measure of how much cash a business actually generates?",
-            choices: ["Revenue", "Net Income", "Free Cash Flow", "Gross Profit"],
+            choices: ["Total Revenue", "Net Income", "Free Cash Flow", "Gross Profit"],
             answer: 2,
             explain:
               "Free cash flow (operating cash flow minus capex) shows real cash generation. Net income includes non-cash items.",
@@ -544,10 +544,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "The reason depreciation can INCREASE a company's cash position is…",
             choices: [
-              "It generates revenue",
+              "It generates revenue from the assets it covers",
               "It is tax-deductible, lowering cash taxes paid",
-              "It is a financing inflow",
-              "It increases inventory",
+              "It is recorded as a financing inflow of cash",
+              "It increases the value of inventory on hand",
             ],
             answer: 1,
             explain:
@@ -565,8 +565,8 @@ export const TRACKS: Track[] = [
             choices: [
               "Total assets − total liabilities",
               "Current assets − current liabilities",
-              "Cash + inventory",
-              "Revenue − expenses",
+              "Cash + inventory + accounts receivable",
+              "Revenue − operating expenses",
             ],
             answer: 1,
             explain: "Working capital = current assets − current liabilities, a gauge of short-term operating liquidity.",
@@ -613,9 +613,9 @@ export const TRACKS: Track[] = [
             q: "Gross profit equals…",
             choices: [
               "Revenue − COGS (cost of goods sold)",
-              "Revenue − all expenses",
-              "Net income + taxes",
-              "Revenue − SG&A",
+              "Revenue − all operating and other expenses",
+              "Net income + taxes + interest expense",
+              "Revenue − SG&A (selling and admin costs)",
             ],
             answer: 0,
             explain: "Gross profit = revenue − COGS. Dividing by revenue gives gross margin.",
@@ -623,7 +623,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "EBITDA stands for earnings before interest, taxes, depreciation and…",
-            choices: ["Amortization", "Acquisitions", "Allocation", "Assets"],
+            choices: ["Amortization", "Acquisitions", "Allocations", "Adjustments"],
             answer: 0,
             explain:
               "EBITDA adds back D&A to operating earnings, a rough proxy for operating cash flow that's capital-structure neutral.",
@@ -632,10 +632,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "The main difference between EBIT and EBITDA is that EBITDA…",
             choices: [
-              "Subtracts taxes",
+              "Subtracts income taxes from earnings",
               "Adds back depreciation and amortization",
-              "Includes interest expense",
-              "Is always smaller",
+              "Includes interest expense on all debt",
+              "Is always smaller than operating income",
             ],
             answer: 1,
             explain: "EBIT = operating income; EBITDA = EBIT + D&A. EBITDA is therefore larger (D&A added back).",
@@ -700,10 +700,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "Why is cash subtracted when calculating Enterprise Value?",
             choices: [
-              "Cash earns no interest",
-              "A buyer can use the target's cash to help fund the purchase, lowering the effective price",
-              "Cash is a liability",
-              "Tax rules require it",
+              "Cash earns little interest, so it adds nothing to the business",
+              "A buyer can use the target's cash to help fund the purchase",
+              "Cash is recorded as a liability on the target's balance sheet",
+              "Accounting and tax rules require it to be removed from EV",
             ],
             answer: 1,
             explain:
@@ -719,7 +719,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "If a company issues new debt and holds the cash, its Enterprise Value should be roughly…",
-            choices: ["Higher", "Lower", "Unchanged", "Doubled"],
+            choices: ["Higher by the new debt", "Lower by the new cash", "Unchanged", "Doubled"],
             answer: 2,
             explain:
               "Debt up and cash up by the same amount → net debt unchanged → EV unchanged. EV is independent of capital structure.",
@@ -734,10 +734,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "A Discounted Cash Flow (DCF) values a company based on…",
             choices: [
-              "Comparable recent deals",
+              "Multiples paid in comparable recent M&A deals",
               "The present value of its expected future cash flows",
-              "Its book value of equity",
-              "Last year's stock price",
+              "The book value of equity on its latest balance sheet",
+              "Last year's average stock price and trading range",
             ],
             answer: 1,
             explain: "A DCF projects future free cash flows and discounts them to today using a discount rate.",
@@ -748,8 +748,8 @@ export const TRACKS: Track[] = [
             choices: [
               "The cost of equity",
               "WACC (weighted average cost of capital)",
-              "The risk-free rate only",
-              "The dividend yield",
+              "The risk-free rate plus a small spread",
+              "The company's current dividend yield",
             ],
             answer: 1,
             explain:
@@ -766,9 +766,9 @@ export const TRACKS: Track[] = [
             q: "Two common ways to calculate Terminal Value are…",
             choices: [
               "Book value and liquidation value",
-              "Gordon Growth (perpetuity growth) and the Exit Multiple method",
-              "P/E and P/B",
-              "FIFO and LIFO",
+              "Gordon Growth and the Exit Multiple method",
+              "P/E and price-to-book multiples",
+              "Average daily trading price and NAV",
             ],
             answer: 1,
             explain:
@@ -779,9 +779,9 @@ export const TRACKS: Track[] = [
             q: "In a typical DCF, the terminal value often represents…",
             choices: [
               "A tiny fraction of total value",
-              "A large majority of the total present value",
-              "Exactly half",
-              "The discount rate",
+              "A large majority of total present value",
+              "Exactly half of the total present value",
+              "The discount rate used in the model",
             ],
             answer: 1,
             explain:
@@ -796,7 +796,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "The P/E ratio compares price to…",
-            choices: ["Revenue", "Earnings per share", "Book value", "EBITDA"],
+            choices: ["Revenue per share", "Earnings per share", "Book value per share", "EBITDA per share"],
             answer: 1,
             explain: "P/E = price per share ÷ earnings per share (or equity value ÷ net income). An equity-value multiple.",
           },
@@ -812,10 +812,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "EV/Revenue is most useful for valuing…",
             choices: [
-              "Mature, highly profitable banks",
-              "High-growth or unprofitable companies with little/no earnings",
-              "Bond portfolios",
-              "Real estate only",
+              "Mature, highly profitable banks with steady earnings",
+              "High-growth or unprofitable companies with little earnings",
+              "Bond portfolios and other fixed income funds",
+              "Real estate trusts valued on funds from operations",
             ],
             answer: 1,
             explain:
@@ -833,9 +833,9 @@ export const TRACKS: Track[] = [
             q: "EV/EBITDA should be paired with which numerator-denominator logic?",
             choices: [
               "Enterprise value over a metric available to ALL investors",
-              "Equity value over a metric available only to shareholders",
-              "Revenue over net income",
-              "Price over dividends",
+              "Equity value over a metric available to ALL capital providers",
+              "Revenue over net income for the trailing twelve months",
+              "Share price over dividends paid to common shareholders",
             ],
             answer: 0,
             explain:
@@ -851,10 +851,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "“Comparable companies” analysis values a business by…",
             choices: [
-              "Discounting its future cash flows",
+              "Discounting its projected future cash flows at WACC",
               "Applying valuation multiples of similar public companies",
-              "Liquidating its assets",
-              "Looking only at its dividend",
+              "Estimating what its assets would fetch in a liquidation",
+              "Looking only at the dividends it pays to shareholders",
             ],
             answer: 1,
             explain:
@@ -865,9 +865,9 @@ export const TRACKS: Track[] = [
             q: "“Precedent transactions” analysis is based on…",
             choices: [
               "Multiples paid in past M&A deals for similar companies",
-              "The current stock price",
-              "A DCF",
-              "The company's IPO price",
+              "The current stock price and its trailing 52-week range",
+              "A discounted cash flow model of projected free cash flow",
+              "The price at which the company first sold shares at its IPO",
             ],
             answer: 0,
             explain:
@@ -884,10 +884,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "A “control premium” is the extra amount paid to…",
             choices: [
-              "Minority shareholders only",
-              "Acquire a controlling stake and the ability to direct the company",
-              "Bondholders",
-              "Investment bankers",
+              "Compensate minority shareholders for their lack of control",
+              "Acquire a controlling stake and the power to direct the company",
+              "Repay bondholders early under a change-of-control clause",
+              "Cover the advisory fees charged by the investment bankers",
             ],
             answer: 1,
             explain: "Acquirers pay above the trading price to gain control and capture synergies, the control premium.",
@@ -896,10 +896,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "A drawback of precedent transactions is that…",
             choices: [
-              "They are always too low",
-              "Market conditions at the time of past deals may differ from today",
-              "They ignore the target entirely",
-              "They require no data",
+              "They always produce values that are too low to be useful",
+              "Market conditions at the time of past deals may differ today",
+              "They ignore the target company's own financials entirely",
+              "They need no data beyond the target's current share price",
             ],
             answer: 1,
             explain:
@@ -916,9 +916,9 @@ export const TRACKS: Track[] = [
             q: "The CAPM formula for cost of equity is…",
             choices: [
               "Risk-free rate + beta × equity risk premium",
-              "Dividend ÷ price",
-              "Debt ÷ equity",
-              "EBITDA × multiple",
+              "Annual dividend ÷ current share price + growth",
+              "Total debt ÷ total equity × the tax rate",
+              "Risk-free rate + credit spread × (1 − tax rate)",
             ],
             answer: 0,
             explain:
@@ -944,9 +944,9 @@ export const TRACKS: Track[] = [
             q: "WACC is a weighted average of the costs of…",
             choices: [
               "Equity and debt, weighted by their share of total capital",
-              "Revenue and expenses",
-              "Assets and liabilities",
-              "Dividends and buybacks",
+              "Revenue and expenses, weighted by their share of sales",
+              "Assets and liabilities, weighted by their book values",
+              "Dividends and buybacks, weighted by cash paid out",
             ],
             answer: 0,
             explain:
@@ -956,10 +956,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "If a company takes on a lot of cheap debt, its WACC will often initially…",
             choices: [
-              "Rise sharply",
+              "Rise sharply, since any debt adds default risk",
               "Decrease (debt is cheaper than equity), up to a point",
-              "Stay exactly the same",
-              "Become negative",
+              "Stay exactly the same, since WACC ignores mix",
+              "Become negative once debt exceeds equity value",
             ],
             answer: 1,
             explain:
@@ -984,7 +984,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "Which is an example of “soft” economic data?",
-            choices: ["GDP", "Nonfarm payrolls", "Consumer Confidence Index", "CPI"],
+            choices: ["Gross Domestic Product", "Nonfarm payrolls", "Consumer Confidence Index", "Consumer Price Index (CPI)"],
             answer: 2,
             explain:
               "Soft data measures sentiment/expectations (surveys like Consumer Confidence and PMI). Hard data measures actual activity.",
@@ -1007,7 +1007,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "The Consumer Price Index (CPI) primarily tracks…",
-            choices: ["Employment", "Inflation / consumer prices", "Stock returns", "Manufacturing orders"],
+            choices: ["Employment and wages", "Inflation / consumer prices", "Stock market returns", "Manufacturing orders and output"],
             answer: 1,
             explain: "CPI measures the change in prices of a basket of consumer goods, a key inflation gauge.",
           },
@@ -1022,10 +1022,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "A PMI (Purchasing Managers' Index) reading above 50 generally signals…",
             choices: [
-              "Economic contraction",
+              "Economic contraction in that sector",
               "Economic expansion in that sector",
-              "Falling prices",
-              "A recession",
+              "Falling prices across the economy",
+              "A recession that has already begun",
             ],
             answer: 1,
             explain: "PMI above 50 indicates expansion; below 50 indicates contraction. It's a closely watched soft indicator.",
@@ -1041,9 +1041,9 @@ export const TRACKS: Track[] = [
             q: "The Federal Reserve's “dual mandate” is…",
             choices: [
               "Maximum employment and stable prices",
-              "Low taxes and high GDP",
-              "Strong dollar and trade surplus",
-              "Full budget and low deficit",
+              "Low taxes and steady GDP growth",
+              "A strong dollar and a trade surplus",
+              "A balanced budget and a low deficit",
             ],
             answer: 0,
             explain: "Congress charged the Fed with pursuing maximum employment and price stability (low, stable inflation).",
@@ -1052,10 +1052,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "When the Fed RAISES the federal funds rate, it is generally trying to…",
             choices: [
-              "Stimulate growth",
+              "Stimulate growth by making borrowing cheaper",
               "Cool the economy and fight inflation",
-              "Weaken the dollar",
-              "Lower unemployment quickly",
+              "Weaken the dollar to help exporters compete",
+              "Lower unemployment as quickly as possible",
             ],
             answer: 1,
             explain:
@@ -1072,10 +1072,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "“Quantitative easing” (QE) refers to the Fed…",
             choices: [
-              "Selling bonds to drain liquidity",
+              "Selling bonds to drain liquidity and push up long-term rates",
               "Buying bonds to inject liquidity and lower long-term rates",
-              "Raising the funds rate",
-              "Printing physical cash for banks",
+              "Raising the funds rate in small steps to slow the economy",
+              "Printing physical cash and handing it directly to banks",
             ],
             answer: 1,
             explain:
@@ -1126,10 +1126,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "Why are long-duration bonds riskier when rates rise?",
             choices: [
-              "They pay no coupon",
+              "They pay no coupon, so they offer no income cushion",
               "Their prices fall more for a given rise in yields",
-              "They mature sooner",
-              "They have higher credit risk",
+              "They mature sooner, so they reprice at higher rates",
+              "They carry higher default risk than short-term bonds",
             ],
             answer: 1,
             explain: "Longer duration = greater price sensitivity to rate changes, so they drop more when rates rise.",
@@ -1161,10 +1161,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "What does pressing F4 do while editing a formula?",
             choices: [
-              "Saves the workbook",
+              "Saves the workbook under its current name and location",
               "Anchors a cell reference (toggles $ absolute/relative)",
-              "Deletes the cell",
-              "Inserts a comment",
+              "Deletes the active cell and shifts the others upward",
+              "Inserts a comment or note on the currently active cell",
             ],
             answer: 1,
             explain:
@@ -1173,14 +1173,14 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "Which shortcut opens the Format Cells dialog?",
-            choices: ["CTRL + 1", "CTRL + F", "ALT + =", "F2"],
+            choices: ["CTRL + 1", "CTRL + F", "ALT + =", "CTRL + SHIFT + F3"],
             answer: 0,
             explain: "CTRL + 1 opens Format Cells: number formats, borders, fonts, and more.",
           },
           {
             type: "mc",
             q: "What does F2 do on a selected cell?",
-            choices: ["Edits the cell's contents", "Anchors the reference", "Sums the column", "Spell-checks"],
+            choices: ["Edits the cell's contents", "Anchors the cell reference", "Sums the column above it", "Runs a spell-check on the sheet"],
             answer: 0,
             explain: "F2 enters edit mode for the active cell so you can change its formula or text.",
           },
@@ -1195,10 +1195,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "Holding CTRL while pressing an arrow key will…",
             choices: [
-              "Select the whole sheet",
-              "Jump to the end of a continuous range of filled cells",
-              "Delete a row",
-              "Open a new tab",
+              "Select every cell on the whole worksheet",
+              "Jump to the end of a continuous filled range",
+              "Delete the entire row of the active cell",
+              "Open a new worksheet tab in the workbook",
             ],
             answer: 1,
             explain: "CTRL + arrow jumps to the edge of the current data region. Add SHIFT to select along the way.",
@@ -1212,28 +1212,28 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "Which shortcut jumps directly to cell A1?",
-            choices: ["CTRL + Home", "CTRL + End", "CTRL + A", "ALT + A1"],
+            choices: ["CTRL + Home", "CTRL + End", "CTRL + A", "ALT + Home + 1"],
             answer: 0,
             explain: "CTRL + Home returns to A1; CTRL + End jumps to the last used cell.",
           },
           {
             type: "mc",
             q: "CTRL + SHIFT + % applies which number format?",
-            choices: ["Currency", "Date", "Percentage", "Scientific"],
+            choices: ["Currency", "Date format", "Percentage", "Scientific"],
             answer: 2,
             explain: "CTRL + SHIFT + % formats the selection as a percentage.",
           },
           {
             type: "mc",
             q: "Flash Fill, which auto-completes a pattern down a column, is triggered by…",
-            choices: ["CTRL + E", "CTRL + F", "CTRL + L", "CTRL + P"],
+            choices: ["CTRL + E", "CTRL + F", "CTRL + L", "CTRL + SHIFT + P"],
             answer: 0,
             explain: "CTRL + E runs Flash Fill, detecting and extending the pattern you've started.",
           },
           {
             type: "mc",
             q: "CTRL + 9 will…",
-            choices: ["Hide the selected row", "Save as", "Insert a row", "Bold the text"],
+            choices: ["Hide the selected row", "Open the Save As dialog", "Insert a row above", "Bold the selected text"],
             answer: 0,
             explain: "CTRL + 9 hides selected row(s); CTRL + SHIFT + 9 unhides them.",
           },
@@ -1252,7 +1252,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "Which function looks up a value in a table by matching the leftmost column?",
-            choices: ["SUMIF", "VLOOKUP", "CONCAT", "TODAY"],
+            choices: ["SUMIF", "VLOOKUP", "CONCAT", "COUNTIFS"],
             answer: 1,
             explain:
               "VLOOKUP searches the first column of a range and returns a value from another column in the same row. XLOOKUP is the modern, more flexible successor.",
@@ -1261,10 +1261,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "Why do many modelers prefer INDEX/MATCH (or XLOOKUP) over VLOOKUP?",
             choices: [
-              "It's the only way to add numbers",
-              "It can look left as well as right and doesn't break when columns are inserted",
-              "It automatically formats cells",
-              "It's required for charts",
+              "It is the only formula that can add numbers across sheets",
+              "It can look left or right and survives inserted columns",
+              "It automatically applies number formats to the result",
+              "It is required before Excel will build a chart from data",
             ],
             answer: 1,
             explain:
@@ -1274,10 +1274,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "IFERROR is most useful for…",
             choices: [
-              "Speeding up calculations",
-              "Replacing error values (like #DIV/0!) with a cleaner output",
-              "Sorting data",
-              "Locking cells",
+              "Speeding up calculations in large workbooks",
+              "Replacing error values like #DIV/0! with clean output",
+              "Sorting data in a range from smallest to largest",
+              "Locking cells so formulas cannot be overwritten",
             ],
             answer: 1,
             explain:
@@ -1295,9 +1295,9 @@ export const TRACKS: Track[] = [
             q: "SUMIF is used to…",
             choices: [
               "Sum only the cells that meet a given condition",
-              "Count blank cells",
-              "Find the maximum",
-              "Round numbers",
+              "Count the blank cells in a selected range",
+              "Find the largest value in a column of numbers",
+              "Round each number to a set count of decimals",
             ],
             answer: 0,
             explain: "SUMIF(range, criteria, [sum_range]) adds up only the values that satisfy your criteria.",
@@ -1327,10 +1327,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "A circular reference in a 3-statement model (e.g., interest depends on debt, which depends on cash, which depends on interest) is typically handled by…",
             choices: [
-              "Deleting the income statement",
+              "Deleting the interest line from the income statement",
               "Enabling iterative calculation",
-              "Converting everything to text",
-              "Using more colors",
+              "Converting the linked formulas into hard-coded values",
+              "Moving the debt schedule onto a separate workbook",
             ],
             answer: 1,
             explain:
@@ -1340,10 +1340,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "Pressing F9 on a highlighted part of a formula will…",
             choices: [
-              "Delete it",
+              "Delete the highlighted part of the formula",
               "Evaluate just that portion to show its value",
-              "Save the file",
-              "Insert a chart",
+              "Save the file and recalculate every sheet",
+              "Insert a chart based on the highlighted cells",
             ],
             answer: 1,
             explain:
@@ -1376,10 +1376,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "Asked to “walk through the 3 statements,” the cleanest one-line summary of the income statement is…",
             choices: [
-              "It lists assets, liabilities, and equity",
+              "It lists assets, liabilities, and equity at a point in time",
               "It shows revenue and expenses, ending in net income",
-              "It tracks cash in and out",
-              "It records only financing activities",
+              "It tracks the cash coming in and going out each period",
+              "It records only the company's financing activities",
             ],
             answer: 1,
             explain:
@@ -1388,7 +1388,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "Which statement would you look at FIRST to judge whether a company can survive a cash crunch?",
-            choices: ["Income Statement", "Cash Flow Statement", "Equity Statement", "None of these"],
+            choices: ["Income Statement", "Cash Flow Statement", "Statement of Equity", "None of these"],
             answer: 1,
             explain:
               "A company can be profitable on the income statement yet run out of cash. The cash flow statement reveals real liquidity.",
@@ -1411,7 +1411,7 @@ export const TRACKS: Track[] = [
           {
             type: "mc",
             q: "“Deferred revenue” is recorded as a ____ on the balance sheet.",
-            choices: ["Asset", "Liability", "Equity", "Expense"],
+            choices: ["Current asset", "Liability", "Equity item", "Operating expense"],
             answer: 1,
             explain:
               "Cash collected before delivering the product/service is an obligation (a liability) until the revenue is earned.",
@@ -1426,10 +1426,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "What is the correct high-level order of steps in a DCF?",
             choices: [
-              "Project FCF → discount at WACC → add terminal value → get enterprise value",
-              "Pick a multiple → multiply by EBITDA",
-              "Average the last 5 stock prices",
-              "Subtract liabilities from assets",
+              "Project FCF → discount at WACC → add terminal value → get EV",
+              "Pick a multiple → multiply by EBITDA → subtract net debt → get EV",
+              "Average the last 5 years of stock prices → adjust for dividends",
+              "Total the assets → subtract liabilities → divide by share count",
             ],
             answer: 0,
             explain:
@@ -1439,10 +1439,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "To get from enterprise value to EQUITY value at the end of a DCF, you…",
             choices: [
-              "Add net debt",
+              "Add net debt (add debt, subtract cash)",
               "Subtract net debt (subtract debt, add cash)",
-              "Multiply by the tax rate",
-              "Do nothing",
+              "Multiply by (1 − tax rate) to get after-tax value",
+              "Do nothing, since EV already equals equity value",
             ],
             answer: 1,
             explain: "Equity value = enterprise value − debt + cash (i.e., minus net debt), the reverse of the EV bridge.",
@@ -1458,10 +1458,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "A common CRITIQUE of the DCF is that it…",
             choices: [
-              "Ignores cash flows",
+              "Ignores cash flows and relies only on market multiples",
               "Is highly sensitive to assumptions far in the future",
-              "Never uses a discount rate",
-              "Can only value banks",
+              "Never uses a discount rate to value future cash flows",
+              "Can only be used to value banks and insurance firms",
             ],
             answer: 1,
             explain:
@@ -1471,10 +1471,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "You'd generally AVOID relying on a DCF for…",
             choices: [
-              "A stable, mature consumer-goods company",
-              "An early-stage company with deeply uncertain, far-off cash flows",
-              "A utility",
-              "A company with predictable margins",
+              "A stable, mature consumer-goods company with steady sales",
+              "An early-stage company with deeply uncertain cash flows",
+              "A regulated utility with predictable long-term earnings",
+              "A company with predictable margins and modest growth",
             ],
             answer: 1,
             explain:
@@ -1505,10 +1505,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "Two companies in the same industry can trade at very different P/E ratios mainly because of differences in…",
             choices: [
-              "Their ticker symbols",
+              "Their ticker symbols and exchange listings",
               "Expected growth and risk",
-              "Their headquarters city",
-              "The number of employees",
+              "The city where each is headquartered",
+              "The total number of employees each has",
             ],
             answer: 1,
             explain:
@@ -1541,9 +1541,9 @@ export const TRACKS: Track[] = [
             q: "A deal is “accretive” when…",
             choices: [
               "The acquirer's earnings per share (EPS) rises after the deal",
-              "The target's stock falls",
-              "The combined company has more employees",
-              "Goodwill is written off",
+              "The target's share price falls after the deal is announced",
+              "The combined company has more employees than either alone",
+              "The acquirer writes off goodwill from an earlier acquisition",
             ],
             answer: 0,
             explain: "Accretive = acquirer's EPS increases post-deal; dilutive = EPS decreases.",
@@ -1565,10 +1565,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "“Synergies” in a merger usually refer to…",
             choices: [
-              "Cost savings or added revenue from combining the two companies",
-              "Legal fees",
-              "The number of shares issued",
-              "The discount rate",
+              "Cost savings or added revenue from combining the companies",
+              "Legal and advisory fees paid to close the transaction",
+              "The number of new shares issued to the target's owners",
+              "The discount rate applied to the target's cash flows",
             ],
             answer: 0,
             explain: "Synergies are the extra value (cost cuts or revenue gains) the combined firm achieves that the two couldn't alone.",
@@ -1585,9 +1585,9 @@ export const TRACKS: Track[] = [
             q: "“Goodwill” created in an acquisition equals roughly…",
             choices: [
               "Purchase price − fair value of the target's net identifiable assets",
-              "The target's revenue",
-              "The acquirer's cash",
-              "The synergies",
+              "The target's trailing twelve months of revenue plus its cash",
+              "The acquirer's cash balance just before the deal closes",
+              "The present value of the synergies expected from the deal",
             ],
             answer: 0,
             explain:
@@ -1623,10 +1623,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "An IDEAL LBO candidate typically has…",
             choices: [
-              "Volatile, unpredictable cash flows",
+              "Volatile, unpredictable cash flows and heavy debt",
               "Stable, predictable cash flows and low existing debt",
-              "No assets and no customers",
-              "A falling market and high capex needs",
+              "Few hard assets and a concentrated customer base",
+              "A shrinking market and high capex requirements",
             ],
             answer: 1,
             explain:
@@ -1644,10 +1644,10 @@ export const TRACKS: Track[] = [
             type: "mc",
             q: "Why does using MORE leverage tend to boost equity returns in an LBO (when things go well)?",
             choices: [
-              "Less debt means more taxes",
-              "A smaller equity check controls the same asset, so gains are spread over less equity",
-              "Debt is free",
-              "It increases revenue directly",
+              "Less debt means more taxes, which lowers equity value",
+              "A smaller equity check controls the same asset, so gains go to less equity",
+              "Debt costs nothing, so every dollar borrowed is pure profit",
+              "Higher leverage directly increases the company's revenue",
             ],
             answer: 1,
             explain:

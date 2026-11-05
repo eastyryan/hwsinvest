@@ -15,10 +15,12 @@ export default function QuizPlayer({ track, lesson }: { track: Track; lesson: Le
   const [phase, setPhase] = useState<Phase>({ i: 0, picked: null, checked: false });
   const [correct, setCorrect] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   const q = questions[phase.i];
-  const choices = useMemo(() => optionsFor(q), [q]);
-  const correctIndex = answerIndex(q);
+  // Multiple-choice options are shuffled (seeded by question text + attempt, so server and
+  // client render the same order) and the correct index is tracked through the shuffle.
+  const { choices, correctIndex } = useMemo(() => shuffled(q, attempt), [q, attempt]);
 
   function check() {
     if (phase.picked === null) return;
@@ -37,7 +39,7 @@ export default function QuizPlayer({ track, lesson }: { track: Track; lesson: Le
   }
 
   if (finished) {
-    return <Results track={track} lesson={lesson} correct={correct} total={questions.length} onRetry={() => { setPhase({ i: 0, picked: null, checked: false }); setCorrect(0); setFinished(false); }} />;
+    return <Results track={track} lesson={lesson} correct={correct} total={questions.length} onRetry={() => { setPhase({ i: 0, picked: null, checked: false }); setCorrect(0); setFinished(false); setAttempt((a) => a + 1); }} />;
   }
 
   const progress = (phase.i / questions.length) * 100;
@@ -152,6 +154,22 @@ function Results({ track, lesson, correct, total, onRetry }: { track: Track; les
 // Normalize MC and TF questions into a common choice list + answer index.
 function optionsFor(q: Question): string[] {
   return q.type === "tf" ? ["True", "False"] : q.choices;
+}
+function hashSeed(text: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+/** Deterministic Fisher-Yates shuffle of MC choices; True/False keeps its fixed order. */
+export function shuffled(q: Question, attempt = 0): { choices: string[]; correctIndex: number } {
+  const base = optionsFor(q);
+  const correct = answerIndex(q);
+  if (q.type !== "mc") return { choices: base, correctIndex: correct };
+  let seed = hashSeed(`${q.q}#${attempt}`) || 1;
+  const rand = () => { seed ^= seed << 13; seed >>>= 0; seed ^= seed >>> 17; seed ^= seed << 5; seed >>>= 0; return seed / 4294967296; };
+  const order = base.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  return { choices: order.map((i) => base[i]), correctIndex: order.indexOf(correct) };
 }
 function answerIndex(q: Question): number {
   return q.type === "tf" ? (q.answer ? 0 : 1) : q.answer;
