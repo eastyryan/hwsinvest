@@ -53,12 +53,21 @@ export const board: Member[] = [
   },
   {
     name: "Thomas McDonough",
-    role: "Head of Financial Modeling",
+    role: "Co-Head of Financial Modeling",
     year: "Class of 2029",
     focus: "Modeling & Valuation",
     img: "/board/thomas.jpg",
-    bio: "Thomas runs the club's modeling work, the three-statement builds and DCFs behind our pitches, and teaches new members how to put one together from a blank spreadsheet. He leads the modeling workshops each semester.",
+    bio: "Thomas co-leads the club's modeling work, the three-statement builds and DCFs behind our pitches, and teaches new members how to put one together from a blank spreadsheet. He leads the modeling workshops each semester.",
     linkedin: "https://www.linkedin.com/in/tommy-mcdonough/",
+  },
+  {
+    name: "Adam Ondris",
+    role: "Co-Head of Financial Modeling",
+    year: "Class of 2029",
+    focus: "Modeling & Valuation",
+    img: "/board/adam.jpg",
+    bio: "Adam co-leads the club's modeling work with Thomas. He has been to every meeting, is very engaged, and helped other members during the financial modeling session.",
+    linkedin: "https://www.linkedin.com/in/adam-ondri%C5%A1/",
   },
   {
     name: "Olivia Wilkins",
